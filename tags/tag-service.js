@@ -515,7 +515,7 @@ function send(res, code, obj) {
 var server = http.createServer(function(req, res){
   var route = req.url.split('?')[0];
   if (req.method === 'OPTIONS') return send(res, 204, {});
-  if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true});
+  if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true, coverSearch: !!(process.env.COVER_SEARCH_URL || appConfig().COVER_SEARCH_URL)});
   if (req.method === 'GET' && route === '/history') return doHistory(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

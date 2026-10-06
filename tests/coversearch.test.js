@@ -30,6 +30,9 @@ api.listen(0, function(){
         var d = ''; res.on('data', function(c){ d += c; }); res.on('end', function(){ cb(JSON.parse(d)); });
       });
     }
+    http.get({port: svc.address().port, path: '/health'}, function(hr){ var hd = ''; hr.on('data', function(c){ hd += c; }); hr.on('end', function(){
+      t('/health meldet die eingerichtete Cover-Suche', function(){ assert.strictEqual(JSON.parse(hd).coverSearch, true); });
+    }); });
     get('artist=Billy%20Joel&album=The%20Stranger', function(r1){
       t('Treffer: Bild über Weiterleitung, als base64', function(){
         assert.ok(r1.ok, r1.error); assert.strictEqual(r1.mime, 'image/jpeg');

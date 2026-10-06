@@ -275,6 +275,10 @@ function tagThumb(caption) {
   return box;
 }
 
+/* Cover-Suche eingerichtet? Das meldet der Tag-Dienst (er liest config.js/config.local.js selbst) */
+var tagCoverSearch = false;
+fetch(TAGS + '/health').then(function(r){ return r.json(); }).then(function(j){ tagCoverSearch = !!(j && j.coverSearch); }).catch(function(){});
+
 /* Bereich oben im Editor: eingebettetes Cover und folder.jpg anzeigen, neues Bild wählen, folder.jpg erzeugen */
 function tagCoverSection(good) {
   var uris = good.map(function(f){ return f.uri; }), first = uris[0], n = uris.length;
@@ -294,7 +298,7 @@ function tagCoverSection(good) {
   var toFolder = document.createElement('button'); toFolder.textContent = 'Eingebettetes als folder.jpg';
   var online = document.createElement('button'); online.textContent = 'Online suchen';
   btns.appendChild(pick);
-  if (window.APP_CONFIG && window.APP_CONFIG.COVER_SEARCH_URL) btns.appendChild(online);     /* nur mit eingerichteter Cover-Suche */
+  if (tagCoverSearch || (window.APP_CONFIG && window.APP_CONFIG.COVER_SEARCH_URL)) btns.appendChild(online);   /* nur mit eingerichteter Cover-Suche */
   btns.appendChild(toFolder); btns.appendChild(file);
   wrap.appendChild(btns);
 
