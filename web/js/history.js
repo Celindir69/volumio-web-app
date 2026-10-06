@@ -199,20 +199,32 @@ function histTop(seq) {
 
 function histNum(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
-function histBars(title, values, labels, every) {
+/* Balken: Tippen (oder Mauszeiger) zeigt den Wert in der Überschrift; details[i] ist die ausführliche Beschriftung */
+function histBars(title, values, labels, every, details) {
   var box = histEl('div', 'hChart');
-  box.appendChild(browseHeading(title));
+  var head = browseHeading(title);
+  var info = histEl('span', 'hPick');
+  head.appendChild(info);
+  box.appendChild(head);
   var max = Math.max.apply(null, values.concat([1]));
-  var bars = histEl('div', 'hBars'), lab = histEl('div', 'hLabels');
+  var bars = histEl('div', 'hBars'), lab = histEl('div', 'hLabels'), picked = null;
+  function pick(b, i) {
+    if (picked) picked.classList.remove('on');
+    if (picked === b) { picked = null; info.textContent = ''; return; }
+    picked = b; b.classList.add('on');
+    info.textContent = (details || labels)[i] + ': ' + histNum(values[i]);
+  }
   values.forEach(function(v, i){
     var b = histEl('div', 'hBar');
     var fill = histEl('div', 'hFill');
     fill.style.height = Math.round(v / max * 100) + '%';
-    b.title = labels[i] + ': ' + v;
     b.appendChild(fill);
+    b.addEventListener('click', function(){ pick(b, i); });
+    b.addEventListener('pointerenter', function(e){ if (e.pointerType === 'mouse' && picked !== b) pick(b, i); });   /* Touch: nur Tippen */
     bars.appendChild(b);
     lab.appendChild(histEl('div', 'hLabel', i % every === 0 ? labels[i] : ''));
   });
+  bars.addEventListener('pointerleave', function(e){ if (e.pointerType === 'mouse' && picked) pick(picked, 0); });
   box.appendChild(bars); box.appendChild(lab);
   return box;
 }
@@ -243,10 +255,20 @@ function histStats(seq) {
           return s.unit === 'day' ? String(parseInt(p[2], 10)) : s.unit === 'month' ? HIST_MONTHS[parseInt(p[1], 10) - 1] : p[0];
         });
         var every = s.unit === 'day' ? 5 : s.unit === 'month' ? 2 : Math.max(1, Math.ceil(labels.length / 8));
+        var details = s.buckets.map(function(b){
+          var p = b.k.split('-');
+          if (s.unit === 'day') {
+            var d = new Date(+p[0], +p[1] - 1, +p[2]);
+            return HIST_DAYS[(d.getDay() + 6) % 7] + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.';
+          }
+          return s.unit === 'month' ? HIST_MONTHS[+p[1] - 1] + ' ' + p[0] : p[0];
+        });
         histBody.appendChild(histBars(s.unit === 'day' ? 'WIEDERGABEN PRO TAG' : s.unit === 'month' ? 'WIEDERGABEN PRO MONAT' : 'WIEDERGABEN PRO JAHR',
-          s.buckets.map(function(b){ return b.n; }), labels, every));
-        histBody.appendChild(histBars('TAGESZEIT', s.hours, s.hours.map(function(v, i){ return String(i); }), 6));
-        histBody.appendChild(histBars('WOCHENTAG', s.weekdays, HIST_DAYS, 1));
+          s.buckets.map(function(b){ return b.n; }), labels, every, details));
+        histBody.appendChild(histBars('TAGESZEIT', s.hours, s.hours.map(function(v, i){ return String(i); }), 6,
+          s.hours.map(function(v, i){ return i + '–' + (i + 1) + ' Uhr'; })));
+        histBody.appendChild(histBars('WOCHENTAG', s.weekdays, HIST_DAYS, 1,
+          ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']));
       }
       if (s.first) histBody.appendChild(browseNote('Verlauf seit ' + histDay(s.first).replace(/^(Heute|Gestern)$/, function(x){ return x.toLowerCase(); })));
     }
