@@ -135,14 +135,15 @@ function lyrLocal(key, ms) {
 
 function lyrSyncShow(on) { document.documentElement.classList.toggle('lyrSynced', !!on); lyrShiftPlace(); }
 
-/* Bühnenansicht: − und + bündig mit dem Anfang der Lyrics-Zeilen */
+/* Bühnenansicht: − und + zwischen Anfang und Mitte der Lyrics, links von den Knöpfen oben rechts */
 function lyrShiftPlace() {
-  var bar = document.getElementById('lyrShiftBar'), top = document.getElementById('topBar');
+  var bar = document.getElementById('lyrShiftBar'), top = document.getElementById('topBar'), right = document.getElementById('topRight');
   var body = document.querySelector('#overlayLyrics .overlayBody');
   if (!bar || !body || !document.documentElement.classList.contains('stage')) return;
-  var t = top.getBoundingClientRect(), l = body.getBoundingClientRect();
-  bar.style.left = Math.round(l.left + (parseFloat(getComputedStyle(body).paddingLeft) || 0) - t.left) + 'px';
-  bar.style.width = '';
+  var t = top.getBoundingClientRect(), l = body.getBoundingClientRect(), r = right.getBoundingClientRect();
+  var w = bar.offsetWidth, start = l.left + (parseFloat(getComputedStyle(body).paddingLeft) || 0) - t.left;
+  var mid = Math.min((l.left + l.right) / 2, r.left - 12 - w / 2) - t.left;       /* Mitte der Lyrics, notfalls weiter links */
+  bar.style.left = Math.round(Math.max(start, ((start + w / 2) + mid) / 2 - w / 2)) + 'px';
 }
 window.addEventListener('resize', lyrShiftPlace);
 
