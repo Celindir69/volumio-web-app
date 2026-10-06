@@ -376,6 +376,10 @@ function browsePlaylist(e, seq) {
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     if (!tracks.length) { browseBody.appendChild(browseNote('Playlist ist leer')); return; }
 
+    var tile = document.createElement('div');        /* Kachel aus den Künstlerfotos, wie in der Playlistenliste */
+    plTileDraw(tile, plTileArtists(tracks));
+    if (tile.firstChild) { tile.id = 'browsePlTile'; browseBody.appendChild(tile); }
+
     var head = document.createElement('div');
     head.id = 'browseArtistHead';
     head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
