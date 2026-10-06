@@ -650,3 +650,5 @@ html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
 .hLabel { flex:1 1 0; font-size:calc(2.6 * var(--vw)); opacity:.5; white-space:nowrap; overflow:visible; }
 .hLastfm { margin-top:calc(2 * var(--vw)); }
 .hBtns { display:flex; flex-wrap:wrap; gap:calc(2 * var(--vw)); margin-top:calc(3 * var(--vw)); }
+#browseArtistPhoto { display:block; width:calc(36 * var(--vw)); height:calc(36 * var(--vw)); object-fit:cover; border-radius:50%;
+  margin:calc(2 * var(--vw)) auto calc(4 * var(--vw)); background:#222; }

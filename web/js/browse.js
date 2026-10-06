@@ -202,6 +202,13 @@ function browseArtist(e, seq) {
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     if (!albums.length && !pageTracks.length && isTidal) { browseBody.appendChild(browseNote('Keine Alben gefunden')); return; }
 
+    var photo = document.createElement('img');      /* Künstlerfoto vom Tag-Dienst (Deezer); ohne Foto fällt es weg */
+    photo.id = 'browseArtistPhoto';
+    photo.alt = '';
+    photo.addEventListener('error', function(){ if (photo.parentNode) photo.parentNode.removeChild(photo); });
+    photo.src = TAGS + '/artistimage?name=' + encodeURIComponent(e.artist);
+    browseBody.appendChild(photo);
+
     if (!isTidal) {                                   /* alles vom Künstler abspielen (Alben und Einzeltitel) */
       var head = document.createElement('div');
       head.id = 'browseArtistHead';
