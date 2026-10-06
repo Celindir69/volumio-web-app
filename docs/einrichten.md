@@ -7,6 +7,26 @@ Alle Befehle auf dem Player (ssh), als Benutzer mit `sudo`.
 `kioskTV.html` nach `/volumio/http/www/` (der Volumio-Kiosk bekommt die Dateien aus `www/`).
 Nach einem Update im Browser hart neu laden. Eine vorhandene `web/config.local.js` bleibt erhalten.
 
+## Aktualisieren mit mx-deploy
+Einmal einrichten:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/mx-deploy >/dev/null
+sudo chmod +x /usr/local/bin/mx-deploy
+```
+Danach auf dem Player:
+| Aufruf | Wirkung |
+|---|---|
+| `sudo mx-deploy` | `main` aus volumio-web-app laden, geänderte und neue Dateien zeigen, nach Rückfrage einspielen |
+| `sudo mx-deploy <branch>` | einen anderen Branch, z. B. zum Testen vor dem Merge |
+| `sudo mx-deploy -n <branch>` | nur zeigen, was sich ändern würde |
+| `sudo mx-deploy -y <branch>` | ohne Rückfrage |
+| `sudo mx-deploy --zurueck` | letzte Sicherung wiederherstellen (mehrmals: Schritt für Schritt weiter zurück) |
+
+Ziele: `app.html`, `web/`, `tools/` nach `/volumio/http/www3/`, `kioskTV.html` nach `/volumio/http/www/`, `tags/` und
+`rotel/rotel-bridge.js` nach `/data/INTERNAL/`; das Skript aktualisiert sich selbst. `tag-service` bzw. `rotel-bridge`
+werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen sichert es die betroffenen Dateien nach
+`/data/INTERNAL/mx-deploy/` (die letzten 5). Gelöscht wird nichts; eigene Dateien wie `web/config.local.js` bleiben.
+
 ## Tag-Dienst (für den Tag-Editor)
 ```bash
 sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
