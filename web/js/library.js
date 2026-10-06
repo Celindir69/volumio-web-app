@@ -271,6 +271,16 @@ function searchRow(it, tidal) {
     var pen = tagTrackButton(it);
     if (pen) row.appendChild(pen);
   }
+  if (searchCat === 'albums' && !tidal && (it.service || 'mpd') === 'mpd' && it.uri) {   /* lokales Album: Tags aller Titel */
+    row.appendChild(tagPenButton('tagEditMini', 'Tags bearbeiten', function(){
+      showToast('Lade Titel…');
+      browseGet(it.uri).then(function(j){
+        var files = browseItems(j).filter(isLocalTrack).map(function(t){ return {uri:t.uri, title:t.title || t.name || ''}; });
+        if (files.length) openTagEditor(files, it.title || it.name || '');
+        else showToast('Keine lokalen Titel gefunden');
+      }).catch(function(){ showToast('Album nicht lesbar'); });
+    }));
+  }
   row.addEventListener('click', function(){
     if (searchCat === 'songs') { playSearchItem(it); closeAllOverlays(); return; }
     if (searchCat === 'artists') {
