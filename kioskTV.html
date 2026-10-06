@@ -1,0 +1,783 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MX Kiosk">
+<title>Kiosk TV</title>
+<style>
+
+
+@font-face {
+  font-family:'Century Gothic';
+  src:url('/app/themes/volumio3/assets/variants/mf/fonts/Century Gothic Std.otf') format('opentype');
+  font-weight:400;
+  font-style:normal;
+  text-rendering:optimizeLegibility;
+}
+@font-face {
+  font-family:'Century Gothic';
+  src:url('/app/themes/volumio3/assets/variants/mf/fonts/Century Gothic Std.otf') format('opentype');
+  font-weight:700;
+  font-style:normal;
+  text-rendering:optimizeLegibility;
+}
+
+
+  html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    background:#000;font-family:'Century Gothic', 'Avant Garde', sans-serif; color:#fff;
+    -webkit-font-smoothing:antialiased;
+ }
+
+
+  /* Hintergrund: Cover gedimmt, kein blur */
+  #bg { position:fixed; top:0; left:0; right:0; bottom:0; z-index:0;
+    background-size:cover; background-position:center; opacity:.22; }
+
+  /* Dunkles Panel links */
+  #leftPanel { position:fixed; top:0; left:0; width:52vw; height:100%;
+    z-index:1; background:rgba(0,0,0,.45); }
+
+  /* Dunkles Panel rechts */
+  #rightPanel { position:fixed; top:0; right:0; width:48vw; height:100%;
+    z-index:1; background:rgba(0,0,0,.45); }
+
+  /* Cover + Metadaten */
+  #main { position:fixed; left:3vw; top:4vh; width:46vw; z-index:2;
+    display:flex; flex-direction:row; align-items:flex-start; gap:3vw; }
+  #cover { flex:0 0 auto; height:44vh; width:auto; max-width:24vw;
+    object-fit:contain; border-radius:.4vw;
+    box-shadow:0 2vh 5vh rgba(0,0,0,.9); }
+  #meta { flex:1 1 auto; min-width:0; padding-left:3vh; padding-top:8vh; }
+  #mAlbum  { font-size:1.7vw; opacity:.7; margin-bottom:.8vh;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #mTitle  { font-size:2.5vw; font-weight:700; line-height:1.2;
+    margin-bottom:.8vh; }
+  #mArtist { font-size:2vw; opacity:.9; margin-bottom:1.5vh; }
+  #mTech   { font-size:1.3vw; opacity:.55; letter-spacing:.05em; }
+
+  /* Rotierende Infos */
+  #sideInfo { position:fixed; left:3vw; top:54vh; width:46vw; height:36vh;
+    z-index:2; box-sizing:border-box; overflow:hidden;
+    display:flex; flex-direction:column; }
+  #sideInfo.empty { display:none; }
+  #sideInfo h2 { font-size:1.85vw; margin:0 0 1.2vh 0; font-weight:600;
+    flex:0 0 auto; opacity:.8; }
+  #sideArea { flex:1 1 auto; overflow:hidden; }
+  #sideText { font-size:1.4vw; line-height:1.65; white-space:pre-wrap; }
+  .credit-row { display:flex; padding:.8vh 0;
+    border-bottom:1px solid rgba(255,255,255,.2); }
+  .credit-row:last-child { border-bottom:none; }
+  .credit-key { flex:0 0 38%; padding-right:1vw; opacity:.65;
+    text-transform:lowercase; }
+  .credit-val { flex:1 1 auto; }
+
+  /* Positionsanzeige */
+  #foot { position:fixed; left:3vw; bottom:3.5vh; width:46vw; z-index:3;
+    display:flex; align-items:center; justify-content:space-between;
+    pointer-events:none; }
+  #foot.hidden { visibility:hidden; }
+  #dots { display:flex; gap:1vw; }
+  .dot { width:1vw; height:1vw; min-width:10px; min-height:10px;
+    border-radius:50%; background:rgba(255,255,255,.35); }
+  .dot.on { background:#fff; }
+  #pager { font-size:1.3vw; opacity:.6; }
+
+  /* Rechts: Lyrics / Story */
+  #story { position:fixed; top:0; right:0; width:48vw; height:100%;
+    padding:5vh 3vw 8vh 3vw; box-sizing:border-box; z-index:2;
+    overflow:hidden; display:flex; flex-direction:column; }
+  #story.empty { display:none; }
+  #story h2 { font-size:2.1vw; margin:0 0 1.8vh 0; font-weight:600;
+    flex:0 0 auto; }
+  #scrollArea { flex:1 1 auto; overflow:hidden; }
+  #storyText { font-size:1.6vw; line-height:1.7; white-space:pre-wrap; }
+
+  /* Fortschrittsbalken */
+  #bar { position:fixed; left:0; bottom:0; width:100%; height:10px; z-index:10;
+    background:rgba(255,255,255,.2); }
+  #barFill { height:100%; width:100%; background:#fff; transform:scaleX(0); transform-origin:left center; }
+
+  /* ===== HIER DEINE LYRICS-STILE EINSETZEN =====
+     #storyText.synced { ... }
+     .lyric-line { ... }
+     .lyric-line.past { ... }
+     .lyric-line.current { ... }
+     ============================================== */
+     
+      #storyText.synced {
+  white-space:normal;
+  line-height:1.45;
+  transition:transform .25s ease;
+}
+
+/* Keine Animation von font-size/transform: Die Schriftgröße der aktuellen Zeile wechselt sofort
+   (ein Layout pro Zeilenwechsel statt Layout in jedem Bild), Deckkraft und Farbe blenden weich über. */
+.lyric-line {
+  opacity:.42;
+  font-size:1em;
+  line-height:1.45;
+  padding:.18em 0;
+  transition:opacity .25s ease, color .25s ease;
+}
+
+.lyric-line.past {
+  opacity:.55;
+}
+
+.lyric-line.current {
+  opacity:1;
+  color:#fff;
+  font-size:1.35em;
+  font-weight:700;
+  text-shadow:0 2px 8px rgba(0,0,0,.95);
+}
+
+
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="leftPanel"></div>
+<div id="rightPanel"></div>
+
+<div id="main">
+  <img id="cover" alt="">
+  <div id="meta">
+    <div id="mAlbum"></div>
+    <div id="mTitle"></div>
+    <div id="mArtist"></div>
+    <div id="mTech"></div>
+  </div>
+</div>
+
+<div id="sideInfo" class="empty">
+  <h2></h2>
+  <div id="sideArea"><div id="sideText"></div></div>
+</div>
+
+<div id="foot" class="hidden">
+  <div id="dots"></div>
+  <div id="pager"></div>
+</div>
+
+<div id="story" class="empty">
+  <h2></h2>
+  <div id="scrollArea"><div id="storyText"></div></div>
+</div>
+
+<div id="bar"><div id="barFill"></div></div>
+
+<script>
+var PAGE_MS = 25000;
+var PLAIN_MIN_VW = 0.95;       /* kleinste Schrift für lange Lyrics ohne Zeitmarken (in vw; 1080p: ca. 18 px), darunter wird geblättert */
+var POLL_MS = 3000;            /* Abgleich mit dem Player; die Position läuft dazwischen lokal weiter */
+var FETCH_TIMEOUT_MS = 15000;  /* Zeitlimit für Lyrics und Plugin-Abfragen */
+
+var bg      = document.getElementById('bg');
+var cover   = document.getElementById('cover');
+var mAlbum  = document.getElementById('mAlbum');
+var mTitle  = document.getElementById('mTitle');
+var mArtist = document.getElementById('mArtist');
+var mTech   = document.getElementById('mTech');
+
+var box   = document.getElementById('story');
+var head  = box.querySelector('h2');
+var body  = document.getElementById('storyText');
+var area  = document.getElementById('scrollArea');
+
+var sBox  = document.getElementById('sideInfo');
+var sHead = sBox.querySelector('h2');
+var sBody = document.getElementById('sideText');
+var sArea = document.getElementById('sideArea');
+
+var fill  = document.getElementById('barFill');
+var foot  = document.getElementById('foot');
+var dots  = document.getElementById('dots');
+var pager = document.getElementById('pager');
+
+var lastKey    = '';
+var lastLyrKey = '';
+var lastArt    = '';
+var token = 0;
+var items = [];
+var idx = 0;
+var timers = [];
+var curAlbum = '';
+var lyricLines = [];
+var lyrEls = [];               /* die Zeilen-Elemente, gleiche Reihenfolge wie lyricLines */
+var lastActive = -2;           /* zuletzt hervorgehobene Zeile (-1 = noch keine, -2 = unbekannt) */
+var lyrTimer = null;
+var plainTimer = null, plainOffsets = null, plainP = -1, plainStart = 0;   /* seitenweises Blättern langer Lyrics ohne Zeitmarken */
+var lyrSeq = 0, infoSeq = 0;   /* Kennungen: nur die Antwort auf die neueste Anfrage wird angezeigt */
+var seekBase = 0, seekStamp = 0, playing = false, lastDur = 0;
+var pollTimer = null, polling = false;
+var shown = {};                /* zuletzt gesetzte Texte (nur bei Änderung ins DOM schreiben) */
+
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+function later(fn, ms) {
+  var t = setTimeout(function(){
+    var i = timers.indexOf(t);
+    if (i > -1) timers.splice(i, 1);   /* abgelaufene Zeitgeber nicht ansammeln */
+    fn();
+  }, ms);
+  timers.push(t);
+  return t;
+}
+
+function nowMs() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+/* aktuelle Abspielposition in ms: Stand der letzten Abfrage plus die seither vergangene Zeit */
+function nowPos() { return seekBase + (playing ? nowMs() - seekStamp : 0); }
+
+/* nur schreiben, wenn sich der Text geändert hat (jede Zuweisung würde sonst Layout auslösen) */
+function setText(el, key, text) {
+  if (shown[key] === text) return;
+  shown[key] = text;
+  el.textContent = text;
+}
+
+/* Promise mit Zeitlimit; bei Fehler oder Ablauf kommt fallback */
+function withTimeout(p, ms, fallback) {
+  return new Promise(function(resolve){
+    var done = false;
+    var t = setTimeout(function(){ if (!done) { done = true; resolve(fallback); } }, ms);
+    p.then(function(v){ if (!done) { done = true; clearTimeout(t); resolve(v); } },
+           function(){ if (!done) { done = true; clearTimeout(t); resolve(fallback); } });
+  });
+}
+
+function artUrl(a) {
+  if (!a) return '';
+  return (a.indexOf('http') === 0) ? a : (location.origin + a);
+}
+
+function ask(payload) {
+  return fetch('/api/v1/pluginEndpoint', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({endpoint:'metavolumio', data:payload})
+  }).then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j || !j.data || !j.data.value) return null;
+      if (j.data.type === 'story')   return {kind:'story',   value:j.data.value};
+      if (j.data.type === 'credits' && j.data.value.length)
+                                     return {kind:'credits', value:j.data.value};
+      return null;
+    }).catch(function(){ return null; });
+}
+
+/* ===================================================================
+   HIER DEINE VIERTE INFO EINSETZEN:
+     var EXTRA_TITLE = ...
+     function extraUrl(artist, title) { ... }
+     function parseSyncedLyrics(text) { ... }
+     function askExtra(artist, title) { ... }
+   =================================================================== */
+var EXTRA_TITLE = 'Lyrics';
+var EXTRA_FIELD = ['syncedLyrics'];
+
+function extraUrl(artist, title) {
+  return 'https://lrclib.net/api/get?artist_name=' + encodeURIComponent(artist) + '&track_name=' + encodeURIComponent(title);
+//return '';
+  // return 'https://example.com/api?artist=' +
+  //        encodeURIComponent(artist) + '&title=' + encodeURIComponent(title);
+}
+
+function parseSyncedLyrics(text) {
+  var result = [];
+  var lines = String(text || '').split(/\r?\n/);
+
+  lines.forEach(function(raw) {
+    var matches = [];
+    var re = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+    var match;
+
+    while ((match = re.exec(raw)) !== null) {
+      var minutes = parseInt(match[1], 10);
+      var seconds = parseInt(match[2], 10);
+      var fraction = match[3] || '0';
+
+      var milliseconds;
+      if (fraction.length === 1) {
+        milliseconds = parseInt(fraction, 10) * 100;
+      } else if (fraction.length === 2) {
+        milliseconds = parseInt(fraction, 10) * 10;
+      } else {
+        milliseconds = parseInt(fraction.slice(0, 3), 10);
+      }
+
+      matches.push(
+        minutes * 60000 +
+        seconds * 1000 +
+        milliseconds
+      );
+    }
+
+    var lyric = raw.replace(/\[[^\]]+\]/g, '').trim();
+if (!lyric) {
+  return;
+}
+    matches.forEach(function(time) {
+      result.push({
+        time: time,
+        text: lyric
+      });
+    });
+  });
+
+  result.sort(function(a, b) {
+    return a.time - b.time;
+  });
+
+  return result;
+}
+
+
+/* isRadio: Bei Webradio ist die Abspielposition nicht die Position im Lied (Zähler seit Sendestart), synchrone Zeilen
+   passen dort nie. Dann nur Text ohne Zeitmarken verwenden (notfalls aus den synchronen Zeilen gewonnen). */
+function askExtra(artist, title, isRadio) {
+  var url = extraUrl(artist, title);
+  if (!url) return Promise.resolve(null);
+
+  return fetch(url)
+    .then(function(r) {
+      return r.ok ? r.json() : null;
+    })
+    .then(function(j) {
+      if (!j) return null;
+
+      var synced = isRadio ? null : j.syncedLyrics;
+      var plain  = j.plainLyrics;
+      if (isRadio && !(typeof plain === 'string' && plain.trim()) && typeof j.syncedLyrics === 'string') {
+        plain = parseSyncedLyrics(j.syncedLyrics).map(function(l){ return l.text; }).join('\n');
+      }
+
+      if (typeof synced === 'string' && synced.trim()) {
+        var parsed = parseSyncedLyrics(synced);
+
+        if (parsed.length) {
+          return {
+            kind: 'syncedLyrics',
+            value: parsed
+          };
+        }
+      }
+
+      if (typeof plain === 'string' && plain.trim()) {
+        return {
+          kind: 'story',
+          value: plain
+            .replace(/[ \t]+/g, ' ')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim()
+        };
+      }
+
+      return null;
+    })
+    .catch(function() {
+      return null;
+    });
+}
+
+
+
+/* ===================================================================
+   Synchronisierte Lyrics: nur bei Zeilenwechsel ins DOM schreiben
+   =================================================================== */
+function renderSyncedLyrics(lines) {
+  body.className = 'synced';
+  lyricLines = lines || [];
+  lyrEls = [];
+  lastActive = -2;
+
+  while (body.firstChild) {
+    body.removeChild(body.firstChild);
+  }
+
+  var frag = document.createDocumentFragment();
+  lyricLines.forEach(function(line) {
+    var div = document.createElement('div');
+    div.className = 'lyric-line';
+    div.textContent = line.text || ' ';
+    lyrEls.push(div);
+    frag.appendChild(div);
+  });
+  body.appendChild(frag);
+
+  updateSyncedLyrics();
+}
+
+/* letzte Zeile, deren Zeit erreicht ist (-1 = noch keine) */
+function activeIndex(pos) {
+  var lo = 0, hi = lyricLines.length - 1, r = -1;
+  while (lo <= hi) {
+    var mid = (lo + hi) >> 1;
+    if (lyricLines[mid].time <= pos) { r = mid; lo = mid + 1; } else { hi = mid - 1; }
+  }
+  return r;
+}
+
+function applyActive(act) {
+  var els = lyrEls, j;
+  if (lastActive > -2 && act === lastActive + 1) {
+    /* normaler Fall: eine Zeile weiter, nur zwei Elemente anfassen */
+    if (lastActive >= 0) els[lastActive].className = 'lyric-line past';
+    if (act >= 0) els[act].className = 'lyric-line current';
+  } else {
+    /* Sprung oder Neuanfang: alle Zeilen setzen */
+    for (j = 0; j < els.length; j++) {
+      els[j].className = 'lyric-line' + (j < act ? ' past' : (j === act ? ' current' : ''));
+    }
+  }
+  lastActive = act;
+
+  if (act >= 0 && els[act]) {
+    var target = els[act];
+    var y = target.offsetTop - area.clientHeight / 2 + target.offsetHeight / 2;
+    /* ganze Pixel: halbe Pixel machen die Schrift unscharf */
+    body.style.transform = 'translateY(-' + Math.max(0, Math.round(y)) + 'px)';
+  }
+}
+
+/* setzt die Hervorhebung auf die aktuelle Position und plant den nächsten Wechsel zur Zeit der nächsten Zeile
+   (kein fester Takt: zwischen zwei Zeilen passiert nichts) */
+function updateSyncedLyrics() {
+  clearTimeout(lyrTimer);
+  lyrTimer = null;
+  if (!lyricLines.length) return;
+
+  var pos = nowPos();
+  var act = activeIndex(pos);
+  if (act !== lastActive) applyActive(act);
+
+  if (playing && act + 1 < lyricLines.length) {
+    var wait = lyricLines[act + 1].time - pos;
+    lyrTimer = setTimeout(updateSyncedLyrics, Math.max(30, wait));
+  }
+}
+
+function showLyrics(data) {
+  clearTimeout(lyrTimer);
+  lyrTimer = null;
+  clearTimeout(plainTimer);
+  plainTimer = null;
+  plainOffsets = null;
+  body.style.fontSize = '';
+  body.style.lineHeight = '';
+  lyricLines = [];
+  lyrEls = [];
+  lastActive = -2;
+  body.className = '';
+  body.style.transform = 'translateY(0)';
+  while (body.firstChild) body.removeChild(body.firstChild);
+  if (!data) { box.className = 'empty'; return; }
+  box.className = '';
+  head.textContent = EXTRA_TITLE;
+  if (data.kind === 'syncedLyrics') {
+    renderSyncedLyrics(data.value);
+  } else {
+    body.textContent = data.value;
+    setupPlainLyrics();
+  }
+}
+
+/* Lyrics ohne Zeitmarken: Ist der Text länger als der Bereich, wird zuerst die Schrift verkleinert (bis PLAIN_MIN_VW);
+   reicht das nicht, wird seitenweise geblättert, gleichmäßig über die ersten 90 %
+   des Titels (ohne bekannte Dauer, z. B. Radio, alle PAGE_MS). Seitenweise statt gleitend: ganze Pixel (scharfe Schrift),
+   kein Skript im Takt, nur ein Zeitgeber bis zum nächsten Seitenwechsel. */
+function setupPlainLyrics() {
+  clearTimeout(plainTimer);
+  plainTimer = null;
+  plainOffsets = null;
+  plainP = -1;
+  var avail = area.clientHeight;
+  if (!avail) return;
+  if (body.scrollHeight > avail + 2) {                    /* zu lang: Schrift in ganzen Pixeln verkleinern, bis es passt */
+    var minPx = Math.round(window.innerWidth * PLAIN_MIN_VW / 100);
+    for (var px = Math.floor(parseFloat(getComputedStyle(body).fontSize)) - 1; px >= minPx; px--) {
+      body.style.fontSize = px + 'px';
+      body.style.lineHeight = '1.45';
+      if (body.scrollHeight <= avail + 2) break;
+    }
+  }
+  var total = body.scrollHeight;
+  if (total <= avail + 2) return;                         /* passt (jetzt) in den Bereich: nichts zu blättern */
+  var lh = parseFloat(getComputedStyle(body).lineHeight) || 22;
+  var pageH = Math.max(1, Math.floor(avail / lh)) * lh;   /* ganze Zeilen pro Seite */
+  var last = total - avail;                               /* letzte Seite endet am Textende */
+  var offs = [];
+  for (var y = 0; y < last; y += pageH) offs.push(Math.round(y));
+  offs.push(Math.round(last));
+  plainOffsets = offs;
+  plainStart = nowMs();
+  updatePlainLyrics();
+}
+
+function updatePlainLyrics() {
+  clearTimeout(plainTimer);
+  plainTimer = null;
+  if (!plainOffsets) return;
+  var n = plainOffsets.length, span, pos, p, wait = 0;
+  if (lastDur > 0) {
+    span = lastDur * 1000 * 0.9 / n;
+    pos = nowPos();
+    p = Math.min(n - 1, Math.floor(pos / span));
+    if (playing && p < n - 1) wait = (p + 1) * span - pos;
+  } else {
+    span = PAGE_MS;
+    pos = nowMs() - plainStart;
+    p = Math.min(n - 1, Math.floor(pos / span));
+    if (p < n - 1) wait = (p + 1) * span - pos;
+  }
+  if (p !== plainP) {
+    plainP = p;
+    body.style.transform = 'translateY(-' + plainOffsets[p] + 'px)';
+  }
+  if (wait > 0) plainTimer = setTimeout(updatePlainLyrics, Math.max(200, wait));
+}
+
+function show(list) {
+  token++;
+  clearTimers();
+  items = list.filter(function(i){ return i && i.data; });
+  idx = 0;
+  sBox.style.transition = 'none';
+  sBox.style.opacity = '1';
+  if (!items.length) {
+    sBox.className = 'empty';
+    foot.className = 'hidden';
+    return;
+  }
+  sBox.className = '';
+  buildDots();
+  render(token);
+}
+
+function buildDots() {
+  while (dots.firstChild) dots.removeChild(dots.firstChild);
+  foot.className = '';
+  for (var i = 0; i < items.length; i++) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    dots.appendChild(d);
+  }
+}
+
+function markDots() {
+  var ds = dots.children;
+  for (var i = 0; i < ds.length; i++) {
+    ds[i].className = (i === idx) ? 'dot on' : 'dot';
+  }
+}
+
+function paint(it) {
+  sHead.textContent = it.title;
+  while (sBody.firstChild) sBody.removeChild(sBody.firstChild);
+  if (it.data.kind === 'story') { sBody.textContent = it.data.value; return; }
+  it.data.value.forEach(function(row){
+    var line = document.createElement('div');
+    line.className = 'credit-row';
+    var k = document.createElement('div');
+    k.className = 'credit-key'; k.textContent = row.key;
+    var v = document.createElement('div');
+    v.className = 'credit-val';
+    v.textContent = (row.values || []).map(function(x){ return x.name; }).join(', ');
+    line.appendChild(k); line.appendChild(v);
+    sBody.appendChild(line);
+  });
+}
+
+function lineTops() {
+  var base = sBody.getBoundingClientRect().top;
+  var out = [];
+  var rows = sBody.querySelectorAll('.credit-row');
+  if (rows.length) {
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i].getBoundingClientRect();
+      out.push({ top: r.top - base, bottom: r.bottom - base });
+    }
+    return out;
+  }
+  var lh = parseFloat(getComputedStyle(sBody).lineHeight) || 22;
+  var n = Math.ceil(sBody.scrollHeight / lh);
+  for (var j = 0; j < n; j++) out.push({ top: j*lh, bottom: (j+1)*lh });
+  return out;
+}
+
+function pageOffsets(avail) {
+  var lines = lineTops();
+  if (!lines.length) return [0];
+  var offsets = [0];
+  var pageTop = 0;
+  for (var i = 0; i < lines.length; i++) {
+    if (lines[i].bottom - pageTop > avail) {
+      if (lines[i].top <= pageTop) continue;
+      pageTop = lines[i].top;
+      offsets.push(pageTop);
+    }
+  }
+  return offsets;
+}
+
+function render(my) {
+  if (my !== token) return;
+  paint(items[idx]);
+  markDots();
+  sBody.style.transform = 'translateY(0)';
+  later(function(){ run(my); }, 100);
+}
+
+function next(my) {
+  if (my !== token) return;
+  idx = (idx + 1) % items.length;
+  sBox.style.transition = 'opacity .6s';
+  sBox.style.opacity = '0';
+  later(function(){
+    if (my !== token) return;
+    render(my);
+    sBox.style.opacity = '1';
+  }, 600);
+}
+
+function run(my) {
+  if (my !== token) return;
+  var offsets = pageOffsets(sArea.clientHeight);
+  var pages = offsets.length;
+  function goTo(p) {
+    if (my !== token) return;
+    if (p >= pages) { next(my); return; }
+    sBody.style.transform = 'translateY(-' + Math.round(offsets[p]) + 'px)';   /* ganze Pixel: halbe Pixel machen die Schrift unscharf */
+    pager.textContent = (pages > 1) ? (p + 1) + '/' + pages : '';
+    later(function(){ goTo(p + 1); }, PAGE_MS);
+  }
+  goTo(0);
+}
+
+document.addEventListener('visibilitychange', function(){
+  if (document.hidden) { clearTimers(); token++; clearTimeout(pollTimer); clearTimeout(lyrTimer); }
+  else { lastKey = ''; lastLyrKey = ''; poll(); }
+});
+
+/* Fortschrittsbalken: springt auf die aktuelle Position und läuft dann per CSS bis zur nächsten Abfrage
+   (transform statt width: kein Layout, kein Skript zwischen den Abfragen) */
+function paintBar(posMs, durMs, waitMs) {
+  if (!(durMs > 0)) {
+    fill.style.transition = 'none';
+    fill.style.transform = 'scaleX(0)';
+    return;
+  }
+  var r0 = Math.min(1, Math.max(0, posMs / durMs));
+  var r1 = playing ? Math.min(1, Math.max(0, (posMs + waitMs) / durMs)) : r0;
+  fill.style.transition = 'none';
+  fill.style.transform = 'scaleX(' + r0 + ')';
+  void fill.offsetWidth;   /* Ausgangswert übernehmen, dann animieren */
+  fill.style.transition = 'transform ' + waitMs + 'ms linear';
+  fill.style.transform = 'scaleX(' + r1 + ')';
+}
+
+function schedulePoll() {
+  var wait = POLL_MS;
+  if (playing && lastDur > 0) {
+    /* kurz nach dem erwarteten Ende des Titels nachsehen, damit der Wechsel nicht bis zu POLL_MS zu spät kommt */
+    var remain = lastDur * 1000 - nowPos();
+    if (remain > 0 && remain + 400 < wait) wait = remain + 400;
+  }
+  paintBar(nowPos(), lastDur * 1000, wait);
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(poll, wait);
+}
+
+function poll() {
+  clearTimeout(pollTimer);
+  if (document.hidden || polling) return;
+  polling = true;
+  withTimeout(fetch('/api/v1/getState').then(function(r){ return r.json(); }), 8000, null).then(function(st){
+    polling = false;
+    if (st) handleState(st);
+    schedulePoll();
+  });
+}
+
+function handleState(st) {
+    var dur = Number(st.duration) || 0;
+    var pos = Number(st.seek) || 0;
+    seekBase = pos;
+    seekStamp = nowMs();
+    playing = (st.status === 'play');
+    lastDur = dur;
+    updateSyncedLyrics();
+    updatePlainLyrics();                           /* Position oder Pause hat sich geändert: Seite neu bestimmen */
+
+    var art = artUrl(st.albumart);
+    if (art && art !== lastArt) {
+      lastArt = art;
+      cover.src = art;
+      bg.style.backgroundImage = 'url(' + art + ')';
+    }
+
+    var artist = st.artist || '', album = st.album || '';
+    var title  = st.title  || '';
+    var radio  = (st.trackType === 'webradio');
+
+    setText(mAlbum, 'album', radio ? '' : album);
+    setText(mTitle, 'title', title);
+    setText(mArtist, 'artist', artist);
+    var tech = [];
+    if (st.samplerate) tech.push(st.samplerate);
+    if (st.bitdepth)   tech.push(st.bitdepth);
+    if (!st.samplerate && st.bitrate) tech.push(st.bitrate);
+    if (st.fileFormat) tech.push(String(st.fileFormat).toUpperCase());
+    if (st.trackType) tech.push(String(st.trackType).toUpperCase());
+    setText(mTech, 'tech', tech.join('  \xb7  '));
+
+    if (radio) {
+      var p = title.indexOf(' - ');
+      artist = (p > 0) ? title.slice(0, p).trim() : '';
+      title  = (p > 0) ? title.slice(p + 3).trim() : title;
+      album  = '';
+    }
+
+    var key    = artist + '|' + album + '|' + (radio ? title : '');
+    var lyrKey = artist + '|' + title;
+
+    if (lyrKey !== lastLyrKey) {
+      lastLyrKey = lyrKey;
+      var lySeq = ++lyrSeq;
+      withTimeout(askExtra(artist, title, radio), FETCH_TIMEOUT_MS, null).then(function(res){
+        if (lySeq === lyrSeq) showLyrics(res);   /* eine spätere Anfrage ist schon unterwegs: Antwort verwerfen */
+      });
+    }
+
+    if (key === lastKey) return;
+    lastKey  = key;
+    curAlbum = album;
+    var inSeq = ++infoSeq;
+    if (!artist) { show([]); return; }
+
+    if (radio) {
+      withTimeout(ask({mode:'storyArtist', artist:artist}), FETCH_TIMEOUT_MS, null)
+        .then(function(res){ if (inSeq === infoSeq) show([{title:artist, data:res}]); });
+      return;
+    }
+
+    Promise.all([
+      withTimeout(ask({mode:'storyAlbum',   artist:artist, album:album}), FETCH_TIMEOUT_MS, null),
+      withTimeout(ask({mode:'storyArtist',  artist:artist}), FETCH_TIMEOUT_MS, null),
+      withTimeout(ask({mode:'creditsAlbum', artist:artist, album:album}), FETCH_TIMEOUT_MS, null)
+    ]).then(function(res){
+      if (inSeq !== infoSeq) return;
+      show([
+        {title: album,         data: res[0]},
+        {title: artist,        data: res[1]},
+        {title: 'Mitwirkende', data: res[2]}
+      ]);
+    });
+}
+
+poll();
+</script>
+</body>
+</html>

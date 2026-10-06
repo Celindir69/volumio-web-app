@@ -1,0 +1,68 @@
+/* Zugang zur originalen Volumio-Oberfläche (Symbol "V" oben rechts)
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html.
+   Die Seiten öffnen im Overlay in einem Rahmen (iframe), die App bleibt darunter erhalten.
+   Seiten die app.html selbst übernommen hat, können hier einfach aus der Liste entfernt werden. */
+
+var VOLUMIO_PAGES = [
+  { label: 'Browse',        path: '/browse' },
+  { label: 'Queue',         path: '/queue' },
+  { label: 'Einstellungen', path: '/settings' },
+  { label: 'Plugins',       path: '/plugin-manager' }
+];
+
+var btnVolumio       = document.getElementById('btnVolumio');
+var overlayVolumio   = document.getElementById('overlayVolumio');
+var volumioTabBar    = document.getElementById('volumioTabBar');
+var volumioPanel     = document.getElementById('volumioPanel');
+var volumioHint      = document.getElementById('volumioHint');
+var openVolumioTab   = document.getElementById('openVolumioTab');
+var volumioActive    = -1;
+
+function buildVolumioTabs() {
+  volumioTabBar.innerHTML = '';
+  VOLUMIO_PAGES.forEach(function(pg, i){
+    var tab = document.createElement('div');
+    tab.className = 'qTab';
+    tab.textContent = pg.label;
+    tab.addEventListener('click', function(){ showVolumioPage(i); });
+    volumioTabBar.appendChild(tab);
+  });
+}
+
+function showVolumioPage(i) {
+  var pg = VOLUMIO_PAGES[i];
+  if (!pg) return;
+  volumioActive = i;
+  Array.prototype.forEach.call(volumioTabBar.children, function(el, k){
+    el.className = 'qTab' + (k === i ? ' on' : '');
+  });
+  volumioHint.style.display = 'none';
+  var f = document.getElementById('volumioFrame');
+  if (!f) {
+    f = document.createElement('iframe');
+    f.id = 'volumioFrame';
+    volumioPanel.appendChild(f);
+  }
+  f.src = pg.path;
+  openVolumioTab.href = pg.path;
+  openVolumioTab.style.display = '';
+}
+
+/* beim Schließen den Rahmen entfernen (spart Arbeit auf dem Player und im Browser) */
+function closeVolumioFrame() {
+  var f = document.getElementById('volumioFrame');
+  if (f) f.parentNode.removeChild(f);
+  volumioActive = -1;
+  volumioHint.style.display = '';
+  openVolumioTab.style.display = 'none';
+  Array.prototype.forEach.call(volumioTabBar.children, function(el){ el.className = 'qTab'; });
+}
+
+btnVolumio.addEventListener('click', function(){
+  var isOpen = overlayVolumio.classList.contains('on');
+  closeAllOverlays();
+  if (!isOpen) overlayVolumio.classList.add('on');
+});
+document.getElementById('closeVolumio').addEventListener('click', closeAllOverlays);
+
+buildVolumioTabs();

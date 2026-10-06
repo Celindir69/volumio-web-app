@@ -1,0 +1,427 @@
+/* Tag-Dienst: liest und schreibt Tags der Audiodateien (m4a, flac, mp3, dsf).
+   HTTP, Port 8766. Läuft mit Node 8 (nur ES5-Syntax). Die eigentliche Arbeit macht tags.py (Python 2.7/3 + mutagen). */
+var http  = require('http');
+var fs    = require('fs');
+var path  = require('path');
+var cp    = require('child_process');
+var url   = require('url');
+
+var HTTP_PORT   = parseInt(process.env.HTTP_PORT || '8766', 10);
+var MUSIC_ROOT  = process.env.MUSIC_ROOT  || '/mnt';
+var PYTHON      = process.env.PYTHON      || 'python';
+var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
+var MPC         = process.env.MPC         || 'mpc';
+var LOG_FILE    = process.env.TAGS_LOG    || '/data/INTERNAL/tags/changes.jsonl';
+var SCRIPT      = path.join(__dirname, 'tags.py');
+var ROOTS       = ['INTERNAL', 'USB', 'NAS'];            /* erlaubte Ordner unterhalb von MUSIC_ROOT */
+var EXT_RE      = /\.(m4a|mp4|m4b|flac|mp3|dsf)$/i;
+var MAX_ITEMS   = 500;                                   /* Dateien je Anfrage */
+var MAX_ARTIST  = 3000;                                  /* Dateien je Künstler (/artist) */
+var PY_BATCH    = 20;                                    /* Dateien je Python-Aufruf */
+var MAX_BODY    = 12 * 1024 * 1024;                     /* Cover-Bilder kommen als base64 mit */
+var JOB_TIMEOUT = 120000;
+var COVER_DIR   = path.join(path.dirname(LOG_FILE), 'covers');   /* Sicherungen alter Cover (für Rückgängig) */
+var FOLDER_JPG  = 'folder.jpg';
+
+/* ---------- Pfade ---------- */
+
+/* Volumio-URI ("USB/Ordner/x.flac", "music-library/USB/…", "/mnt/USB/…") -> absoluter Pfad; null, wenn nicht erlaubt */
+function resolveUri(uri) {
+  if (typeof uri !== 'string' || !uri || uri.indexOf('\0') >= 0) return null;
+  var rel = uri.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, '');
+  var parts = rel.split('/');
+  if (ROOTS.indexOf(parts[0]) < 0 || parts.length < 2) return null;
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i] === '' || parts[i] === '.' || parts[i] === '..') return null;
+  }
+  if (!EXT_RE.test(rel)) return null;
+  var full = path.join(MUSIC_ROOT, rel);
+  var real;
+  try { real = fs.realpathSync(full); } catch (e) { return { rel: rel, full: full, missing: true }; }
+  var root;
+  try { root = fs.realpathSync(path.join(MUSIC_ROOT, parts[0])); } catch (e) { return null; }
+  if (real.indexOf(root + path.sep) !== 0) return null;   /* Symlink führt aus INTERNAL/USB/NAS heraus */
+  return { rel: rel, full: full };
+}
+
+/* ---------- tags.py aufrufen (immer nur ein Auftrag gleichzeitig; der CM3 hat wenig Speicher) ---------- */
+
+var queue = [], busy = false;
+
+function runPy(job, cb) {
+  queue.push({job: job, cb: cb});
+  next();
+}
+
+/* mehrere Aufträge, je PY_BATCH in einem Python-Aufruf; cb(results) in derselben Reihenfolge */
+function runPyMany(jobs, cb) {
+  var out = [], i = 0;
+  (function step() {
+    if (i >= jobs.length) return cb(out);
+    var chunk = jobs.slice(i, i + PY_BATCH);
+    i += chunk.length;
+    runPy({op: 'batch', jobs: chunk}, function(r){
+      chunk.forEach(function(j, k){
+        out.push(r.ok && r.results && r.results[k] ? r.results[k] : {ok: false, error: r.error || 'keine Antwort'});
+      });
+      step();
+    });
+  })();
+}
+function next() {
+  if (busy || !queue.length) return;
+  busy = true;
+  var q = queue.shift();
+  var args = USE_SUDO ? ['-n', PYTHON, SCRIPT] : [SCRIPT];
+  var child = cp.spawn(USE_SUDO ? 'sudo' : PYTHON, args, {stdio: ['pipe', 'pipe', 'pipe']});
+  var out = '', err = '', done = false;
+  function finish(res) {
+    if (done) return;
+    done = true; clearTimeout(timer); busy = false;
+    q.cb(res); next();
+  }
+  var limit = Math.max(JOB_TIMEOUT, (q.job.jobs ? q.job.jobs.length : 1) * 15000);   /* m4a-Umschreiben kann je Datei dauern */
+  var timer = setTimeout(function(){ child.kill('SIGKILL'); finish({ok: false, error: 'Zeitüberschreitung'}); }, limit);
+  child.stdout.on('data', function(d){ out += d; });
+  child.stderr.on('data', function(d){ err += d; });
+  child.on('error', function(e){ finish({ok: false, error: 'Python nicht startbar: ' + e.message}); });
+  child.on('close', function(){
+    var res;
+    try { res = JSON.parse(out); } catch (e) { res = {ok: false, error: (err || 'Keine Antwort von tags.py').trim().split('\n').pop()}; }
+    if (!res.ok && /permission denied|read-only/i.test(res.error || '')) {
+      res.error += ' (keine Schreibrechte auf dem Datenträger; siehe docs/tags.md)';
+    }
+    finish(res);
+  });
+  child.stdin.on('error', function(){});
+  child.stdin.end(JSON.stringify(q.job));
+}
+
+/* ---------- Protokoll der Änderungen (für Rückgängig) ---------- */
+
+function logEntry(entry) {
+  try {
+    fs.mkdirSync(path.dirname(LOG_FILE));
+  } catch (e) { /* existiert schon */ }
+  try { fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n'); return true; } catch (e) { return false; }
+}
+function readLog() {
+  var txt;
+  try { txt = fs.readFileSync(LOG_FILE, 'utf8'); } catch (e) { return []; }
+  var list = [];
+  txt.split('\n').forEach(function(line){
+    if (!line) return;
+    try { list.push(JSON.parse(line)); } catch (e) { /* kaputte Zeile überspringen */ }
+  });
+  return list;
+}
+
+/* ---------- MPD: geänderte Ordner neu einlesen ---------- */
+
+/* Jedes "mpc update" lässt Volumio seine ganze Albumliste neu aufbauen (rund 1 min Last). Darum möglichst nur
+   einen Ordner einlesen: den gemeinsamen Elternordner, solange er mindestens 3 Ebenen tief liegt
+   (z. B. USB/MX-Media/AllFlac), sonst die einzelnen Ordner. */
+function scanDirs(relFiles) {
+  var dirs = {};
+  relFiles.forEach(function(r){ dirs[path.dirname(r)] = true; });
+  var list = Object.keys(dirs);
+  if (list.length < 2) return list;
+  var common = list[0].split('/');
+  list.forEach(function(d){
+    var p = d.split('/'), k = 0;
+    while (k < common.length && k < p.length && common[k] === p[k]) k++;
+    common = common.slice(0, k);
+  });
+  return common.length >= 3 ? [common.join('/')] : list;
+}
+
+function mpdUpdate(relFiles, cb) {
+  var list = scanDirs(relFiles), ok = true;
+  (function step() {
+    if (!list.length) return cb(ok);
+    cp.execFile(MPC, ['update', list.shift()], {timeout: 15000}, function(e){ if (e) ok = false; step(); });
+  })();
+}
+
+/* ---------- Aufträge ---------- */
+
+function mapSeq(items, fn, cb) {
+  var res = [], i = 0;
+  (function step() {
+    if (i >= items.length) return cb(res);
+    fn(items[i], function(r){ res.push(r); i++; step(); });
+  })();
+}
+
+function doRead(body, cb) {
+  var uris = body.uris;
+  if (!Array.isArray(uris) || !uris.length || uris.length > MAX_ITEMS) return cb(400, {ok: false, error: 'uris fehlt oder zu viele'});
+  var items = new Array(uris.length), jobs = [], at = [];
+  uris.forEach(function(uri, k){
+    var p = resolveUri(uri);
+    if (!p || p.missing) items[k] = {uri: uri, ok: false, error: p ? 'Datei nicht gefunden' : 'Pfad nicht erlaubt'};
+    else { jobs.push({op: 'read', path: p.full}); at.push(k); }
+  });
+  runPyMany(jobs, function(rs){
+    rs.forEach(function(r, k){ r.uri = uris[at[k]]; items[at[k]] = r; });
+    cb(200, {ok: true, items: items});
+  });
+}
+
+var BATCH_RE = /^[a-z0-9]{6,16}$/;
+
+/* POST /write {items:[{uri, tags}], batch?, scan?}
+   batch: Kennung mitgeben, damit mehrere Anfragen gemeinsam rückgängig gemacht werden;
+   scan:false: MPD nicht neu einlesen lassen (das macht dann ein abschließendes /scan) */
+function doWrite(body, cb) {
+  var items = body.items;
+  if (!Array.isArray(items) || !items.length || items.length > MAX_ITEMS) return cb(400, {ok: false, error: 'items fehlt oder zu viele'});
+  if (body.batch !== undefined && !BATCH_RE.test(String(body.batch))) return cb(400, {ok: false, error: 'batch ungültig'});
+  writeItems(items, body.batch || Date.now().toString(36), body.scan !== false, cb);
+}
+
+function writeItems(items, batch, scan, cb) {
+  var results = new Array(items.length), jobs = [], at = [], paths = [], changedRel = [];
+  items.forEach(function(it, k){
+    var p = resolveUri(it && it.uri);
+    if (!p || p.missing) results[k] = {uri: it && it.uri, ok: false, error: p ? 'Datei nicht gefunden' : 'Pfad nicht erlaubt'};
+    else { jobs.push({op: 'write', path: p.full, tags: it.tags || {}}); at.push(k); paths.push(p); }
+  });
+  runPyMany(jobs, function(rs){
+    rs.forEach(function(r, k){
+      var it = items[at[k]];
+      r.uri = it.uri;
+      if (r.ok && r.changed) {
+        changedRel.push(paths[k].rel);
+        if (!logEntry({batch: batch, time: new Date().toISOString(), uri: it.uri, before: r.before, after: r.after})) r.logWarning = true;
+      }
+      results[at[k]] = r;
+    });
+    if (!changedRel.length) return cb(200, {ok: true, batch: null, items: results, scan: null});
+    if (!scan) return cb(200, {ok: true, batch: batch, items: results, scan: null});
+    mpdUpdate(changedRel, function(scanned){ cb(200, {ok: true, batch: batch, items: results, scan: scanned}); });
+  });
+}
+
+/* POST /scan {uris}: geänderte Dateien von MPD neu einlesen lassen (nach mehreren /write mit scan:false) */
+function doScan(body, cb) {
+  var rel = [];
+  (Array.isArray(body.uris) ? body.uris : []).forEach(function(u){ var p = resolveUri(u); if (p && !p.missing) rel.push(p.rel); });
+  if (!rel.length) return cb(400, {ok: false, error: 'uris fehlt'});
+  mpdUpdate(rel, function(scanned){ cb(200, {ok: true, scan: scanned}); });
+}
+
+/* GET /artist?name=…: alle Dateien, deren Interpret oder Album-Interpret dem Namen entspricht
+   (Groß-/Kleinschreibung und Leerzeichen am Rand egal), über MPD.
+   Mit &tracks=1 stattdessen alle Suchtreffer mit Titel und Album (Künstlerseite: Titel ohne eigenes Album). */
+function doArtist(query, cb) {
+  var name = String(query.name || '').trim();
+  if (!name) return cb(400, {ok: false, error: 'name fehlt'});
+  var me = name.toLowerCase(), seen = {}, files = [], tracks = [], withTracks = query.tracks === '1';
+  function search(tag, done) {
+    cp.execFile(MPC, ['-f', '%file%\t[%artist%]\t[%albumartist%]\t[%title%]\t[%album%]', 'search', tag, name], {timeout: 30000, maxBuffer: 32 * 1024 * 1024}, function(e, out){
+      if (e) return done(e);
+      String(out).split('\n').forEach(function(line){
+        var f = line.split('\t');
+        if (!f[0] || seen[f[0]]) return;
+        if (withTracks) {                                    /* Teiltreffer ("A feat. B") filtert der Browser */
+          seen[f[0]] = true;
+          tracks.push({file: f[0], artist: f[1] || '', albumartist: f[2] || '', title: f[3] || '', album: f[4] || ''});
+          return;
+        }
+        if ((f[1] || '').trim().toLowerCase() !== me && (f[2] || '').trim().toLowerCase() !== me) return;
+        seen[f[0]] = true;
+        files.push(f[0]);
+      });
+      done();
+    });
+  }
+  search('artist', function(e1){
+    search('albumartist', function(e2){
+      if (e1 && e2) return cb(500, {ok: false, error: 'MPD-Suche fehlgeschlagen: ' + e1.message});
+      if (withTracks) return cb(200, {ok: true, tracks: tracks.slice(0, MAX_ARTIST)});
+      files = files.filter(function(f){ var p = resolveUri(f); return p && !p.missing; }).sort();
+      if (files.length > MAX_ARTIST) return cb(200, {ok: false, error: 'zu viele Dateien (' + files.length + ', höchstens ' + MAX_ARTIST + ')'});
+      cb(200, {ok: true, files: files});
+    });
+  });
+}
+
+/* ---------- Cover ---------- */
+
+function mkdirs(dir) {
+  var parts = path.resolve(dir).split(path.sep), cur = '';
+  parts.forEach(function(p, i){
+    cur = i ? path.join(cur, p) : (p || path.sep);
+    try { fs.mkdirSync(cur); } catch (e) { /* existiert schon */ }
+  });
+}
+
+/* Ordner der Dateien (ohne Doppelte), als {rel, full} */
+function dirsOf(paths) {
+  var seen = {}, out = [];
+  paths.forEach(function(p){
+    var rel = path.dirname(p.rel);
+    if (!seen[rel]) { seen[rel] = true; out.push({rel: rel, full: path.dirname(p.full)}); }
+  });
+  return out;
+}
+
+/* GET /image?uri=…&src=embedded|folder: eingebettetes Cover der Datei bzw. folder.jpg ihres Ordners */
+function doImage(query, res) {
+  var p = resolveUri(query.uri);
+  function none(code) { res.writeHead(code || 404, {'Access-Control-Allow-Origin': '*'}); res.end(); }
+  if (!p || p.missing) return none(p ? 404 : 400);
+  function img(mime, buf) {
+    res.writeHead(200, {'Content-Type': mime, 'Content-Length': buf.length, 'Cache-Control': 'no-store',
+                        'Access-Control-Allow-Origin': '*'});
+    res.end(buf);
+  }
+  if (query.src === 'folder') {
+    fs.readFile(path.join(path.dirname(p.full), FOLDER_JPG), function(e, buf){ if (e) return none(); img('image/jpeg', buf); });
+    return;
+  }
+  runPy({op: 'cover_get', path: p.full}, function(r){
+    if (!r.ok || !r.data) return none();
+    img(r.mime || 'image/jpeg', Buffer.from(r.data, 'base64'));
+  });
+}
+
+/* POST /cover {uris, image:<base64 JPEG>, embed:bool, folder:bool, overwrite:bool}
+   embed: Bild als Frontcover in alle Dateien; folder: Bild als folder.jpg in deren Ordner.
+   Eine vorhandene folder.jpg wird nur mit overwrite ersetzt (sonst {ok:false, exists:[Ordner]}). */
+function doCover(body, cb) {
+  var uris = body.uris;
+  if (!Array.isArray(uris) || !uris.length || uris.length > MAX_ITEMS) return cb(400, {ok: false, error: 'uris fehlt oder zu viele'});
+  if (typeof body.image !== 'string' || !body.image) return cb(400, {ok: false, error: 'Bild fehlt'});
+  if (!body.embed && !body.folder) return cb(400, {ok: false, error: 'nichts zu tun'});
+  var buf = Buffer.from(body.image, 'base64');
+  if (buf.length < 100 || !(buf[0] === 0xff && buf[1] === 0xd8)) return cb(400, {ok: false, error: 'Bild ist kein JPEG'});
+
+  var paths = [], bad = [];
+  uris.forEach(function(u){ var p = resolveUri(u); if (p && !p.missing) { p.uri = u; paths.push(p); } else bad.push(u); });
+  if (!paths.length) return cb(400, {ok: false, error: 'keine gültigen Dateien'});
+  var dirs = body.folder ? dirsOf(paths) : [];
+  var exists = dirs.filter(function(d){ return fs.existsSync(path.join(d.full, FOLDER_JPG)); });
+  if (exists.length && !body.overwrite) return cb(200, {ok: false, exists: exists.map(function(d){ return d.rel; })});
+
+  var batch = Date.now().toString(36), bdir = path.join(COVER_DIR, batch), tmp = path.join(bdir, 'neu.jpg');
+  try { mkdirs(bdir); fs.writeFileSync(tmp, buf); } catch (e) { return cb(500, {ok: false, error: 'Sicherungsordner nicht beschreibbar: ' + e.message}); }
+
+  var results = bad.map(function(u){ return {uri: u, ok: false, error: 'Pfad nicht erlaubt oder Datei fehlt'}; });
+  var changedRel = [], folders = [];
+  dirs.forEach(function(d, i){                                  /* folder.jpg zuerst (schnell, ohne Python) */
+    var target = path.join(d.full, FOLDER_JPG), backup = null;
+    try {
+      if (fs.existsSync(target)) { backup = path.join(bdir, 'folder-' + i + '.jpg'); fs.writeFileSync(backup, fs.readFileSync(target)); }
+      fs.writeFileSync(target, buf);
+      logEntry({batch: batch, time: new Date().toISOString(), folder: d.rel, cover: {backup: backup}});
+      folders.push({dir: d.rel, ok: true});
+    } catch (e) { folders.push({dir: d.rel, ok: false, error: e.message}); }
+  });
+  if (!body.embed) return finish();
+  var i = 0;
+  mapSeq(paths, function(p, done){
+    runPy({op: 'cover_set', path: p.full, image: tmp, mime: 'image/jpeg', backup: path.join(bdir, String(i++))}, function(r){
+      r.uri = p.uri;
+      if (r.ok && r.changed) {
+        changedRel.push(p.rel);
+        logEntry({batch: batch, time: new Date().toISOString(), uri: p.uri, cover: {backup: r.backup}});
+      }
+      done(r);
+    });
+  }, function(rs){ results = results.concat(rs); finish(); });
+
+  function finish() {
+    var changed = changedRel.length + folders.filter(function(f){ return f.ok; }).length;
+    var out = {ok: true, batch: changed ? batch : null, items: results, folders: folders};
+    if (!changedRel.length) return cb(200, out);
+    mpdUpdate(changedRel, function(scanned){ out.scan = scanned; cb(200, out); });
+  }
+}
+
+/* Rückgängig: Text-Tags (before), eingebettete Cover und folder.jpg eines Auftrags zurücksetzen */
+function doUndo(body, cb) {
+  var entries = readLog().filter(function(e){ return e.batch === body.batch; });
+  if (!entries.length) return cb(404, {ok: false, error: 'Änderung nicht gefunden'});
+  var textEntries = entries.filter(function(e){ return e.before; });
+  var coverEntries = entries.filter(function(e){ return e.cover && e.uri; });
+  var folderEntries = entries.filter(function(e){ return e.cover && e.folder; });
+  var results = [], changedRel = [];
+
+  folderEntries.forEach(function(e){
+    var dir = path.join(MUSIC_ROOT, e.folder), target = path.join(dir, FOLDER_JPG);
+    try {
+      if (e.folder.split('/').indexOf('..') >= 0) throw new Error('Pfad nicht erlaubt');
+      if (e.cover.backup) fs.writeFileSync(target, fs.readFileSync(e.cover.backup)); else fs.unlinkSync(target);
+      results.push({folder: e.folder, ok: true, changed: true});
+    } catch (err) { results.push({folder: e.folder, ok: false, error: err.message}); }
+  });
+  mapSeq(coverEntries, function(e, done){
+    var p = resolveUri(e.uri);
+    if (!p || p.missing) return done({uri: e.uri, ok: false, error: 'Datei nicht gefunden'});
+    runPy({op: 'cover_set', path: p.full, image: e.cover.backup || null}, function(r){
+      r.uri = e.uri;
+      if (r.ok && r.changed) changedRel.push(p.rel);
+      done(r);
+    });
+  }, function(rs){
+    results = results.concat(rs);
+    if (!textEntries.length) {
+      if (!changedRel.length) return cb(200, {ok: true, batch: null, items: results, undone: body.batch});
+      return mpdUpdate(changedRel, function(scanned){ cb(200, {ok: true, batch: null, items: results, scan: scanned, undone: body.batch}); });
+    }
+    writeItems(textEntries.map(function(e){ return {uri: e.uri, tags: e.before}; }), Date.now().toString(36), true, function(code, res){
+      res.items = results.concat(res.items || []);
+      if (changedRel.length) mpdUpdate(changedRel, function(){});
+      res.undone = body.batch; cb(code, res);
+    });
+  });
+}
+
+function doHistory(cb) {
+  var seen = {}, list = [];
+  readLog().reverse().forEach(function(e){
+    if (!e.uri) return;                                   /* folder.jpg-Einträge zählen nicht als Datei */
+    if (!seen[e.batch]) { seen[e.batch] = {batch: e.batch, time: e.time, files: 0}; list.push(seen[e.batch]); }
+    seen[e.batch].files++;
+  });
+  cb(200, {ok: true, batches: list.slice(0, 20)});
+}
+
+/* ---------- HTTP ---------- */
+
+function send(res, code, obj) {
+  res.writeHead(code, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  });
+  res.end(JSON.stringify(obj));
+}
+
+var server = http.createServer(function(req, res){
+  var route = req.url.split('?')[0];
+  if (req.method === 'OPTIONS') return send(res, 204, {});
+  if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true});
+  if (req.method === 'GET' && route === '/history') return doHistory(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  var data = '', tooBig = false;
+  req.setEncoding('utf8');
+  req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
+  req.on('end', function(){
+    if (tooBig) return;
+    var body;
+    try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo}[route];
+    fn(body || {}, function(c, o){ send(res, c, o); });
+  });
+});
+
+if (require.main === module) {
+  server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
+}
+module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server};

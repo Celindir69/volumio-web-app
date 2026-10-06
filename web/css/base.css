@@ -1,0 +1,29 @@
+  *, *:before, *:after { box-sizing:border-box; }
+
+html, body { margin:0; padding:0; width:100%;
+  height:calc(100% + env(safe-area-inset-bottom, 0px));
+  overflow:hidden; background:#111; color:#fff;
+  font-family:'Century Gothic','Avant Garde',sans-serif;
+  -webkit-user-select:none; user-select:none;
+  -webkit-font-smoothing:antialiased; }
+
+
+  @font-face {
+    font-family:'Century Gothic';
+    src:url('/app/themes/volumio3/assets/variants/mf/fonts/Century Gothic Std.otf') format('opentype');
+    font-weight:400; font-style:normal;
+  }
+
+  #bg { position:fixed; top:0; left:0; right:0; bottom:-50px; z-index:0;
+    background-size:cover; background-position:center;
+    filter:blur(30px) brightness(.6); transform:scale(1.15); }
+  #bgTint { position:fixed; top:0; left:0; right:0; bottom:-50px; z-index:1; pointer-events:none;
+    background-color:var(--bg-tint, transparent); transition:background-color .8s; }
+  #scrim { position:fixed; top:0; left:0; right:0; bottom:-50px; z-index:1;
+    background:linear-gradient(to bottom, rgba(0,0,0,.2), rgba(0,0,0,.75)); }
+
+
+/* Maßeinheit der Oberfläche: wie 1vw, aber nach oben begrenzt, damit auf iPad und Desktop nichts
+   riesig wird. Hochformat bis ca. 440 px Breite = unverändert (1vw). */
+:root { --vw: min(1vw, 4.4px); }
+@media (orientation:landscape) { :root { --vw: min(1vw, 1.6vh, 7px); } }

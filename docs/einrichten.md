@@ -1,0 +1,63 @@
+# Einrichten auf dem Player
+
+Alle Befehle auf dem Player (ssh), als Benutzer mit `sudo`.
+
+## Oberfläche
+`app.html` und `web/` nach `/volumio/http/www3/` kopieren, Aufruf `http://<player>/app.html`.
+`kioskTV.html` nach `/volumio/http/www/` (der Volumio-Kiosk bekommt die Dateien aus `www/`).
+Nach einem Update im Browser hart neu laden. Eine vorhandene `web/config.local.js` bleibt erhalten.
+
+## Tag-Dienst (für den Tag-Editor)
+```bash
+sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
+sudo chown -R volumio:volumio /data/INTERNAL/tags
+sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
+[Unit]
+Description=Tag-Dienst fuer app.html
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/node /data/INTERNAL/tags/tag-service.js
+WorkingDirectory=/data/INTERNAL/tags
+Restart=always
+User=volumio
+# Environment=USE_SUDO=1
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+sudo systemctl daemon-reload && sudo systemctl enable tag-service && sudo systemctl start tag-service
+curl -s localhost:8766/health
+```
+Der Dienst schreibt als `volumio` in die Musikdateien. Ob das geht:
+`sudo -u volumio touch /mnt/USB/<Musikordner>/.test && sudo rm /mnt/USB/<Musikordner>/.test && echo schreibbar`.
+Wenn nicht, `Environment=USE_SUDO=1` einkommentieren (dann läuft nur `tags.py` als root).
+Nach einem Update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
+Weitere Variablen: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_LOG`.
+
+Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`. Alte Werte für „Rückgängig“ stehen in
+`/data/INTERNAL/tags/changes.jsonl`. Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
+Spiegelung die Änderungen am Player. Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
+
+## Rotel-Bridge (optional)
+`rotel/rotel-bridge.js` nach `/data/INTERNAL/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
+```js
+window.APP_CONFIG.ROTEL = true;                  // Ein/Aus-Knopf und Verstärker-Lautstärke in der Oberfläche
+window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';   // Adresse des Verstärkers, liest die Bridge beim Start
+```
+Danach die Bridge neu starten. Damit der Verstärker im Standby per Netz einschaltbar ist, dort Power Mode „Quick“ einstellen.
+Ohne `ROTEL: true` regelt die Oberfläche die Lautstärke von Volumio (falls dort eingeschaltet).
+
+## TIDAL
+Die TIDAL-Teile (Auswahl Lokal/TIDAL in der Suche, ähnliche Künstler bei TIDAL) erscheinen nur, wenn das TIDAL-Plugin in Volumio
+aktiv ist. Fest ein- oder ausschalten: `window.APP_CONFIG.TIDAL = true;` bzw. `false` in `web/config.local.js`.
+
+## TIDAL-Wächter (optional)
+```bash
+sudo mkdir -p /volumio/http/www3/tools && sudo cp tools/tidal-watchdog.sh /volumio/http/www3/tools/
+sudo chmod +x /volumio/http/www3/tools/tidal-watchdog.sh
+sudo /volumio/http/www3/tools/tidal-watchdog.sh --check      # nur prüfen
+echo '*/10 * * * * root /volumio/http/www3/tools/tidal-watchdog.sh' | sudo tee /etc/cron.d/tidal-watchdog
+```
+Prüft alle 10 Minuten, ob TIDAL antwortet, und startet Volumio sonst neu (höchstens einmal je Stunde). Protokoll:
+`/var/log/tidal-watchdog.log`. Ist TIDAL nicht angemeldet, den Wächter nicht einrichten.
