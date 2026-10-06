@@ -12,6 +12,8 @@ var PYTHON      = process.env.PYTHON      || 'python';
 var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
 var MPC         = process.env.MPC         || 'mpc';
 var LOG_FILE    = process.env.TAGS_LOG    || '/data/INTERNAL/tags/changes.jsonl';
+var MPD_HOST    = process.env.MPD_HOST    || 'localhost';
+var MPD_PORT    = parseInt(process.env.MPD_PORT || '6600', 10);
 var SCRIPT      = path.join(__dirname, 'tags.py');
 var ROOTS       = ['INTERNAL', 'USB', 'NAS'];            /* erlaubte Ordner unterhalb von MUSIC_ROOT */
 var EXT_RE      = /\.(m4a|mp4|m4b|flac|mp3|dsf)$/i;
@@ -247,6 +249,49 @@ function doArtist(query, cb) {
   });
 }
 
+/* ---------- Bibliotheks-Check ---------- */
+/* POST /check startet die Prüfung im Hintergrund, GET /check liefert Fortschritt und das letzte Ergebnis.
+   Das Ergebnis liegt in check.json neben dem Änderungsprotokoll, bis neu geprüft wird. */
+var libcheck = require('./libcheck.js');
+var CHECK_FILE = path.join(path.dirname(LOG_FILE), 'check.json');
+var checkRun = null;                                     /* {phase, done, total, started} während der Prüfung */
+var checkError = null;
+
+function doCheckStart(body, cb) {
+  if (checkRun) return cb(200, {ok: true, running: checkRun});
+  checkRun = {phase: 'mpd', done: 0, total: 0, started: Date.now()};
+  checkError = null;
+  cb(200, {ok: true, running: checkRun});
+  libcheck.mpdWalk({host: MPD_HOST, port: MPD_PORT}, function(err, songs){
+    if (err) { checkError = 'MPD: ' + err.message; checkRun = null; return; }
+    checkRun.phase = 'cover';
+    var cand = libcheck.dirsWithoutImage(songs, MUSIC_ROOT), noCover = {};
+    checkRun.done = 0; checkRun.total = cand.length;
+    var jobs = cand.map(function(c){ return {op: 'cover_has', path: path.join(MUSIC_ROOT, c.file)}; });
+    var i = 0, results = [];
+    (function step() {                                   /* in Teilen, damit der Fortschritt mitläuft */
+      if (i >= jobs.length) {
+        cand.forEach(function(c, k){ if (!(results[k] && results[k].ok && results[k].has)) noCover[c.dir] = true; });
+        var res = libcheck.analyze(songs, function(d){ return !noCover[d]; });
+        res.at = Date.now();
+        res.seconds = Math.round((res.at - checkRun.started) / 1000);
+        try { fs.writeFileSync(CHECK_FILE, JSON.stringify(res)); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
+        checkRun = null;
+        return;
+      }
+      var part = jobs.slice(i, i + PY_BATCH);
+      i += part.length;
+      runPyMany(part, function(r){ results = results.concat(r); checkRun.done = i; step(); });
+    })();
+  }, function(done, total){ checkRun.done = done; checkRun.total = total; });
+}
+
+function doCheckGet(cb) {
+  var last = null;
+  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { /* noch nie geprüft */ }
+  cb(200, {ok: true, running: checkRun, error: checkError, result: last});
+}
+
 /* ---------- Cover ---------- */
 
 function mkdirs(dir) {
@@ -407,8 +452,9 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true});
   if (req.method === 'GET' && route === '/history') return doHistory(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -416,7 +462,7 @@ var server = http.createServer(function(req, res){
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart}[route];
     fn(body || {}, function(c, o){ send(res, c, o); });
   });
 });

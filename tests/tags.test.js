@@ -94,6 +94,7 @@ else {
   t('tags.py: ohne Cover liefert cover_get kein Bild', function(){
     var r = run({op: 'cover_get', path: dsf});
     assert.ok(r.ok); assert.strictEqual(r.data, undefined);
+    assert.strictEqual(run({op: 'cover_has', path: dsf}).has, false);
   });
   t('tags.py: Cover einbetten und wieder lesen', function(){
     var r = run({op: 'cover_set', path: dsf, image: jpgA, mime: 'image/jpeg', backup: bak});
@@ -101,6 +102,7 @@ else {
     var g = run({op: 'cover_get', path: dsf});
     assert.strictEqual(g.mime, 'image/jpeg');
     assert.ok(Buffer.from(g.data, 'base64').equals(fs.readFileSync(jpgA)));
+    assert.strictEqual(run({op: 'cover_has', path: dsf}).has, true);
   });
   t('tags.py: gleiches Bild ändert nichts', function(){
     assert.strictEqual(run({op: 'cover_set', path: dsf, image: jpgA, backup: bak}).changed, false);

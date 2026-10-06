@@ -170,6 +170,9 @@
       <label><input type="checkbox" id="srcLocal" checked> Lokal</label>
       <label><input type="checkbox" id="srcTidal" checked> TIDAL</label>
     </div>
+    <div class="overlayClose" id="btnCheck" title="Bibliothek prüfen" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M3 5h11v2H3zm0 4h11v2H3zm0 4h7v2H3zm15.3 1.3l-2.8-2.8-1.4 1.4 4.2 4.2 6.7-6.7-1.4-1.4z" transform="translate(-1 0)"/></svg>
+    </div>
     <div class="overlayClose" id="closeSearch">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
@@ -224,6 +227,21 @@
 </div>
 
 
+<!-- Bibliotheks-Check: Problemfälle der Sammlung, Stift öffnet den Tag-Editor darüber -->
+<div class="overlay" id="overlayCheck">
+  <div class="overlayHandle"></div>
+  <div class="overlayHead">
+    <div id="checkBack" title="Zurück zur Suche">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </div>
+    <h2>Bibliothek prüfen</h2>
+    <div class="overlayClose" id="closeCheck">
+      <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+    </div>
+  </div>
+  <div class="overlayBody" id="checkBody"></div>
+</div>
+
 <!-- Tag-Editor (öffnet über dem Album-Overlay) -->
 <div class="overlay" id="overlayTags">
   <div class="overlayHandle"></div>
@@ -251,6 +269,7 @@
 <script src="web/js/browse.js"></script>
 <script src="web/js/textfn.js"></script>
 <script src="web/js/tagedit.js"></script>
+<script src="web/js/check.js"></script>
 <script src="web/js/ui.js"></script>
 <script src="web/js/volumio.js"></script>
 <script src="web/js/quality.js"></script>
