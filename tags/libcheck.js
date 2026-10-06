@@ -1,0 +1,148 @@
+/* Bibliotheks-Check: Problemfälle der Sammlung finden (nur lesen, schreibt nichts in die Musikdateien).
+   Quelle ist die MPD-Datenbank (Ordner für Ordner per "lsinfo", damit keine Antwort zu groß wird),
+   dazu ein Blick in die Ordner nach Cover-Bildern. Node 8, nur ES5. */
+var net  = require('net');
+var fs   = require('fs');
+var path = require('path');
+
+var IMG_RE = /\.(jpe?g|png)$/i;
+
+/* ---------- MPD lesen ---------- */
+
+function mpdQuote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
+
+/* Alle Titel unterhalb von roots: cb(err, songs, dirCount); songs: [{file, artist, albumartist, album, title, track, date}].
+   onProgress(erledigte Ordner, bekannte Ordner) */
+function mpdWalk(opts, cb, onProgress) {
+  var sock = net.createConnection({host: opts.host || 'localhost', port: opts.port || 6600});
+  var buf = '', greeted = false, cur = null, queue = (opts.roots || ['']).slice(), done = 0, songs = [], finished = false;
+  var song = null, pending = null;
+  function finish(err) {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    try { sock.end('close\n'); } catch (e) { /* schon zu */ }
+    cb(err, songs, done);
+  }
+  var timer = setTimeout(function(){ finish(new Error('MPD antwortet nicht')); sock.destroy(); }, opts.timeout || 600000);
+  function next() {
+    if (!queue.length) return finish(null);
+    cur = queue.shift();
+    song = null;
+    sock.write('lsinfo ' + mpdQuote(cur) + '\n');
+  }
+  function line(l) {
+    if (!greeted) {
+      if (l.indexOf('OK MPD') !== 0) return finish(new Error('kein MPD: ' + l));
+      greeted = true;
+      return next();
+    }
+    if (l === 'OK') {
+      done++;
+      if (onProgress) onProgress(done, done + queue.length);
+      return next();
+    }
+    if (l.indexOf('ACK') === 0) {                        /* Ordner nicht lesbar: überspringen */
+      done++;
+      return next();
+    }
+    var i = l.indexOf(': ');
+    if (i < 0) return;
+    var k = l.slice(0, i).toLowerCase(), v = l.slice(i + 2);
+    if (k === 'directory') { queue.push(v); song = null; return; }
+    if (k === 'file') { song = {file: v, artist: '', albumartist: '', album: '', title: '', track: '', date: ''}; songs.push(song); return; }
+    if (k === 'playlist') { song = null; return; }
+    if (song && song.hasOwnProperty(k) && !song[k]) song[k] = v;          /* bei Mehrfachwerten zählt der erste */
+  }
+  sock.setEncoding('utf8');
+  sock.on('data', function(d){
+    buf += d;
+    var n;
+    while ((n = buf.indexOf('\n')) >= 0) { var l = buf.slice(0, n); buf = buf.slice(n + 1); if (!finished) line(l); }
+  });
+  sock.on('error', function(e){ finish(e); });
+  sock.on('close', function(){ if (!finished) finish(queue.length || !greeted ? new Error('MPD-Verbindung getrennt') : null); });
+}
+
+/* ---------- Auswerten ---------- */
+
+/* Schlüssel für Schreibweisen: ohne Akzente, Groß-/Kleinschreibung, "The " am Anfang, Satzzeichen; & = and */
+function artistKey(name) {
+  var s = String(name || '').normalize ? String(name || '').normalize('NFKD') : String(name || '');
+  s = s.replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  s = s.replace(/^the\s+/, '').replace(/\s*&\s*/g, ' and ').replace(/\s*\+\s*/g, ' and ');
+  return s.replace(/[^a-z0-9]+/g, '');
+}
+
+function year(d) { var m = /\d{4}/.exec(d || ''); return m ? m[0] : ''; }
+function uniq(list) { var o = {}, out = []; list.forEach(function(x){ if (!o.hasOwnProperty(x)) { o[x] = 1; out.push(x); } }); return out; }
+function filesOf(list) { return list.map(function(s){ return {uri: s.file, title: s.title || path.basename(s.file)}; }); }
+function byName(a, b) { return a.name.localeCompare(b.name); }
+
+/* songs: wie mpdWalk; hasCover(dir) -> true/false. Ergebnis: Listen je Kategorie */
+function analyze(songs, hasCover) {
+  var dirs = {}, order = [];
+  songs.forEach(function(s){
+    var d = path.dirname(s.file);
+    if (!dirs[d]) { dirs[d] = []; order.push(d); }
+    dirs[d].push(s);
+  });
+  var res = {songs: songs.length, albums: order.length, noCover: [], albumArtist: [], mixed: [], noTrack: [], spelling: []};
+  order.sort().forEach(function(d){
+    var list = dirs[d];
+    var albums = uniq(list.map(function(s){ return s.album; }).filter(Boolean));
+    var name = albums[0] || path.basename(d);
+    var artists = uniq(list.map(function(s){ return s.artist; }).filter(Boolean));
+    var aas = uniq(list.map(function(s){ return s.albumartist; }));
+    var who = aas.filter(Boolean)[0] || (artists.length === 1 ? artists[0] : 'Verschiedene');
+    var base = {dir: d, name: name, artist: who, count: list.length};
+    function item(extra, files) { var o = {}; for (var k in base) o[k] = base[k]; for (k in extra) o[k] = extra[k]; o.files = filesOf(files || list); return o; }
+
+    if (!hasCover(d)) res.noCover.push(item({}));
+    var aaFilled = aas.filter(Boolean);
+    if (aaFilled.length > 1 || (artists.length > 1 && aaFilled.length < aas.length)) {
+      res.albumArtist.push(item({artists: artists.slice(0, 6), albumartists: aaFilled, missing: aaFilled.length < aas.length}));
+    }
+    var years = uniq(list.map(function(s){ return year(s.date); }));
+    if (albums.length > 1 || years.length > 1 || (albums.length === 1 && list.some(function(s){ return !s.album; }))) {
+      res.mixed.push(item({albums: albums, years: years.map(function(y){ return y || '(ohne)'; })}));
+    }
+    var noTrack = list.filter(function(s){ return !/\d/.test(s.track); });
+    if (noTrack.length) res.noTrack.push(item({missing: noTrack.length}));
+  });
+
+  /* Schreibweisen: Interpret und Album-Interpret, gruppiert nach artistKey */
+  var groups = {};
+  songs.forEach(function(s){
+    uniq([s.artist, s.albumartist].filter(Boolean)).forEach(function(n){
+      var k = artistKey(n);
+      if (!k) return;
+      var g = groups[k] || (groups[k] = {});
+      g[n] = (g[n] || 0) + 1;
+    });
+  });
+  Object.keys(groups).forEach(function(k){
+    var names = Object.keys(groups[k]);
+    if (names.length < 2) return;
+    res.spelling.push({variants: names.map(function(n){ return {name: n, count: groups[k][n]}; })
+      .sort(function(a, b){ return b.count - a.count || a.name.localeCompare(b.name); })});
+  });
+  res.spelling.sort(function(a, b){ return byName(a.variants[0], b.variants[0]); });
+  return res;
+}
+
+/* Ordner ohne Bilddatei (folder.jpg, cover.jpg, …); eingebettete Cover prüft der Aufrufer danach */
+function dirsWithoutImage(songs, musicRoot) {
+  var seen = {}, out = [];
+  songs.forEach(function(s){
+    var d = path.dirname(s.file);
+    if (seen[d]) return;
+    seen[d] = true;
+    var names = [];
+    try { names = fs.readdirSync(path.join(musicRoot, d)); } catch (e) { /* Ordner fehlt: als ohne Bild zählen */ }
+    if (!names.some(function(n){ return IMG_RE.test(n); })) out.push({dir: d, file: s.file});
+  });
+  return out;
+}
+
+module.exports = {mpdWalk: mpdWalk, analyze: analyze, artistKey: artistKey, dirsWithoutImage: dirsWithoutImage};

@@ -8,11 +8,16 @@
 <meta name="apple-mobile-web-app-title" content="MX Stream">
 <title>MX Stream</title>
 <link rel="apple-touch-icon" sizes="180x180" id="appIcon">
-<link rel="stylesheet" href="web/css/base.css">
-<link rel="stylesheet" href="web/css/app.css">
+<script>
+  document.write('<link rel="stylesheet" href="web/css/base.css?t=' + Date.now() + '">' +
+                 '<link rel="stylesheet" href="web/css/app.css?t=' + Date.now() + '">');
+</script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="web/config.js"></script>
-<script src="web/config.local.js" onerror="void 0"></script>
+<script>
+  /* Einstellungen immer frisch laden (Safari/iPad behalten sie sonst lange im Cache) */
+  document.write('<script src="web/config.js?t=' + Date.now() + '"><\/script>' +
+                 '<script src="web/config.local.js?t=' + Date.now() + '" onerror="void 0"><\/script>');
+</script>
 </head>
 <body>
 
@@ -170,6 +175,12 @@
       <label><input type="checkbox" id="srcLocal" checked> Lokal</label>
       <label><input type="checkbox" id="srcTidal" checked> TIDAL</label>
     </div>
+    <div class="overlayClose" id="btnCheck" title="Bibliothek prüfen" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M3 5h11v2H3zm0 4h11v2H3zm0 4h7v2H3zm15.3 1.3l-2.8-2.8-1.4 1.4 4.2 4.2 6.7-6.7-1.4-1.4z" transform="translate(-1 0)"/></svg>
+    </div>
+    <div class="overlayClose" id="btnHistory" title="Verlauf und Statistik" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z"/></svg>
+    </div>
     <div class="overlayClose" id="closeSearch">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
@@ -224,6 +235,40 @@
 </div>
 
 
+<!-- Bibliotheks-Check: Problemfälle der Sammlung, Stift öffnet den Tag-Editor darüber -->
+<div class="overlay" id="overlayCheck">
+  <div class="overlayHandle"></div>
+  <div class="overlayHead">
+    <div id="checkBack" title="Zurück zur Suche">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </div>
+    <h2>Bibliothek prüfen</h2>
+    <div class="overlayClose" id="closeCheck">
+      <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+    </div>
+  </div>
+  <div class="overlayBody" id="checkBody"></div>
+</div>
+
+<div class="overlay" id="overlayHistory">
+  <div class="overlayHandle"></div>
+  <div class="overlayHead">
+    <div id="historyBack" title="Zurück zur Suche">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </div>
+    <h2>Verlauf</h2>
+    <div class="overlayClose" id="closeHistory">
+      <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+    </div>
+  </div>
+  <div id="histTabBar">
+    <div class="qTab on" data-tab="recent">Zuletzt</div>
+    <div class="qTab" data-tab="top">Meistgespielt</div>
+    <div class="qTab" data-tab="stats">Statistik</div>
+  </div>
+  <div class="overlayBody" id="histBody"></div>
+</div>
+
 <!-- Tag-Editor (öffnet über dem Album-Overlay) -->
 <div class="overlay" id="overlayTags">
   <div class="overlayHandle"></div>
@@ -241,22 +286,11 @@
   </div>
 </div>
 
-<script src="web/js/core.js"></script>
-<script src="web/js/lyrics.js"></script>
-<script src="web/js/controls.js"></script>
-<script src="web/js/info.js"></script>
-<script src="web/js/queue.js"></script>
-<script src="web/js/library.js"></script>
-<script src="web/js/marquee.js"></script>
-<script src="web/js/browse.js"></script>
-<script src="web/js/textfn.js"></script>
-<script src="web/js/tagedit.js"></script>
-<script src="web/js/ui.js"></script>
-<script src="web/js/volumio.js"></script>
-<script src="web/js/quality.js"></script>
-<script src="web/js/mp4probe.js"></script>
-<script src="web/js/color.js"></script>
-<script src="web/js/poll.js"></script>
-<script src="web/js/stage.js"></script>
+<script>
+  /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
+  ['core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
+    document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
+  });
+</script>
 </body>
 </html>

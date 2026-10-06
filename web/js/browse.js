@@ -202,6 +202,13 @@ function browseArtist(e, seq) {
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     if (!albums.length && !pageTracks.length && isTidal) { browseBody.appendChild(browseNote('Keine Alben gefunden')); return; }
 
+    var photo = document.createElement('img');      /* Künstlerfoto vom Tag-Dienst (Deezer); ohne Foto fällt es weg */
+    photo.id = 'browseArtistPhoto';
+    photo.alt = '';
+    photo.addEventListener('error', function(){ if (photo.parentNode) photo.parentNode.removeChild(photo); });
+    photo.src = TAGS + '/artistimage?name=' + encodeURIComponent(e.artist);
+    browseBody.appendChild(photo);
+
     if (!isTidal) {                                   /* alles vom Künstler abspielen (Alben und Einzeltitel) */
       var head = document.createElement('div');
       head.id = 'browseArtistHead';
@@ -235,6 +242,8 @@ function browseArtist(e, seq) {
       var subText = al.service === 'tidal' ? [al.year, al.audioQuality && al.audioQuality !== 'LOSSLESS' ? al.audioQuality : ''].filter(function(x){ return x; }).join('  ·  ') : (al.artist || '');
       if (subText) { var sub = document.createElement('div'); sub.className = 'sSub'; sub.textContent = subText; meta.appendChild(sub); }
       row.appendChild(img); row.appendChild(meta);
+      var apen = tagAlbumButton(al);                  /* lokales Album: Tags aller Titel */
+      if (apen) row.appendChild(apen);
       row.addEventListener('click', function(){
         browseStack.push({kind:'album', artist:e.artist, album:al.title, uri:al.uri, albumart:al.albumart, service:al.service});
         browseRender();
@@ -366,6 +375,10 @@ function browsePlaylist(e, seq) {
     var tracks = browseItems(j).filter(function(it){ return it.uri && !/^folder/.test(it.type || ''); });
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     if (!tracks.length) { browseBody.appendChild(browseNote('Playlist ist leer')); return; }
+
+    var tile = document.createElement('div');        /* Kachel aus den Künstlerfotos, wie in der Playlistenliste */
+    plTileDraw(tile, plTileArtists(tracks));
+    if (tile.firstChild) { tile.id = 'browsePlTile'; browseBody.appendChild(tile); }
 
     var head = document.createElement('div');
     head.id = 'browseArtistHead';

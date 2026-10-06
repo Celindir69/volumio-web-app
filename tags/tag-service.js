@@ -5,6 +5,7 @@ var fs    = require('fs');
 var path  = require('path');
 var cp    = require('child_process');
 var url   = require('url');
+var vm    = require('vm');
 
 var HTTP_PORT   = parseInt(process.env.HTTP_PORT || '8766', 10);
 var MUSIC_ROOT  = process.env.MUSIC_ROOT  || '/mnt';
@@ -12,6 +13,8 @@ var PYTHON      = process.env.PYTHON      || 'python';
 var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
 var MPC         = process.env.MPC         || 'mpc';
 var LOG_FILE    = process.env.TAGS_LOG    || '/data/INTERNAL/tags/changes.jsonl';
+var MPD_HOST    = process.env.MPD_HOST    || 'localhost';
+var MPD_PORT    = parseInt(process.env.MPD_PORT || '6600', 10);
 var SCRIPT      = path.join(__dirname, 'tags.py');
 var ROOTS       = ['INTERNAL', 'USB', 'NAS'];            /* erlaubte Ordner unterhalb von MUSIC_ROOT */
 var EXT_RE      = /\.(m4a|mp4|m4b|flac|mp3|dsf)$/i;
@@ -247,6 +250,199 @@ function doArtist(query, cb) {
   });
 }
 
+/* ---------- Bibliotheks-Check ---------- */
+/* POST /check startet die Prüfung im Hintergrund, GET /check liefert Fortschritt und das letzte Ergebnis.
+   Das Ergebnis liegt in check.json neben dem Änderungsprotokoll, bis neu geprüft wird. */
+var libcheck = require('./libcheck.js');
+var CHECK_FILE = path.join(path.dirname(LOG_FILE), 'check.json');
+var checkRun = null;                                     /* {phase, done, total, started} während der Prüfung */
+var checkError = null;
+
+function doCheckStart(body, cb) {
+  if (checkRun) return cb(200, {ok: true, running: checkRun});
+  checkRun = {phase: 'mpd', done: 0, total: 0, started: Date.now()};
+  checkError = null;
+  cb(200, {ok: true, running: checkRun});
+  libcheck.mpdWalk({host: MPD_HOST, port: MPD_PORT}, function(err, songs){
+    if (err) { checkError = 'MPD: ' + err.message; checkRun = null; return; }
+    checkRun.phase = 'cover';
+    var cand = libcheck.dirsWithoutImage(songs, MUSIC_ROOT), noCover = {};
+    checkRun.done = 0; checkRun.total = cand.length;
+    var jobs = cand.map(function(c){ return {op: 'cover_has', path: path.join(MUSIC_ROOT, c.file)}; });
+    var i = 0, results = [];
+    (function step() {                                   /* in Teilen, damit der Fortschritt mitläuft */
+      if (i >= jobs.length) {
+        cand.forEach(function(c, k){ if (!(results[k] && results[k].ok && results[k].has)) noCover[c.dir] = true; });
+        var res = libcheck.analyze(songs, function(d){ return !noCover[d]; });
+        res.at = Date.now();
+        res.seconds = Math.round((res.at - checkRun.started) / 1000);
+        try { fs.writeFileSync(CHECK_FILE, JSON.stringify(res)); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
+        checkRun = null;
+        return;
+      }
+      var part = jobs.slice(i, i + PY_BATCH);
+      i += part.length;
+      runPyMany(part, function(r){ results = results.concat(r); checkRun.done = i; step(); });
+    })();
+  }, function(done, total){ checkRun.done = done; checkRun.total = total; });
+}
+
+function doCheckGet(cb) {
+  var last = null;
+  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { /* noch nie geprüft */ }
+  cb(200, {ok: true, running: checkRun, error: checkError, result: last});
+}
+
+/* ---------- Cover online suchen ---------- */
+/* GET /coversearch?artist=…&album=… -> {ok, results:[{id, source}]}; GET /coverimage?id=… liefert das Bild.
+   Nur Adressen, die die Suche selbst gefunden hat, werden geladen (über die id). Last.fm-Schlüssel aus web/config*.js. */
+var coversearch = require('./coversearch.js');
+var APP_CONFIG_DIR = process.env.APP_CONFIG_DIR || '/volumio/http/www3/web';
+var coverHits = {}, coverHitIds = [], coverHitSeq = 0;
+
+function appConfig() {
+  var ctx = {window: {}};
+  ['config.js', 'config.local.js'].forEach(function(f){
+    try { vm.runInNewContext(fs.readFileSync(path.join(APP_CONFIG_DIR, f), 'utf8'), ctx, {filename: f, timeout: 1000}); }
+    catch (e) { /* Datei fehlt oder ist fehlerhaft: Standardwerte */ }
+  });
+  return ctx.window.APP_CONFIG || {};
+}
+
+function doCoverSearch(query, cb) {
+  var album = String(query.album || '').trim();
+  if (!album) return cb(400, {ok: false, error: 'album fehlt'});
+  coversearch.search({artist: query.artist, album: album, lastfmKey: process.env.LASTFM_KEY || appConfig().LASTFM_KEY}, function(list){
+    cb(200, {ok: true, results: list.map(function(r){
+      var id = String(++coverHitSeq);
+      coverHits[id] = r.url; coverHitIds.push(id);
+      if (coverHitIds.length > 100) delete coverHits[coverHitIds.shift()];
+      return {id: id, source: r.source};
+    })});
+  });
+}
+
+function doCoverImage(query, res) {
+  var u = coverHits[String(query.id || '')];
+  if (!u) return send(res, 404, {ok: false, error: 'unbekannt'});
+  coversearch.image(u, function(e, img){
+    if (e) return send(res, 404, {ok: false, error: e.message});
+    res.writeHead(200, {'Content-Type': img.mime, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=600'});
+    res.end(img.body);
+  });
+}
+
+/* ---------- Verlauf und Last.fm ---------- */
+/* Der Dienst fragt Volumio alle paar Sekunden nach dem Wiedergabestand und schreibt gezählte Wiedergaben
+   nach plays.jsonl. GET /plays?view=recent|top|stats liefert Listen und Statistik, /lastfm verbindet und gleicht ab. */
+var plays  = require('./plays.js');
+var lastfm = require('./lastfm.js');
+var DATA_DIR    = path.dirname(LOG_FILE);
+var VOLUMIO_URL = process.env.VOLUMIO_URL || 'http://localhost:3000';
+var playStore = new plays.Store(path.join(DATA_DIR, 'plays.jsonl'));
+var lfm = new lastfm.Sync(path.join(DATA_DIR, 'lastfm.json'), playStore, function(){
+  var c = appConfig();
+  return {key: process.env.LASTFM_KEY || c.LASTFM_KEY, secret: process.env.LASTFM_SECRET || c.LASTFM_SECRET};
+});
+var tracker = new plays.Tracker(function(e){ playStore.add([e]); lfm.played(e); }, function(e){ lfm.nowPlaying(e); });
+var recording = false;
+
+function playerState(cb) {
+  var done = false;
+  function finish(e, st) { if (!done) { done = true; cb(e, st); } }
+  var req = http.get(VOLUMIO_URL + '/api/v1/getState', function(res){
+    var data = '';
+    res.setEncoding('utf8');
+    res.on('data', function(d){ data += d; });
+    res.on('end', function(){ try { finish(null, JSON.parse(data)); } catch (e) { finish(e); } });
+  });
+  req.setTimeout(5000, function(){ req.abort(); finish(new Error('Zeitüberschreitung')); });
+  req.on('error', finish);
+}
+
+function watchPlayer() {
+  playerState(function(e, st){
+    if (!e && st) tracker.update(st, Date.now());
+    setTimeout(watchPlayer, tracker.cur && tracker.cur.playing ? 5000 : 15000);
+  });
+}
+
+/* Volumio-uri -> Pfad relativ zum Musikordner ("USB/…"), sonst '' */
+function relUri(u) {
+  u = String(u || '');
+  if (/^[a-z]+:\/\//.test(u)) return '';
+  return u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, '');
+}
+
+function doPlays(query, cb) {
+  var list = playStore.load(), now = Math.floor(Date.now() / 1000), view = query.view;
+  var limit = Math.min(parseInt(query.limit, 10) || 100, 500);
+  if (view === 'recent') return cb(200, {ok: true, recording: recording, items: plays.recent(list, parseInt(query.before, 10) || 0, limit)});
+  if (view === 'top') {
+    var kind = ['track', 'album', 'artist'].indexOf(query.kind) >= 0 ? query.kind : 'track';
+    var items = plays.top(list, kind, plays.rangeStart(query.range, now), limit);
+    if (kind === 'album') items.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
+    return cb(200, {ok: true, items: items});
+  }
+  if (view === 'stats') {
+    var tz = {w: parseInt(query.tzw, 10) || 0, s: parseInt(query.tzs, 10) || 0};
+    return cb(200, {ok: true, recording: recording, stats: plays.stats(list, query.range, now, tz)});
+  }
+  cb(400, {ok: false, error: 'view fehlt'});
+}
+
+/* GET /plays/resolve?artist=…&title=…: lokale Datei zu einem Titel aus dem Verlauf (z. B. von Last.fm eingelesen) */
+function doResolve(query, cb) {
+  var artist = String(query.artist || '').trim(), title = String(query.title || '').trim();
+  if (!artist || !title) return cb(400, {ok: false, error: 'artist und title nötig'});
+  function find(how, done) {
+    cp.execFile(MPC, ['-f', '%file%', how, 'artist', artist, 'title', title], {timeout: 15000, maxBuffer: 4 * 1024 * 1024}, function(e, out){
+      done(e ? [] : String(out).split('\n').filter(Boolean));
+    });
+  }
+  find('find', function(hits){
+    if (hits.length) return cb(200, {ok: true, file: hits[0]});
+    find('search', function(more){
+      var want = plays.norm(title);
+      var exact = more.filter(function(f){ return plays.norm(path.basename(f).replace(/\.[^.]+$/, '')).indexOf(want) >= 0; });
+      cb(200, {ok: true, file: exact[0] || more[0] || null});
+    });
+  });
+}
+
+function doLastfm(body, cb) {
+  var a = body.action;
+  if (a === 'connect') return lfm.connect(function(e, u){ cb(200, e ? {ok: false, error: e} : {ok: true, url: u}); });
+  if (a === 'finish') return lfm.finish(function(e){
+    if (e) return cb(200, {ok: false, error: e});
+    if (!lfm.state.importedTo) lfm.importAll();          /* beim ersten Verbinden gleich den Verlauf holen */
+    cb(200, {ok: true, status: lfm.status()});
+  });
+  if (a === 'disconnect') { lfm.disconnect(); return cb(200, {ok: true, status: lfm.status()}); }
+  if (a === 'import') {
+    if (!lfm.state.user) return cb(200, {ok: false, error: 'Erst mit Last.fm verbinden'});
+    lfm.importAll();
+    return cb(200, {ok: true, status: lfm.status()});
+  }
+  if (a === 'send') { lfm.flush(); return cb(200, {ok: true, status: lfm.status()}); }
+  cb(400, {ok: false, error: 'action unbekannt'});
+}
+
+/* GET /artistimage?name=…: Künstlerfoto (Deezer, auf dem Player gespeichert unter artists/); 404 ohne Foto */
+var artistimg = require('./artistimg.js');
+var artistImages = new artistimg.Store(path.join(DATA_DIR, 'artists'));
+
+function doArtistImage(query, res) {
+  var name = String(query.name || '').trim();
+  if (!name || name.length > 200) return send(res, 400, {ok: false, error: 'name fehlt'});
+  artistImages.get(name, function(e, buf){
+    if (!buf) { res.writeHead(404, {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600'}); return res.end(); }
+    res.writeHead(200, {'Content-Type': buf[0] === 0x89 ? 'image/png' : 'image/jpeg', 'Content-Length': buf.length,
+                        'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=2592000'});
+    res.end(buf);
+  });
+}
+
 /* ---------- Cover ---------- */
 
 function mkdirs(dir) {
@@ -407,8 +603,15 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true});
   if (req.method === 'GET' && route === '/history') return doHistory(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/lastfm'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -416,12 +619,13 @@ var server = http.createServer(function(req, res){
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/lastfm': doLastfm}[route];
     fn(body || {}, function(c, o){ send(res, c, o); });
   });
 });
 
 if (require.main === module) {
   server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
+  if (process.env.HISTORY !== '0' && appConfig().HISTORY !== false) { recording = true; watchPlayer(); lfm.flush(); }
 }
-module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server};
+module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server, tracker: tracker, playStore: playStore, lastfm: lfm};

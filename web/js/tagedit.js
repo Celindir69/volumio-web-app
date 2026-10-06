@@ -55,6 +55,19 @@ function tagTrackButton(t) {
   return tagEditButton([{uri:t.uri, title:title}], title);
 }
 
+/* Stift für ein Album in einer Liste (Suche, Künstlerseite): liest die Titel erst beim Tippen; nur lokal, sonst null */
+function tagAlbumButton(al) {
+  if (!al || !al.uri || (al.service || 'mpd') !== 'mpd' || /^tidal:/.test(al.uri)) return null;
+  return tagPenButton('tagEditMini', 'Tags bearbeiten', function(){
+    showToast('Lade Titel…');
+    browseGet(al.uri).then(function(j){
+      var files = browseItems(j).filter(isLocalTrack).map(function(t){ return {uri:t.uri, title:t.title || t.name || ''}; });
+      if (files.length) openTagEditor(files, al.title || al.name || '');
+      else showToast('Keine lokalen Titel gefunden');
+    }).catch(function(){ showToast('Album nicht lesbar'); });
+  });
+}
+
 /* Stift im Player neben der Qualitätsanzeige: nur, wenn gerade eine lokale Datei läuft */
 var mEdit = null, mEditUri = '';
 function tagPaintPlayer(st) {
@@ -292,8 +305,12 @@ function tagCoverSection(good) {
   file.type = 'file'; file.accept = 'image/*'; file.style.display = 'none';
   var pick = document.createElement('button'); pick.textContent = 'Bild wählen…';
   var toFolder = document.createElement('button'); toFolder.textContent = 'Eingebettetes als folder.jpg';
-  btns.appendChild(pick); btns.appendChild(toFolder); btns.appendChild(file);
+  var online = document.createElement('button'); online.textContent = 'Online suchen';
+  btns.appendChild(pick); btns.appendChild(online); btns.appendChild(toFolder); btns.appendChild(file);
   wrap.appendChild(btns);
+  var found = document.createElement('div');               /* Vorschläge der Online-Suche */
+  found.className = 'tagOnline'; found.style.display = 'none';
+  wrap.appendChild(found);
 
   var opts = document.createElement('div');                 /* erscheint nach der Bildwahl */
   opts.className = 'tagCoverOpts'; opts.style.display = 'none';
@@ -322,13 +339,60 @@ function tagCoverSection(good) {
   file.addEventListener('change', function(){
     if (!file.files || !file.files[0]) return;
     tagStatus.textContent = 'Bild wird vorbereitet…';
-    tagPrepareImage(file.files[0]).then(function(r){
-      chosen = r;
-      emb.show('data:image/jpeg;base64,' + r.b64, 'Neu · ' + r.w + '×' + r.h + ' · ' + Math.round(r.b64.length * 0.75 / 1024) + ' KB');
-      opts.style.display = '';
-      tagStatus.textContent = '';
-    }).catch(function(e){ tagStatus.textContent = e.message; });
+    tagPrepareImage(file.files[0]).then(function(r){ useImage(r, 'Neu'); }).catch(function(e){ tagStatus.textContent = e.message; });
     file.value = '';
+  });
+
+  function useImage(r, label) {                            /* Vorschau im Feld "Eingebettet", Optionen einblenden */
+    chosen = r;
+    emb.show('data:image/jpeg;base64,' + r.b64, label + ' · ' + r.w + '×' + r.h + ' · ' + Math.round(r.b64.length * 0.75 / 1024) + ' KB');
+    opts.style.display = '';
+    tagStatus.textContent = '';
+  }
+
+  /* Cover online suchen (iTunes, Last.fm, Cover Art Archive über den Tag-Dienst): Album-Interpret (sonst Interpret)
+     und Album, wie sie gerade in den Feldern stehen (zum Suchen kurz ändern, ohne zu speichern); leere Felder
+     ("verschieden") nehmen den Wert des ersten Titels. Vorschläge nebeneinander, Tippen übernimmt das Bild in die Vorschau. */
+  online.addEventListener('click', function(){
+    var t = good[0].tags || {};
+    function cur(k) { var c = tagCommon[k]; var v = c && c.input.value.trim(); return v || t[k] || ''; }
+    var artist = cur('albumartist') || cur('artist'), album = cur('album');
+    if (!album) { tagStatus.textContent = 'Kein Albumname eingetragen'; return; }
+    tagStatus.textContent = 'Suche Cover für „' + album + '“…';
+    online.disabled = true;
+    while (found.firstChild) found.removeChild(found.firstChild);
+    found.style.display = 'none';
+    tagGetJson('/coversearch?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album)).then(function(res){
+      online.disabled = false;
+      if (!res.ok) { tagStatus.textContent = res.error || 'Fehler'; return; }
+      var left = res.results.length;
+      function count() {
+        var k = found.children.length;
+        if (!k) { found.style.display = 'none'; tagStatus.textContent = 'Online kein Cover gefunden'; }
+        else tagStatus.textContent = k + ' Vorschl' + (k > 1 ? 'äge' : 'ag') + ' – zum Übernehmen antippen';
+      }
+      function gone() { left--; if (/Vorschl|kein Cover/.test(tagStatus.textContent)) count(); }
+      if (!left) { tagStatus.textContent = 'Online kein Cover gefunden'; return; }
+      found.style.display = '';
+      res.results.forEach(function(r){
+        var src = TAGS + '/coverimage?id=' + encodeURIComponent(r.id);
+        var card = tagThumb(r.source);
+        card.classList.add('tagPick');
+        card.onEmpty = function(){ if (card.parentNode) found.removeChild(card); gone(); };
+        card.show(src);
+        card.addEventListener('click', function(){
+          tagStatus.textContent = 'Bild wird vorbereitet…';
+          fetch(src).then(function(x){ if (!x.ok) throw new Error('Bild nicht ladbar'); return x.blob(); })
+            .then(tagPrepareImage)
+            .then(function(img){
+              Array.prototype.forEach.call(found.children, function(c){ c.classList.toggle('on', c === card); });
+              useImage(img, r.source);
+            }).catch(function(e){ tagStatus.textContent = e.message; });
+        });
+        found.appendChild(card);
+      });
+      count();
+    }).catch(function(){ online.disabled = false; tagStatus.textContent = 'Tag-Dienst nicht erreichbar'; });
   });
 
   function send(body, done) {

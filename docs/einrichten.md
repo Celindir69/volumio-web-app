@@ -59,6 +59,43 @@ Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`
 `/data/INTERNAL/tags/changes.jsonl`. Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
 Spiegelung die Änderungen am Player. Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
 
+### Cover online suchen
+Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Schlüssel aus `web/config.local.js`) und im
+Cover Art Archive (MusicBrainz) nach Album-Interpret (sonst Interpret) und Album, wie sie gerade in den Feldern stehen
+(zum Suchen kurz ändern, ohne zu speichern). Die Vorschläge erscheinen
+nebeneinander; ein Tipp übernimmt das Bild wie ein gewähltes (einbetten und/oder folder.jpg, mit Rückgängig).
+Die Abfragen macht der Tag-Dienst; der Player braucht dafür Internetzugang.
+
+### Bibliotheks-Check
+In der Suche oben rechts (Symbol mit Haken, nur wenn der Tag-Dienst läuft): findet Alben ohne Cover, Compilations ohne
+einheitlichen Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche Albumnamen/Jahre und Titel ohne
+Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-Datenbank (`MPD_HOST`, `MPD_PORT`, Standard
+`localhost:6600`) und die Ordner, ändert nichts an den Dateien und läuft nur auf Knopfdruck. Ergebnis:
+`/data/INTERNAL/tags/check.json`, bis neu geprüft wird.
+
+### Verlauf und Statistik
+In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
+30 Tage, 12 Monate oder gesamt) und **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag). Antippen spielt
+den Titel ab bzw. öffnet Album oder Künstler.
+Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/INTERNAL/tags/artists/`
+(Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.
+
+Der Tag-Dienst fragt Volumio alle 5 s (bei Pause/Stopp alle 15 s) nach dem Wiedergabestand (`VOLUMIO_URL`, Standard
+`http://localhost:3000`). Ein Titel zählt, wenn er länger als 30 s ist und zur Hälfte oder 4 Minuten lief; Webradio zählt
+nicht. Jede Wiedergabe ist eine Zeile in `/data/INTERNAL/tags/plays.jsonl`. Ausschalten: `HISTORY: false` in
+`web/config.local.js`, dann den Tag-Dienst neu starten.
+
+**Last.fm:** Zum Scrobbeln braucht der Dienst neben `LASTFM_KEY` auch `LASTFM_SECRET` (das „Shared secret“ auf
+https://www.last.fm/api/accounts) in `web/config.local.js`. Dann unter Statistik „Mit Last.fm verbinden“, bei Last.fm
+„Zulassen“ und zurück in der App „Fertig“. Danach:
+- neue Wiedergaben werden gescrobbelt („läuft gerade“ inklusive); ohne Internet warten sie in einer Warteschlange
+  (Last.fm nimmt sie bis zu 14 Tage später noch an),
+- der bisherige Last.fm-Verlauf wird einmal eingelesen; „Mit Last.fm abgleichen“ holt später nur Neues. Was schon im
+  Verlauf steht (gleicher Titel innerhalb von 5 Minuten), wird nicht doppelt eingetragen.
+
+Der Sitzungsschlüssel liegt in `/data/INTERNAL/tags/lastfm.json` und bleibt auf dem Player. Falls ein anderes
+Last.fm-Plugin in Volumio scrobbelt, eines davon abschalten, sonst kommt jeder Titel doppelt bei Last.fm an.
+
 ## Rotel-Bridge (optional)
 `rotel/rotel-bridge.js` nach `/data/INTERNAL/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
 ```js

@@ -237,6 +237,8 @@ def native(p):
 
 def cover_job(job, path, kind, audio):
     old, old_mime = get_cover(audio, kind)
+    if job['op'] == 'cover_has':
+        return {'ok': True, 'has': old is not None}
     if job['op'] == 'cover_get':
         out = {'ok': True, 'mime': old_mime}
         if old is not None:
@@ -265,7 +267,7 @@ def cover_job(job, path, kind, audio):
 def run_job(job):
     path = job.get('path')
     op = job.get('op')
-    if not path or op not in ('read', 'write', 'cover_get', 'cover_set'):
+    if not path or op not in ('read', 'write', 'cover_get', 'cover_has', 'cover_set'):
         fail('Ungültiger Auftrag')
     if PY2 and isinstance(path, text_type):
         path = path.encode('utf-8')
