@@ -135,17 +135,14 @@ function lyrLocal(key, ms) {
 
 function lyrSyncShow(on) { document.documentElement.classList.toggle('lyrSynced', !!on); lyrShiftPlace(); }
 
-/* Bühnenansicht: − und + mittig über den Lyrics, aber links von den Knöpfen oben rechts */
+/* Bühnenansicht: − und + bündig mit dem Anfang der Lyrics-Zeilen */
 function lyrShiftPlace() {
-  var bar = document.getElementById('lyrShiftBar'), top = document.getElementById('topBar'), right = document.getElementById('topRight');
-  var lyr = document.getElementById('overlayLyrics');
-  if (!bar || !document.documentElement.classList.contains('stage')) return;
-  var t = top.getBoundingClientRect(), l = lyr.getBoundingClientRect(), r = right.getBoundingClientRect();
-  var from = l.left - t.left, to = Math.min(l.right, r.left - 12) - t.left;
-  var mid = Math.min((l.left + l.right) / 2 - t.left, to - 50);          /* Mitte der Lyrics, notfalls weiter links */
-  var half = Math.max(0, Math.min(mid - from, to - mid));
-  bar.style.left = Math.round(mid - half) + 'px';
-  bar.style.width = Math.round(half * 2) + 'px';
+  var bar = document.getElementById('lyrShiftBar'), top = document.getElementById('topBar');
+  var body = document.querySelector('#overlayLyrics .overlayBody');
+  if (!bar || !body || !document.documentElement.classList.contains('stage')) return;
+  var t = top.getBoundingClientRect(), l = body.getBoundingClientRect();
+  bar.style.left = Math.round(l.left + (parseFloat(getComputedStyle(body).paddingLeft) || 0) - t.left) + 'px';
+  bar.style.width = '';
 }
 window.addEventListener('resize', lyrShiftPlace);
 
