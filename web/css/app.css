@@ -639,7 +639,8 @@ html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
 .hChip.on { background:var(--accent, #fff); color:#111; border-color:transparent; font-weight:700; }
 .hNums { display:grid; grid-template-columns:repeat(auto-fill, minmax(calc(26 * var(--vw)), 1fr)); gap:calc(2 * var(--vw)); margin-top:calc(4 * var(--vw)); }
 .hNum { background:rgba(255,255,255,.06); border-radius:calc(2 * var(--vw)); padding:calc(2.5 * var(--vw)); }
-.hBig { font-size:calc(5.5 * var(--vw)); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.hBig { font-size:calc(5.5 * var(--vw)); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hNum { min-width:0; }
 .hSmall { font-size:calc(2.8 * var(--vw)); opacity:.6; }
 .hBars { display:flex; align-items:flex-end; gap:2px; height:calc(24 * var(--vw)); }
 .hBar { flex:1 1 0; height:100%; display:flex; align-items:flex-end; }

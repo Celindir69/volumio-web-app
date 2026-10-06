@@ -191,7 +191,7 @@ function histStats(seq) {
     if (s) {
       var hours = Math.round(s.seconds / 3600);
       var grid = histEl('div', 'hNums');
-      [[histNum(s.plays), 'Wiedergaben'], [(s.estimated ? 'ca. ' : '') + histNum(hours) + ' h', 'Hörzeit'],
+      [[histNum(s.plays), 'Wiedergaben'], [histNum(hours) + ' h', s.estimated ? 'Hörzeit ca.' : 'Hörzeit'],
        [histNum(s.tracks), 'Titel'], [histNum(s.artists), 'Künstler'], [histNum(s.albums), 'Alben']].forEach(function(n){
         var c = histEl('div', 'hNum');
         c.appendChild(histEl('div', 'hBig', n[0]));
