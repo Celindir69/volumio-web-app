@@ -319,4 +319,17 @@ document.getElementById('historyBack').addEventListener('click', function(){
 });
 
 /* Knopf in der Suche nur zeigen, wenn der Tag-Dienst läuft */
-tagGetJson('/health').then(function(r){ if (r && r.ok) btnHistory.style.display = ''; }).catch(function(){});
+tagGetJson('/health').then(function(r){ if (r && r.ok) { btnHistory.style.display = ''; histAlignSearchHead(); } }).catch(function(){});
+
+/* Suche: Symbole Bibliotheks-Check und Verlauf enden bündig mit dem Eingabefeld, das X steht über "Los" */
+function histAlignSearchHead() {
+  var x = document.getElementById('closeSearch'), field = document.getElementById('searchField');
+  var icon = btnHistory.querySelector('svg');
+  if (!x || !field || btnHistory.style.display === 'none') return;
+  var cur = parseFloat(x.style.marginLeft) || 0;
+  var m = cur + icon.getBoundingClientRect().right - field.getBoundingClientRect().right;
+  if (field.getBoundingClientRect().width > 0) x.style.marginLeft = Math.max(0, Math.round(m)) + 'px';
+}
+window.addEventListener('resize', histAlignSearchHead);
+if (window.MutationObserver) new MutationObserver(function(){ if (overlaySearch.classList.contains('on')) histAlignSearchHead(); })
+  .observe(overlaySearch, {attributes: true, attributeFilter: ['class']});
