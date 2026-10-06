@@ -1,7 +1,7 @@
 /* Playlisten, Web-Radio und Suche
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
 /* ---------- Playlisten / Radio ---------- */
-function renderPlList(items, container, clickFn) {
+function renderPlList(items, container, clickFn, tiles) {   /* tiles: Playlisten mit Künstler-Kachel */
   while (container.firstChild) container.removeChild(container.firstChild);
   if (!items.length) {
     var empty = document.createElement('div');
@@ -21,6 +21,7 @@ function renderPlList(items, container, clickFn) {
       icon.appendChild(img);
     } else {
       icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>';
+      if (tiles) plTileLater(icon, it.uri);
     }
     var nm = document.createElement('div');
     nm.className = 'plName'; nm.textContent = it.title || it.name || '';
@@ -28,6 +29,81 @@ function renderPlList(items, container, clickFn) {
     row.addEventListener('click', function(){ clickFn(it); });
     container.appendChild(row);
   });
+}
+
+/* ---------- Kachel aus Künstlerfotos statt des Playlist-Symbols ---------- */
+/* Künstler nach Häufigkeit: 1 Bild, 2–3 Künstler zwei Hälften, ab 4 vier Viertel. Fotos vom Tag-Dienst (Deezer),
+   fehlt eins, das Cover eines Titels dieses Künstlers. Playlisten werden erst gelesen, wenn ihre Zeile sichtbar ist,
+   eine nach der anderen; das Ergebnis bleibt einen Tag im Browser gespeichert. */
+var PL_TILE_TTL = 86400000, plTileQueue = [], plTileBusy = false, plTileSeen = null;
+
+function plTileArtists(tracks) {
+  var count = {}, name = {}, art = {};
+  tracks.forEach(function(t){
+    var a = String(t.artist || '').split(/\s+(?:feat\.?|ft\.?|featuring|with)\s+|\s*[,;\/]\s*/i)[0].trim();
+    if (!a) return;
+    var k = a.toLowerCase();
+    count[k] = (count[k] || 0) + 1;
+    if (!name[k]) name[k] = a;
+    if (!art[k] && t.albumart) art[k] = t.albumart;
+  });
+  return Object.keys(count).sort(function(x, y){ return count[y] - count[x]; }).slice(0, 4)
+    .map(function(k){ return {name: name[k], art: art[k] || ''}; });
+}
+
+function plTileDraw(icon, artists) {
+  if (!artists || !artists.length) return;
+  var list = artists.length >= 4 ? artists.slice(0, 4) : artists.length >= 2 ? artists.slice(0, 2) : artists.slice(0, 1);
+  while (icon.firstChild) icon.removeChild(icon.firstChild);
+  icon.className = 'plIcon plTile n' + list.length;
+  list.forEach(function(a){
+    var img = document.createElement('img');
+    img.alt = '';
+    img.addEventListener('error', function once(){
+      img.removeEventListener('error', once);
+      if (a.art) img.src = artUrl(a.art);
+    });
+    img.src = (typeof TAGS !== 'undefined' ? TAGS + '/artistimage?name=' + encodeURIComponent(a.name) : artUrl(a.art));
+    icon.appendChild(img);
+  });
+}
+
+function plTileCache(uri, val) {
+  try {
+    var all = JSON.parse(localStorage.getItem('plTiles') || '{}');
+    if (val === undefined) { var c = all[uri]; return c && Date.now() - c.at < PL_TILE_TTL ? c.artists : null; }
+    all[uri] = {at: Date.now(), artists: val};
+    localStorage.setItem('plTiles', JSON.stringify(all));
+  } catch (e) { return null; }
+}
+
+function plTileNext() {
+  if (plTileBusy || !plTileQueue.length) return;
+  var job = plTileQueue.shift();
+  plTileBusy = true;
+  fetch('/api/v1/browse?uri=' + encodeURIComponent(job.uri)).then(function(r){ return r.json(); }).then(function(j){
+    var tracks = browseItems(j).filter(function(it){ return it.uri && !/^folder/.test(it.type || ''); });
+    var artists = plTileArtists(tracks);
+    plTileCache(job.uri, artists);
+    plTileDraw(job.icon, artists);
+  }).catch(function(){}).then(function(){ plTileBusy = false; plTileNext(); });
+}
+
+function plTileLater(icon, uri) {
+  if (!uri) return;
+  var cached = plTileCache(uri);
+  if (cached) return plTileDraw(icon, cached);
+  function go() { plTileQueue.push({icon: icon, uri: uri}); plTileNext(); }
+  if (!window.IntersectionObserver) return go();
+  if (!plTileSeen) plTileSeen = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (!en.isIntersecting) return;
+      plTileSeen.unobserve(en.target);
+      en.target._plGo();
+    });
+  });
+  icon._plGo = go;
+  plTileSeen.observe(icon);
 }
 
 function loadPlaylists() {
@@ -43,7 +119,7 @@ function loadPlaylists() {
                   ? j.navigation.lists[0].items : [];
       renderPlList(items, playlistResults, function(pl){
         openBrowse({kind:'playlist', name:pl.title || pl.name || '', uri:pl.uri, service:pl.service || 'mpd'});   /* Titel der Playlist; zurück-Pfeil führt hierher */
-      });
+      }, true);
     }).catch(function(){
       while (playlistResults.firstChild) playlistResults.removeChild(playlistResults.firstChild);
       var err = document.createElement('div');
