@@ -72,6 +72,27 @@ Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-
 `localhost:6600`) und die Ordner, ändert nichts an den Dateien und läuft nur auf Knopfdruck. Ergebnis:
 `/data/INTERNAL/tags/check.json`, bis neu geprüft wird.
 
+### Verlauf und Statistik
+In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
+30 Tage, 12 Monate oder gesamt) und **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag). Antippen spielt
+den Titel ab bzw. öffnet Album oder Künstler.
+
+Der Tag-Dienst fragt Volumio alle 5 s (bei Pause/Stopp alle 15 s) nach dem Wiedergabestand (`VOLUMIO_URL`, Standard
+`http://localhost:3000`). Ein Titel zählt, wenn er länger als 30 s ist und zur Hälfte oder 4 Minuten lief; Webradio zählt
+nicht. Jede Wiedergabe ist eine Zeile in `/data/INTERNAL/tags/plays.jsonl`. Ausschalten: `HISTORY: false` in
+`web/config.local.js`, dann den Tag-Dienst neu starten.
+
+**Last.fm:** Zum Scrobbeln braucht der Dienst neben `LASTFM_KEY` auch `LASTFM_SECRET` (das „Shared secret“ auf
+https://www.last.fm/api/accounts) in `web/config.local.js`. Dann unter Statistik „Mit Last.fm verbinden“, bei Last.fm
+„Zulassen“ und zurück in der App „Fertig“. Danach:
+- neue Wiedergaben werden gescrobbelt („läuft gerade“ inklusive); ohne Internet warten sie in einer Warteschlange
+  (Last.fm nimmt sie bis zu 14 Tage später noch an),
+- der bisherige Last.fm-Verlauf wird einmal eingelesen; „Mit Last.fm abgleichen“ holt später nur Neues. Was schon im
+  Verlauf steht (gleicher Titel innerhalb von 5 Minuten), wird nicht doppelt eingetragen.
+
+Der Sitzungsschlüssel liegt in `/data/INTERNAL/tags/lastfm.json` und bleibt auf dem Player. Falls ein anderes
+Last.fm-Plugin in Volumio scrobbelt, eines davon abschalten, sonst kommt jeder Titel doppelt bei Last.fm an.
+
 ## Rotel-Bridge (optional)
 `rotel/rotel-bridge.js` nach `/data/INTERNAL/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
 ```js

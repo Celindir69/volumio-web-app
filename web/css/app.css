@@ -620,3 +620,31 @@ html.noTidal #btnCheck { margin-left:auto; }
 .tagOnline { display:flex; flex-wrap:wrap; gap:calc(3 * var(--vw)); margin:calc(3 * var(--vw)) 0 calc(1 * var(--vw)); }
 .tagOnline .tagPick { cursor:pointer; border-radius:calc(1.5 * var(--vw)); outline:2px solid transparent; outline-offset:3px; }
 .tagOnline .tagPick.on { outline-color:var(--accent, #4bbe87); }
+
+/* Verlauf und Statistik */
+#historyBack { cursor:pointer; opacity:.7; display:flex; }
+#historyBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:#fff; }
+#overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
+#btnHistory svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
+html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
+#histTabBar { flex:0 0 auto; display:flex; border-bottom:1px solid rgba(255,255,255,.2); margin:0 calc(5 * var(--vw)); }
+#histBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); }
+#histBody .infoSection:first-child { margin-top:calc(3 * var(--vw)); }
+.hRow { cursor:pointer; }
+.hRight { flex:0 0 auto; margin-left:calc(3 * var(--vw)); font-size:calc(3.2 * var(--vw)); opacity:.55; font-variant-numeric:tabular-nums; }
+.hRank { flex:0 0 calc(8 * var(--vw)); font-size:calc(3.2 * var(--vw)); opacity:.45; font-variant-numeric:tabular-nums; }
+.hChips { display:flex; flex-wrap:wrap; gap:calc(2 * var(--vw)); padding-top:calc(3 * var(--vw)); }
+.hChip { background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:999px;
+  padding:calc(1.4 * var(--vw)) calc(3.5 * var(--vw)); font-size:calc(3.2 * var(--vw)); cursor:pointer; }
+.hChip.on { background:var(--accent, #fff); color:#111; border-color:transparent; font-weight:700; }
+.hNums { display:grid; grid-template-columns:repeat(auto-fill, minmax(calc(26 * var(--vw)), 1fr)); gap:calc(2 * var(--vw)); margin-top:calc(4 * var(--vw)); }
+.hNum { background:rgba(255,255,255,.06); border-radius:calc(2 * var(--vw)); padding:calc(2.5 * var(--vw)); }
+.hBig { font-size:calc(5.5 * var(--vw)); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.hSmall { font-size:calc(2.8 * var(--vw)); opacity:.6; }
+.hBars { display:flex; align-items:flex-end; gap:2px; height:calc(24 * var(--vw)); }
+.hBar { flex:1 1 0; height:100%; display:flex; align-items:flex-end; }
+.hFill { width:100%; min-height:1px; background:var(--accent, #fff); opacity:.85; border-radius:2px 2px 0 0; }
+.hLabels { display:flex; gap:2px; margin-top:calc(1 * var(--vw)); }
+.hLabel { flex:1 1 0; font-size:calc(2.6 * var(--vw)); opacity:.5; white-space:nowrap; overflow:visible; }
+.hLastfm { margin-top:calc(2 * var(--vw)); }
+.hBtns { display:flex; flex-wrap:wrap; gap:calc(2 * var(--vw)); margin-top:calc(3 * var(--vw)); }

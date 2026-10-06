@@ -13,6 +13,8 @@ function closeAllOverlays() {
   if (ov) ov.classList.remove('on');
   var oc = document.getElementById('overlayCheck');
   if (oc) oc.classList.remove('on');
+  var oh = document.getElementById('overlayHistory');
+  if (oh) oh.classList.remove('on');
   var ot = document.getElementById('overlayTags');
   if (ot) ot.classList.remove('on');
   if (window.closeVolumioFrame) closeVolumioFrame();
