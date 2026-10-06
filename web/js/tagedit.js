@@ -55,6 +55,19 @@ function tagTrackButton(t) {
   return tagEditButton([{uri:t.uri, title:title}], title);
 }
 
+/* Stift für ein Album in einer Liste (Suche, Künstlerseite): liest die Titel erst beim Tippen; nur lokal, sonst null */
+function tagAlbumButton(al) {
+  if (!al || !al.uri || (al.service || 'mpd') !== 'mpd' || /^tidal:/.test(al.uri)) return null;
+  return tagPenButton('tagEditMini', 'Tags bearbeiten', function(){
+    showToast('Lade Titel…');
+    browseGet(al.uri).then(function(j){
+      var files = browseItems(j).filter(isLocalTrack).map(function(t){ return {uri:t.uri, title:t.title || t.name || ''}; });
+      if (files.length) openTagEditor(files, al.title || al.name || '');
+      else showToast('Keine lokalen Titel gefunden');
+    }).catch(function(){ showToast('Album nicht lesbar'); });
+  });
+}
+
 /* Stift im Player neben der Qualitätsanzeige: nur, wenn gerade eine lokale Datei läuft */
 var mEdit = null, mEditUri = '';
 function tagPaintPlayer(st) {
