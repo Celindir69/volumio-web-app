@@ -61,7 +61,8 @@ Spiegelung die Änderungen am Player. Der Dienst ist ohne Anmeldung im lokalen N
 
 ### Cover online suchen
 Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Schlüssel aus `web/config.local.js`) und im
-Cover Art Archive (MusicBrainz) nach Album-Interpret (sonst Interpret) und Album des ersten Titels. Die Vorschläge erscheinen
+Cover Art Archive (MusicBrainz) nach Album-Interpret (sonst Interpret) und Album, wie sie gerade in den Feldern stehen
+(zum Suchen kurz ändern, ohne zu speichern). Die Vorschläge erscheinen
 nebeneinander; ein Tipp übernimmt das Bild wie ein gewähltes (einbetten und/oder folder.jpg, mit Rückgängig).
 Die Abfragen macht der Tag-Dienst; der Player braucht dafür Internetzugang.
 
@@ -76,6 +77,8 @@ Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-
 In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
 30 Tage, 12 Monate oder gesamt) und **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.
+Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/INTERNAL/tags/artists/`
+(Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.
 
 Der Tag-Dienst fragt Volumio alle 5 s (bei Pause/Stopp alle 15 s) nach dem Wiedergabestand (`VOLUMIO_URL`, Standard
 `http://localhost:3000`). Ein Titel zählt, wenn er länger als 30 s ist und zur Hälfte oder 4 Minuten lief; Webradio zählt

@@ -428,6 +428,21 @@ function doLastfm(body, cb) {
   cb(400, {ok: false, error: 'action unbekannt'});
 }
 
+/* GET /artistimage?name=…: Künstlerfoto (Deezer, auf dem Player gespeichert unter artists/); 404 ohne Foto */
+var artistimg = require('./artistimg.js');
+var artistImages = new artistimg.Store(path.join(DATA_DIR, 'artists'));
+
+function doArtistImage(query, res) {
+  var name = String(query.name || '').trim();
+  if (!name || name.length > 200) return send(res, 400, {ok: false, error: 'name fehlt'});
+  artistImages.get(name, function(e, buf){
+    if (!buf) { res.writeHead(404, {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600'}); return res.end(); }
+    res.writeHead(200, {'Content-Type': buf[0] === 0x89 ? 'image/png' : 'image/jpeg', 'Content-Length': buf.length,
+                        'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=2592000'});
+    res.end(buf);
+  });
+}
+
 /* ---------- Cover ---------- */
 
 function mkdirs(dir) {
@@ -591,6 +606,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});

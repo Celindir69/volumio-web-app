@@ -338,9 +338,12 @@ function tagCoverSection(good) {
   }
 
   /* Cover online suchen (iTunes, Last.fm, Cover Art Archive über den Tag-Dienst): Album-Interpret (sonst Interpret)
-     und Album des ersten Titels. Vorschläge nebeneinander, Tippen übernimmt das Bild in die Vorschau. */
+     und Album, wie sie gerade in den Feldern stehen (zum Suchen kurz ändern, ohne zu speichern); leere Felder
+     ("verschieden") nehmen den Wert des ersten Titels. Vorschläge nebeneinander, Tippen übernimmt das Bild in die Vorschau. */
   online.addEventListener('click', function(){
-    var t = good[0].tags || {}, artist = t.albumartist || t.artist || '', album = t.album || '';
+    var t = good[0].tags || {};
+    function cur(k) { var c = tagCommon[k]; var v = c && c.input.value.trim(); return v || t[k] || ''; }
+    var artist = cur('albumartist') || cur('artist'), album = cur('album');
     if (!album) { tagStatus.textContent = 'Kein Albumname eingetragen'; return; }
     tagStatus.textContent = 'Suche Cover für „' + album + '“…';
     online.disabled = true;

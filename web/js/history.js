@@ -82,7 +82,14 @@ function histAlbumArt(artist, album, dir) {
   var path = dir ? 'path=' + encodeURIComponent('/mnt/' + dir) : '';
   return web || path ? '/albumart?' + [web, path].filter(Boolean).join('&') : '';
 }
-function histArtistArt(artist) { return '/albumart?web=' + encodeURIComponent(artist) + '/large&icon=users'; }
+/* Künstlerfoto vom Tag-Dienst (Deezer); gibt es keins, Volumios Künstler-Symbol */
+function histArtistArt(artist) { return TAGS + '/artistimage?name=' + encodeURIComponent(artist); }
+function histArtistFallback(img, artist) {
+  img.addEventListener('error', function once(){
+    img.removeEventListener('error', once);
+    img.src = artUrl('/albumart?web=' + encodeURIComponent(artist) + '/large&icon=users');
+  });
+}
 function histImg(src, round) {
   var img = histEl('img', 'sCover' + (round ? ' hRound' : ''));
   img.loading = 'lazy';
@@ -181,6 +188,7 @@ function histTop(seq) {
         openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.ti, uri: it.u ? 'music-library/' + it.u : undefined,
                     albumart: art});
       }, histImg(art, histKind === 'artist'));
+      if (histKind === 'artist') histArtistFallback(row.querySelector('img'), it.ar);
       row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
       histBody.appendChild(row);
     });
