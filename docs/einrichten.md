@@ -96,6 +96,11 @@ https://www.last.fm/api/accounts) in `web/config.local.js`. Dann unter Statistik
 Der Sitzungsschlüssel liegt in `/data/INTERNAL/tags/lastfm.json` und bleibt auf dem Player. Falls ein anderes
 Last.fm-Plugin in Volumio scrobbelt, eines davon abschalten, sonst kommt jeder Titel doppelt bei Last.fm an.
 
+### Lyrics-Versatz
+Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der
+Überschrift „Lyrics“ (Bühnenansicht: runde Knöpfe oben rechts) den Text um je 0,5 s. Der Wert gilt für diesen Titel auf
+allen Geräten (`/data/INTERNAL/tags/lyrics-offsets.json`); Tippen auf den Wert setzt ihn auf 0 zurück.
+
 ## Rotel-Bridge (optional)
 `rotel/rotel-bridge.js` nach `/data/INTERNAL/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
 ```js

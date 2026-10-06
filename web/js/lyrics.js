@@ -84,7 +84,8 @@ function askExtra(artist, title, isRadio) {
         if (parsed.length) {
           return {
             kind: 'syncedLyrics',
-            value: parsed
+            value: parsed,
+            key: lyrKeyOf(artist, title)
           };
         }
       }
@@ -115,8 +116,73 @@ function askExtra(artist, title, isRadio) {
 var lyrActive = -2, lyrUserUntil = 0, lyrPending = false, lyrAnim = 0, lyrLastH = 0;
 var LYR_PAUSE_MS = 4000;
 
-function renderSyncedLyrics(lines) {
+/* ---------- Versatz je Titel (ms, positiv = Text kommt später); gespeichert im Tag-Dienst, sonst im Browser ---------- */
+var lyrOffset = 0, lyrKey = '', lyrSyncTimer = null;
+
+function lyrKeyOf(artist, title) {
+  function k(s) { s = String(s || ''); if (s.normalize) s = s.normalize('NFKD'); return s.replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  return k(artist) + '|' + k(title);
+}
+function lyrTags() { return typeof TAGS !== 'undefined' ? TAGS : ''; }
+function lyrLocal(key, ms) {
+  try {
+    var all = JSON.parse(localStorage.getItem('lyrOffsets') || '{}');
+    if (ms === undefined) return all[key] || 0;
+    if (ms) all[key] = ms; else delete all[key];
+    localStorage.setItem('lyrOffsets', JSON.stringify(all));
+  } catch (e) { return 0; }
+}
+
+function lyrSyncShow(on) { document.documentElement.classList.toggle('lyrSynced', !!on); }
+
+function lyrPaintOffset() {
+  var v = document.getElementById('lyrSyncVal');
+  if (!v) return;
+  v.textContent = lyrOffset ? (lyrOffset > 0 ? '+' : '−') + (Math.abs(lyrOffset) / 1000).toFixed(1).replace('.', ',') + ' s' : 'sync';
+  v.classList.toggle('set', !!lyrOffset);
+}
+
+function lyrSetOffset(ms, save) {
+  lyrOffset = ms;
+  lyrActive = -2;                               /* aktive Zeile neu bestimmen */
+  lyrPaintOffset();
+  updateSyncedLyrics();
+  if (!save || !lyrKey) return;
+  var key = lyrKey;
+  clearTimeout(lyrSyncTimer);                   /* mehrfaches Tippen: einmal speichern */
+  lyrSyncTimer = setTimeout(function(){
+    lyrLocal(key, ms);
+    if (lyrTags()) fetch(lyrTags() + '/lyricsoffset', {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'},
+                                                     body: JSON.stringify({key: key, ms: ms})}).catch(function(){});
+  }, 800);
+}
+
+function lyrLoadOffset(key) {
+  lyrKey = key || '';
+  lyrSetOffset(key ? lyrLocal(key) : 0, false);
+  if (!key || !lyrTags()) return;
+  fetch(lyrTags() + '/lyricsoffset?key=' + encodeURIComponent(key)).then(function(r){ return r.json(); }).then(function(j){
+    if (j && j.ok && key === lyrKey && j.ms !== lyrOffset) lyrSetOffset(j.ms, false);
+  }).catch(function(){});
+}
+
+function lyrShift(d) {
+  if (!lyricLines.length) return;
+  lyrSetOffset(lyrOffset + d, true);
+  showToast('Lyrics ' + (d > 0 ? 'später' : 'früher') + (lyrOffset ? ' (' + document.getElementById('lyrSyncVal').textContent + ')' : ' (wie geliefert)'));
+}
+
+Array.prototype.forEach.call(document.querySelectorAll('.lyrShift'), function(b){
+  b.addEventListener('click', function(e){ e.stopPropagation(); lyrShift(Number(b.getAttribute('data-d'))); });
+});
+document.getElementById('lyrSyncVal').addEventListener('click', function(){
+  if (lyrOffset) { lyrSetOffset(0, true); showToast('Lyrics wie geliefert'); }
+});
+
+function renderSyncedLyrics(lines, key) {
   body.className = 'synced';
+  lyrSyncShow(true);
+  lyrLoadOffset(key);
   lyricLines = lines || [];
   lyrActive = -2; lyrPending = false; lyrUserUntil = 0; lyrLastH = 0;
   cancelAnimationFrame(lyrAnim);
@@ -164,7 +230,7 @@ function lyrCenter(el, animate) {
 function updateSyncedLyrics() {
   if (!lyricLines.length) return;
 
-  var pos = Number(window.currentSeekMs) || 0;
+  var pos = (Number(window.currentSeekMs) || 0) - lyrOffset;
   var active = -1;
 
   for (var i = 0; i < lyricLines.length; i++) {
@@ -222,5 +288,5 @@ body.addEventListener('click', function(e) {
   var line = lyricLines[Number(el.dataset.index)];
   if (!line || !curDur) return;                 /* Webradio: kein Springen */
   lyrUserUntil = 0; lyrPending = true;
-  seekToMs(line.time);
+  seekToMs(Math.max(0, line.time + lyrOffset));
 });
