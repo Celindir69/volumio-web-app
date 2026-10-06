@@ -663,3 +663,15 @@ html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
 .hBar { cursor:pointer; }
 .hBar.on .hFill { opacity:1; box-shadow:0 0 0 1px #fff; }
 .hBars:has(.hBar.on) .hBar:not(.on) .hFill { opacity:.45; }
+
+/* Lyrics-Versatz: "− sync +" neben der Überschrift, in der Bühnenansicht − und + oben rechts; nur bei synchronen Lyrics */
+#lyrSync { display:none; align-items:center; gap:calc(2 * var(--vw)); margin:0 auto 0 calc(4 * var(--vw)); }
+html.lyrSynced #lyrSync { display:flex; }
+#lyrSync button { background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:50%;
+  width:calc(8 * var(--vw)); height:calc(8 * var(--vw)); max-width:36px; max-height:36px; min-width:28px; min-height:28px;
+  font-size:calc(4.5 * var(--vw)); line-height:1; padding:0; cursor:pointer; }
+#lyrSyncVal { font-size:calc(3.4 * var(--vw)); opacity:.6; min-width:calc(12 * var(--vw)); text-align:center; cursor:pointer;
+  font-variant-numeric:tabular-nums; }
+#lyrSyncVal.set { opacity:1; font-weight:700; }
+#btnLyrEarlier, #btnLyrLater { display:none; }
+html.stage.lyrSynced #btnLyrEarlier, html.stage.lyrSynced #btnLyrLater { display:flex; }

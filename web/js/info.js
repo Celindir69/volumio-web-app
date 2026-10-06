@@ -9,9 +9,10 @@ paintTime();
   area.scrollTop = 0;
   while (lyricsText.firstChild) lyricsText.removeChild(lyricsText.firstChild);
   btnLyrics.className = 'actBtn' + (data ? ' has-content' : '');
+  lyrSyncShow(false);
   if (!data) return;
   if (data.kind === 'syncedLyrics') {
-    renderSyncedLyrics(data.value);
+    renderSyncedLyrics(data.value, data.key);
   } else {
     lyricsText.textContent = data.value;
   }
