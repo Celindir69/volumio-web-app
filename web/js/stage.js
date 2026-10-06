@@ -47,6 +47,7 @@ function stageApply() {
   infoOverlayBody.scrollTop = 0;
   stageInfoSchedule();
   setTimeout(stagePlainSetup, 50);
+  lyrShiftPlace();                                           /* − und + über die Lyrics */
 }
 
 btnStage.addEventListener('click', function(){

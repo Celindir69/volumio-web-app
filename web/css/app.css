@@ -673,5 +673,6 @@ html.lyrSynced #lyrSync { display:flex; }
 #lyrSyncVal { font-size:calc(3.4 * var(--vw)); opacity:.6; min-width:calc(12 * var(--vw)); text-align:center; cursor:pointer;
   font-variant-numeric:tabular-nums; }
 #lyrSyncVal.set { opacity:1; font-weight:700; }
-#btnLyrEarlier, #btnLyrLater { display:none; }
-html.stage.lyrSynced #btnLyrEarlier, html.stage.lyrSynced #btnLyrLater { display:flex; }
+#lyrShiftBar { display:none; position:absolute; top:0; bottom:0; align-items:center; justify-content:flex-start; gap:12px; pointer-events:none; }
+html.stage.lyrSynced #lyrShiftBar { display:flex; }
+html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShiftBar { visibility:hidden; }
