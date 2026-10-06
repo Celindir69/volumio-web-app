@@ -8,11 +8,16 @@
 <meta name="apple-mobile-web-app-title" content="MX Stream">
 <title>MX Stream</title>
 <link rel="apple-touch-icon" sizes="180x180" id="appIcon">
-<link rel="stylesheet" href="web/css/base.css">
-<link rel="stylesheet" href="web/css/app.css">
+<script>
+  document.write('<link rel="stylesheet" href="web/css/base.css?t=' + Date.now() + '">' +
+                 '<link rel="stylesheet" href="web/css/app.css?t=' + Date.now() + '">');
+</script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="web/config.js"></script>
-<script src="web/config.local.js" onerror="void 0"></script>
+<script>
+  /* Einstellungen immer frisch laden (Safari/iPad behalten sie sonst lange im Cache) */
+  document.write('<script src="web/config.js?t=' + Date.now() + '"><\/script>' +
+                 '<script src="web/config.local.js?t=' + Date.now() + '" onerror="void 0"><\/script>');
+</script>
 </head>
 <body>
 
@@ -259,23 +264,11 @@
   </div>
 </div>
 
-<script src="web/js/core.js"></script>
-<script src="web/js/lyrics.js"></script>
-<script src="web/js/controls.js"></script>
-<script src="web/js/info.js"></script>
-<script src="web/js/queue.js"></script>
-<script src="web/js/library.js"></script>
-<script src="web/js/marquee.js"></script>
-<script src="web/js/browse.js"></script>
-<script src="web/js/textfn.js"></script>
-<script src="web/js/tagedit.js"></script>
-<script src="web/js/check.js"></script>
-<script src="web/js/ui.js"></script>
-<script src="web/js/volumio.js"></script>
-<script src="web/js/quality.js"></script>
-<script src="web/js/mp4probe.js"></script>
-<script src="web/js/color.js"></script>
-<script src="web/js/poll.js"></script>
-<script src="web/js/stage.js"></script>
+<script>
+  /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
+  ['core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
+    document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
+  });
+</script>
 </body>
 </html>
