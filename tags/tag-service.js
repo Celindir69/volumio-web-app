@@ -443,6 +443,26 @@ function doArtistImage(query, res) {
   });
 }
 
+/* GET /lyricsoffset?key=… -> {ok, ms}; POST /lyricsoffset {key, ms}: Versatz der synchronen Lyrics je Titel
+   (in ms, positiv = Text kommt später), für alle Geräte gemeinsam in lyrics-offsets.json */
+var OFFSET_FILE = path.join(DATA_DIR, 'lyrics-offsets.json');
+function readOffsets() { try { return JSON.parse(fs.readFileSync(OFFSET_FILE, 'utf8')) || {}; } catch (e) { return {}; } }
+
+function doOffsetGet(query, cb) {
+  var key = String(query.key || '');
+  if (!key || key.length > 400) return cb(400, {ok: false, error: 'key fehlt'});
+  cb(200, {ok: true, ms: readOffsets()[key] || 0});
+}
+function doOffsetSet(body, cb) {
+  var key = String(body.key || ''), ms = Math.round(Number(body.ms) || 0);
+  if (!key || key.length > 400 || Math.abs(ms) > 600000) return cb(400, {ok: false, error: 'key oder ms ungültig'});
+  var all = readOffsets();
+  if (ms) all[key] = ms; else delete all[key];
+  try { mkdirs(DATA_DIR); fs.writeFileSync(OFFSET_FILE + '.neu', JSON.stringify(all)); fs.renameSync(OFFSET_FILE + '.neu', OFFSET_FILE); }
+  catch (e) { return cb(500, {ok: false, error: e.message}); }
+  cb(200, {ok: true, ms: ms});
+}
+
 /* ---------- Cover ---------- */
 
 function mkdirs(dir) {
@@ -607,11 +627,12 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/lastfm'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/lastfm', '/lyricsoffset'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -619,7 +640,7 @@ var server = http.createServer(function(req, res){
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/lastfm': doLastfm}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet}[route];
     fn(body || {}, function(c, o){ send(res, c, o); });
   });
 });
