@@ -93,7 +93,7 @@
   #btnRotelPower.on { opacity:1; }
   #btnRotelPower.on svg { fill:#4bbe87; }
   #btnRotelPower.na { opacity:.2; cursor:default; }
-  #topRight { display:flex; align-items:center; gap:12px; pointer-events:none; }
+  #topRight { margin-left:auto; display:flex; align-items:center; gap:12px; pointer-events:none; }
   #btnStage { display:none; }
   @media (orientation:landscape) and (min-width:900px) and (min-height:560px) { #btnStage { display:flex; } }
   #btnStage.on { opacity:1; }
