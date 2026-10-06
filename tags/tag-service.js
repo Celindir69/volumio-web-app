@@ -5,6 +5,8 @@ var fs    = require('fs');
 var path  = require('path');
 var cp    = require('child_process');
 var url   = require('url');
+var https = require('https');
+var vm    = require('vm');
 
 var HTTP_PORT   = parseInt(process.env.HTTP_PORT || '8766', 10);
 var MUSIC_ROOT  = process.env.MUSIC_ROOT  || '/mnt';
@@ -292,6 +294,70 @@ function doCheckGet(cb) {
   cb(200, {ok: true, running: checkRun, error: checkError, result: last});
 }
 
+/* ---------- Cover online suchen ---------- */
+/* GET /coversearch?artist=…&album=…: fragt die in COVER_SEARCH_URL eingetragene Adresse (web/config.local.js oder
+   Umgebungsvariable; {artist} und {album} werden ersetzt). Erwartet JSON mit cover_url (auch url oder image),
+   lädt das Bild und gibt es als base64 zurück. So stört es nicht, wenn die Seite keine Browser-Zugriffe erlaubt. */
+var APP_CONFIG_DIR = process.env.APP_CONFIG_DIR || '/volumio/http/www3/web';
+var COVER_MAX_BYTES = 10 * 1024 * 1024;
+
+function appConfig() {
+  var ctx = {window: {}};
+  ['config.js', 'config.local.js'].forEach(function(f){
+    try { vm.runInNewContext(fs.readFileSync(path.join(APP_CONFIG_DIR, f), 'utf8'), ctx, {filename: f, timeout: 1000}); }
+    catch (e) { /* Datei fehlt oder ist fehlerhaft: Standardwerte */ }
+  });
+  return ctx.window.APP_CONFIG || {};
+}
+
+/* einfacher GET mit Weiterleitungen, Zeit- und Größengrenze: cb(err, {type, body:Buffer}) */
+function fetchUrl(u, maxBytes, cb, hops) {
+  var p = url.parse(u);
+  if (p.protocol !== 'https:' && p.protocol !== 'http:') return cb(new Error('ungültige Adresse'));
+  var done = false;
+  function finish(e, r) { if (!done) { done = true; cb(e, r); } }
+  var req = (p.protocol === 'https:' ? https : http).get({
+    protocol: p.protocol, hostname: p.hostname, port: p.port, path: p.path,
+    headers: {'User-Agent': 'volumio-web-app tag-service', 'Accept': '*/*'}
+  }, function(res){
+    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && (hops || 0) < 3) {
+      res.resume();
+      return fetchUrl(url.resolve(u, res.headers.location), maxBytes, finish, (hops || 0) + 1);
+    }
+    if (res.statusCode !== 200) { res.resume(); return finish(new Error('HTTP ' + res.statusCode)); }
+    var parts = [], size = 0;
+    res.on('data', function(d){
+      size += d.length;
+      if (size > maxBytes) { req.abort(); return finish(new Error('Antwort zu groß')); }
+      parts.push(d);
+    });
+    res.on('end', function(){ finish(null, {type: String(res.headers['content-type'] || ''), body: Buffer.concat(parts)}); });
+  });
+  req.setTimeout(15000, function(){ req.abort(); finish(new Error('Zeitüberschreitung')); });
+  req.on('error', function(e){ finish(e); });
+}
+
+function doCoverSearch(query, cb) {
+  var tpl = process.env.COVER_SEARCH_URL || appConfig().COVER_SEARCH_URL || '';
+  var artist = String(query.artist || '').trim(), album = String(query.album || '').trim();
+  if (!tpl) return cb(200, {ok: false, error: 'keine Cover-Suche eingerichtet (COVER_SEARCH_URL)'});
+  if (!album) return cb(400, {ok: false, error: 'album fehlt'});
+  var u = tpl.replace(/\{artist\}/g, encodeURIComponent(artist)).replace(/\{album\}/g, encodeURIComponent(album));
+  fetchUrl(u, 256 * 1024, function(e, r){
+    if (e) return cb(200, {ok: false, error: 'Cover-Suche: ' + e.message});
+    var j;
+    try { j = JSON.parse(r.body.toString('utf8')); } catch (x) { return cb(200, {ok: false, error: 'Cover-Suche: keine JSON-Antwort'}); }
+    var img = j && (j.cover_url || j.url || j.image);
+    if (!img || typeof img !== 'string') return cb(200, {ok: false, notFound: true, error: 'kein Cover gefunden'});
+    fetchUrl(img, COVER_MAX_BYTES, function(e2, r2){
+      if (e2) return cb(200, {ok: false, error: 'Bild: ' + e2.message});
+      var b = r2.body, jpeg = b[0] === 0xff && b[1] === 0xd8, png = b[0] === 0x89 && b[1] === 0x50;
+      if (!jpeg && !png) return cb(200, {ok: false, error: 'Bild: kein JPEG oder PNG'});
+      cb(200, {ok: true, source: img, mime: jpeg ? 'image/jpeg' : 'image/png', image: b.toString('base64')});
+    });
+  });
+}
+
 /* ---------- Cover ---------- */
 
 function mkdirs(dir) {
@@ -452,6 +518,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true});
   if (req.method === 'GET' && route === '/history') return doHistory(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});

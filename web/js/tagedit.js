@@ -292,7 +292,10 @@ function tagCoverSection(good) {
   file.type = 'file'; file.accept = 'image/*'; file.style.display = 'none';
   var pick = document.createElement('button'); pick.textContent = 'Bild wählen…';
   var toFolder = document.createElement('button'); toFolder.textContent = 'Eingebettetes als folder.jpg';
-  btns.appendChild(pick); btns.appendChild(toFolder); btns.appendChild(file);
+  var online = document.createElement('button'); online.textContent = 'Online suchen';
+  btns.appendChild(pick);
+  if (window.APP_CONFIG && window.APP_CONFIG.COVER_SEARCH_URL) btns.appendChild(online);     /* nur mit eingerichteter Cover-Suche */
+  btns.appendChild(toFolder); btns.appendChild(file);
   wrap.appendChild(btns);
 
   var opts = document.createElement('div');                 /* erscheint nach der Bildwahl */
@@ -322,13 +325,30 @@ function tagCoverSection(good) {
   file.addEventListener('change', function(){
     if (!file.files || !file.files[0]) return;
     tagStatus.textContent = 'Bild wird vorbereitet…';
-    tagPrepareImage(file.files[0]).then(function(r){
-      chosen = r;
-      emb.show('data:image/jpeg;base64,' + r.b64, 'Neu · ' + r.w + '×' + r.h + ' · ' + Math.round(r.b64.length * 0.75 / 1024) + ' KB');
-      opts.style.display = '';
-      tagStatus.textContent = '';
-    }).catch(function(e){ tagStatus.textContent = e.message; });
+    tagPrepareImage(file.files[0]).then(function(r){ useImage(r, 'Neu'); }).catch(function(e){ tagStatus.textContent = e.message; });
     file.value = '';
+  });
+
+  function useImage(r, label) {                            /* Vorschau im Feld "Eingebettet", Optionen einblenden */
+    chosen = r;
+    emb.show('data:image/jpeg;base64,' + r.b64, label + ' · ' + r.w + '×' + r.h + ' · ' + Math.round(r.b64.length * 0.75 / 1024) + ' KB');
+    opts.style.display = '';
+    tagStatus.textContent = '';
+  }
+
+  /* Cover online suchen: Album-Interpret (sonst Interpret) und Album des ersten Titels */
+  online.addEventListener('click', function(){
+    var t = good[0].tags || {}, artist = t.albumartist || t.artist || '', album = t.album || '';
+    if (!album) { tagStatus.textContent = 'Kein Albumname eingetragen'; return; }
+    tagStatus.textContent = 'Suche Cover für „' + album + '“…';
+    online.disabled = true;
+    tagGetJson('/coversearch?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album)).then(function(res){
+      online.disabled = false;
+      if (!res.ok) { tagStatus.textContent = res.notFound ? 'Online kein Cover gefunden' : (res.error || 'Fehler'); return; }
+      var bin = atob(res.image), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return tagPrepareImage(new Blob([bytes], {type: res.mime})).then(function(r){ useImage(r, 'Online'); });
+    }).catch(function(e){ online.disabled = false; tagStatus.textContent = e && e.message ? e.message : 'Tag-Dienst nicht erreichbar'; });
   });
 
   function send(body, done) {
