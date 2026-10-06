@@ -615,3 +615,8 @@ html.noTidal #btnCheck { margin-left:auto; }
 .ckList .sRow { cursor:default; }
 .ckList .sRow.done { opacity:.4; }
 .ckMore { font-size:calc(3 * var(--vw)); opacity:.5; text-align:center; padding:calc(3 * var(--vw)) 0; cursor:pointer; }
+
+/* Vorschläge der Online-Cover-Suche im Tag-Editor */
+.tagOnline { display:flex; flex-wrap:wrap; gap:calc(3 * var(--vw)); margin:calc(3 * var(--vw)) 0 calc(1 * var(--vw)); }
+.tagOnline .tagPick { cursor:pointer; border-radius:calc(1.5 * var(--vw)); outline:2px solid transparent; outline-offset:3px; }
+.tagOnline .tagPick.on { outline-color:var(--accent, #4bbe87); }

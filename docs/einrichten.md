@@ -60,10 +60,10 @@ Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`
 Spiegelung die Änderungen am Player. Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
 
 ### Cover online suchen
-Mit `window.APP_CONFIG.COVER_SEARCH_URL = 'https://…?artist={artist}&album={album}';` in `web/config.local.js` erscheint im
-Album-Editor der Knopf „Online suchen“. Die Adresse muss JSON mit `cover_url` (oder `url`/`image`) liefern; der Tag-Dienst
-ruft sie ab (Album-Interpret, sonst Interpret, und Album des ersten Titels), lädt das Bild und zeigt es als Vorschau.
-Übernommen wird es wie ein gewähltes Bild (einbetten und/oder folder.jpg, mit Rückgängig).
+Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Schlüssel aus `web/config.local.js`) und im
+Cover Art Archive (MusicBrainz) nach Album-Interpret (sonst Interpret) und Album des ersten Titels. Die Vorschläge erscheinen
+nebeneinander; ein Tipp übernimmt das Bild wie ein gewähltes (einbetten und/oder folder.jpg, mit Rückgängig).
+Die Abfragen macht der Tag-Dienst; der Player braucht dafür Internetzugang.
 
 ### Bibliotheks-Check
 In der Suche oben rechts (Symbol mit Haken, nur wenn der Tag-Dienst läuft): findet Alben ohne Cover, Compilations ohne

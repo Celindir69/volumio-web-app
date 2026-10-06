@@ -4,9 +4,6 @@ window.APP_CONFIG.LASTFM_KEY = 'DEIN_LASTFM_SCHLUESSEL';
 window.APP_CONFIG.ROTEL = true;
 window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';
 */
-/* Cover online suchen (eigene Schnittstelle, Antwort JSON {"cover_url": "https://…"}):
-window.APP_CONFIG.COVER_SEARCH_URL = 'https://example.org/api.php?artist={artist}&album={album}&action=cover';
-*/
 /* TIDAL-Teile abschalten, auch wenn das Plugin läuft:
 window.APP_CONFIG.TIDAL = false;
 */

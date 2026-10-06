@@ -11,8 +11,6 @@ window.APP_CONFIG = {
   ROTEL_HOST: '',     /* Adresse des Verstärkers im Netz (liest nur rotel-bridge.js), z. B. '192.168.1.50' */
   ROTEL_AMP_PORT: 9590, /* Port des Verstärkers (ASCII-Protokoll) */
   ROTEL_PORT: 8765,   /* Port des Rotel-Dienstes auf dem Player */
-  COVER_SEARCH_URL: '', /* Cover online suchen (Album-Editor): Adresse mit {artist} und {album}, Antwort JSON {"cover_url": "…"};
-                         leer = kein Knopf. Der Tag-Dienst ruft sie ab (liest diese Datei und config.local.js beim Suchen). */
   TIDAL: 'auto',      /* TIDAL-Teile (Auswahl Lokal/TIDAL in der Suche, ähnliche Künstler bei TIDAL):
                          'auto' = nur, wenn das TIDAL-Plugin in Volumio aktiv ist; true = immer; false = nie */
   ROTEL_CMD_POWER_ON:  'power_on',    /* Befehlsnamen für /cmd?c=... des Rotel-Dienstes */

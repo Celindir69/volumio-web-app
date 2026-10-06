@@ -275,10 +275,6 @@ function tagThumb(caption) {
   return box;
 }
 
-/* Cover-Suche eingerichtet? Das meldet der Tag-Dienst (er liest config.js/config.local.js selbst) */
-var tagCoverSearch = false;
-fetch(TAGS + '/health').then(function(r){ return r.json(); }).then(function(j){ tagCoverSearch = !!(j && j.coverSearch); }).catch(function(){});
-
 /* Bereich oben im Editor: eingebettetes Cover und folder.jpg anzeigen, neues Bild wählen, folder.jpg erzeugen */
 function tagCoverSection(good) {
   var uris = good.map(function(f){ return f.uri; }), first = uris[0], n = uris.length;
@@ -297,10 +293,11 @@ function tagCoverSection(good) {
   var pick = document.createElement('button'); pick.textContent = 'Bild wählen…';
   var toFolder = document.createElement('button'); toFolder.textContent = 'Eingebettetes als folder.jpg';
   var online = document.createElement('button'); online.textContent = 'Online suchen';
-  btns.appendChild(pick);
-  if (tagCoverSearch || (window.APP_CONFIG && window.APP_CONFIG.COVER_SEARCH_URL)) btns.appendChild(online);   /* nur mit eingerichteter Cover-Suche */
-  btns.appendChild(toFolder); btns.appendChild(file);
+  btns.appendChild(pick); btns.appendChild(online); btns.appendChild(toFolder); btns.appendChild(file);
   wrap.appendChild(btns);
+  var found = document.createElement('div');               /* Vorschläge der Online-Suche */
+  found.className = 'tagOnline'; found.style.display = 'none';
+  wrap.appendChild(found);
 
   var opts = document.createElement('div');                 /* erscheint nach der Bildwahl */
   opts.className = 'tagCoverOpts'; opts.style.display = 'none';
@@ -340,19 +337,46 @@ function tagCoverSection(good) {
     tagStatus.textContent = '';
   }
 
-  /* Cover online suchen: Album-Interpret (sonst Interpret) und Album des ersten Titels */
+  /* Cover online suchen (iTunes, Last.fm, Cover Art Archive über den Tag-Dienst): Album-Interpret (sonst Interpret)
+     und Album des ersten Titels. Vorschläge nebeneinander, Tippen übernimmt das Bild in die Vorschau. */
   online.addEventListener('click', function(){
     var t = good[0].tags || {}, artist = t.albumartist || t.artist || '', album = t.album || '';
     if (!album) { tagStatus.textContent = 'Kein Albumname eingetragen'; return; }
     tagStatus.textContent = 'Suche Cover für „' + album + '“…';
     online.disabled = true;
+    while (found.firstChild) found.removeChild(found.firstChild);
+    found.style.display = 'none';
     tagGetJson('/coversearch?artist=' + encodeURIComponent(artist) + '&album=' + encodeURIComponent(album)).then(function(res){
       online.disabled = false;
-      if (!res.ok) { tagStatus.textContent = res.notFound ? 'Online kein Cover gefunden' : (res.error || 'Fehler'); return; }
-      var bin = atob(res.image), bytes = new Uint8Array(bin.length);
-      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      return tagPrepareImage(new Blob([bytes], {type: res.mime})).then(function(r){ useImage(r, 'Online'); });
-    }).catch(function(e){ online.disabled = false; tagStatus.textContent = e && e.message ? e.message : 'Tag-Dienst nicht erreichbar'; });
+      if (!res.ok) { tagStatus.textContent = res.error || 'Fehler'; return; }
+      var left = res.results.length;
+      function count() {
+        var k = found.children.length;
+        if (!k) { found.style.display = 'none'; tagStatus.textContent = 'Online kein Cover gefunden'; }
+        else tagStatus.textContent = k + ' Vorschl' + (k > 1 ? 'äge' : 'ag') + ' – zum Übernehmen antippen';
+      }
+      function gone() { left--; if (/Vorschl|kein Cover/.test(tagStatus.textContent)) count(); }
+      if (!left) { tagStatus.textContent = 'Online kein Cover gefunden'; return; }
+      found.style.display = '';
+      res.results.forEach(function(r){
+        var src = TAGS + '/coverimage?id=' + encodeURIComponent(r.id);
+        var card = tagThumb(r.source);
+        card.classList.add('tagPick');
+        card.onEmpty = function(){ if (card.parentNode) found.removeChild(card); gone(); };
+        card.show(src);
+        card.addEventListener('click', function(){
+          tagStatus.textContent = 'Bild wird vorbereitet…';
+          fetch(src).then(function(x){ if (!x.ok) throw new Error('Bild nicht ladbar'); return x.blob(); })
+            .then(tagPrepareImage)
+            .then(function(img){
+              Array.prototype.forEach.call(found.children, function(c){ c.classList.toggle('on', c === card); });
+              useImage(img, r.source);
+            }).catch(function(e){ tagStatus.textContent = e.message; });
+        });
+        found.appendChild(card);
+      });
+      count();
+    }).catch(function(){ online.disabled = false; tagStatus.textContent = 'Tag-Dienst nicht erreichbar'; });
   });
 
   function send(body, done) {
