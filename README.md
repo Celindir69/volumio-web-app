@@ -13,6 +13,7 @@ privaten Repository, von dem aus dieses hier aktualisiert wird.
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt | `/volumio/http/www3/tools/` |
 
 Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`). Einrichtung: [docs/einrichten.md](docs/einrichten.md).
+Aktualisieren direkt auf dem Player: `sudo mx-deploy` (`tools/mx-deploy.sh`, siehe dort).
 
 Rotel-Verstärker und TIDAL sind optional (siehe Einrichtung). Eigene Einstellungen (z. B. ein Last.fm-Schlüssel für ähnliche Künstler) gehören in `web/config.local.js`
 (Vorlage `web/config.local.js.example`); diese Datei ist nicht im Repository.
