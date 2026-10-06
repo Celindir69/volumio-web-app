@@ -70,6 +70,31 @@ function histChips(list, cur, onPick) {
   return row;
 }
 
+/* ---------- Bilder (Volumios /albumart mit Zwischenspeicher; lokal aus dem Ordner, sonst einmal online) ---------- */
+
+/* uri bzw. Ordner relativ zu /mnt ("USB/…"); '' bei TIDAL und Co. */
+function histRel(u) {
+  if (!u || /^[a-z]+:\/\//.test(u)) return '';
+  return u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, '');
+}
+function histAlbumArt(artist, album, dir) {
+  var web = artist && album && artist !== 'Verschiedene' ? 'web=' + encodeURIComponent(artist) + '/' + encodeURIComponent(album) + '/extralarge' : '';
+  var path = dir ? 'path=' + encodeURIComponent('/mnt/' + dir) : '';
+  return web || path ? '/albumart?' + [web, path].filter(Boolean).join('&') : '';
+}
+function histArtistArt(artist) { return '/albumart?web=' + encodeURIComponent(artist) + '/large&icon=users'; }
+function histImg(src, round) {
+  var img = histEl('img', 'sCover' + (round ? ' hRound' : ''));
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  if (src) img.src = artUrl(src);
+  return img;
+}
+function histTrackArt(e) {
+  var rel = histRel(e.u);
+  return histAlbumArt(e.ar, e.al, rel ? rel.replace(/\/[^\/]*$/, '') : '');
+}
+
 /* ---------- Abspielen und Öffnen ---------- */
 
 function histPlayUri(uri, service, e) {
@@ -88,8 +113,9 @@ function histPlay(e) {
   }).catch(function(){ showToast('Tag-Dienst nicht erreichbar'); });
 }
 
-function histRow(title, sub, right, onClick) {
+function histRow(title, sub, right, onClick, img) {
   var row = histEl('div', 'sRow hRow');
+  if (img) row.appendChild(img);
   var meta = histEl('div', 'sMeta');
   meta.appendChild(histEl('div', 'sTitle', title));
   if (sub) meta.appendChild(histEl('div', 'sSub', sub));
@@ -120,7 +146,7 @@ function histRecent(seq) {
         if (day !== lastDay) { histBody.appendChild(browseHeading(day)); lastDay = day; }
         var d = new Date(e.t * 1000);
         histBody.appendChild(histRow(e.ti, e.ar + (e.al ? ' · ' + e.al : ''), histTwo(d.getHours()) + ':' + histTwo(d.getMinutes()),
-                                     function(){ histPlay(e); }));
+                                     function(){ histPlay(e); }, histImg(histTrackArt(e))));
         before = e.t;
       });
       if (items.length >= 100) {
@@ -146,11 +172,15 @@ function histTop(seq) {
     items.forEach(function(it, i){
       var title = histKind === 'artist' ? it.ar : it.ti;
       var sub = histKind === 'artist' ? '' : (histKind === 'track' && it.al ? it.ar + ' · ' + it.al : it.ar);
+      var art = histKind === 'artist' ? histArtistArt(it.ar)
+              : histKind === 'album' ? histAlbumArt(it.ar, it.ti, it.u || '')
+              : histTrackArt(it);
       var row = histRow(title, sub, it.n + '×', function(){
         if (histKind === 'track') return histPlay({ti: it.ti, ar: it.ar, al: it.al, u: it.u});
         if (histKind === 'artist') return openBrowse({kind: 'artist', artist: it.ar});
-        openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.ti, uri: it.u ? 'music-library/' + it.u : undefined});
-      });
+        openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.ti, uri: it.u ? 'music-library/' + it.u : undefined,
+                    albumart: art});
+      }, histImg(art, histKind === 'artist'));
       row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
       histBody.appendChild(row);
     });

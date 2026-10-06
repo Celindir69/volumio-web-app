@@ -632,7 +632,8 @@ html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
 #histBody .infoSection:first-child { margin-top:calc(3 * var(--vw)); }
 .hRow { cursor:pointer; }
 .hRight { flex:0 0 auto; margin-left:calc(3 * var(--vw)); font-size:calc(3.2 * var(--vw)); opacity:.55; font-variant-numeric:tabular-nums; }
-.hRank { flex:0 0 calc(8 * var(--vw)); font-size:calc(3.2 * var(--vw)); opacity:.45; font-variant-numeric:tabular-nums; }
+.sCover.hRound { border-radius:50%; }
+.hRank { flex:0 0 calc(7 * var(--vw)); font-size:calc(3.2 * var(--vw)); opacity:.45; font-variant-numeric:tabular-nums; }
 .hChips { display:flex; flex-wrap:wrap; gap:calc(2 * var(--vw)); padding-top:calc(3 * var(--vw)); }
 .hChip { background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:999px;
   padding:calc(1.4 * var(--vw)) calc(3.5 * var(--vw)); font-size:calc(3.2 * var(--vw)); cursor:pointer; }
