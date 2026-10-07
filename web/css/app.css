@@ -615,6 +615,18 @@ html.noTidal #btnCheck { margin-left:auto; }
 .ckList .sRow { cursor:default; }
 .ckList .sRow.done { opacity:.4; }
 .ckMore { font-size:calc(3 * var(--vw)); opacity:.5; text-align:center; padding:calc(3 * var(--vw)) 0; cursor:pointer; }
+.ckMoodCat { margin-top:calc(4 * var(--vw)); }
+.ckMoodLine { font-size:calc(3.2 * var(--vw)); opacity:.8; line-height:1.4; padding:calc(1 * var(--vw)) 0; }
+.ckMoodBar { height:calc(1.2 * var(--vw)); background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; margin:calc(1 * var(--vw)) 0 calc(2 * var(--vw)); }
+.ckMoodBar div { height:100%; background:var(--accent, #fff); opacity:.8; }
+.ckMoodHead { font-size:calc(3 * var(--vw)); text-transform:uppercase; letter-spacing:.08em; opacity:.5; padding:calc(3 * var(--vw)) 0 calc(1.5 * var(--vw)); }
+.ckChips { display:flex; flex-wrap:wrap; gap:calc(1.5 * var(--vw)); }
+.ckChip { font-size:calc(3 * var(--vw)); padding:calc(.8 * var(--vw)) calc(2.4 * var(--vw)); border-radius:999px; background:rgba(255,255,255,.1); }
+.ckEnergy { display:flex; gap:calc(3 * var(--vw)); align-items:flex-end; height:calc(30 * var(--vw)); }
+.ckEnCol { flex:1 1 0; display:flex; flex-direction:column; align-items:center; height:100%; }
+.ckEnN, .ckEnL { font-size:calc(2.8 * var(--vw)); opacity:.6; padding:calc(.6 * var(--vw)) 0; }
+.ckEnBar { flex:1 1 auto; width:100%; display:flex; align-items:flex-end; }
+.ckEnBar div { width:100%; min-height:1px; background:rgba(255,255,255,.35); border-radius:calc(.8 * var(--vw)) calc(.8 * var(--vw)) 0 0; }
 
 /* Vorschläge der Online-Cover-Suche im Tag-Editor */
 .tagOnline { display:flex; flex-wrap:wrap; gap:calc(3 * var(--vw)); margin:calc(3 * var(--vw)) 0 calc(1 * var(--vw)); }

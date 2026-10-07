@@ -1,0 +1,2459 @@
+{
+  "schema_version": "2.0",
+  "purpose": "Normalize Last.fm community tags into MOOD, ENERGY and STYLE.",
+  "semantics": {
+    "weight": "Relative influence of this mapping when aggregating several Last.fm tags. Range 0.0-1.0.",
+    "confidence": "Estimated semantic reliability of the mapping itself. Range 0.0-1.0; editorial heuristic, not supplied by Last.fm.",
+    "lastfm_count": "Popularity/strength returned by Last.fm for a track tag; normalize per track before aggregation."
+  },
+  "entries": {
+    "happy": {
+      "aliases": [
+        "cheerful",
+        "joyful",
+        "sunny",
+        "good mood"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "happy",
+            "weight": 1.0,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 1.0,
+          "confidence": 0.95
+        }
+      }
+    },
+    "feel-good": {
+      "aliases": [
+        "feel good",
+        "feelgood",
+        "positive vibes"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "happy",
+            "weight": 0.95,
+            "confidence": 0.92
+          },
+          {
+            "value": "uplifting",
+            "weight": 0.95,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.95,
+          "confidence": 0.92
+        }
+      }
+    },
+    "uplifting": {
+      "aliases": [
+        "inspiring",
+        "inspirational",
+        "triumphant"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 1.0,
+          "confidence": 0.96
+        }
+      }
+    },
+    "euphoric": {
+      "aliases": [
+        "euphoria",
+        "ecstatic"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 1.0,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 1.0,
+          "confidence": 0.94
+        }
+      }
+    },
+    "melancholic": {
+      "aliases": [
+        "melancholy",
+        "melancholia",
+        "wistful",
+        "sorrowful",
+        "mournful"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "melancholic",
+            "weight": 1.0,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.97
+        }
+      }
+    },
+    "sad": {
+      "aliases": [
+        "sadness",
+        "heartbroken",
+        "depressing"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "sad",
+            "weight": 1.0,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.94
+        }
+      }
+    },
+    "bittersweet": {
+      "aliases": [
+        "bittersweetness"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "melancholic",
+            "weight": 0.9,
+            "confidence": 0.92
+          },
+          {
+            "value": "reflective",
+            "weight": 0.9,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.92
+        }
+      }
+    },
+    "relaxed": {
+      "aliases": [
+        "relaxing",
+        "relax",
+        "soothing",
+        "tranquil",
+        "serene"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 1.0,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 1,
+          "weight": 1.0,
+          "confidence": 0.97
+        }
+      }
+    },
+    "calm": {
+      "aliases": [
+        "peaceful",
+        "quiet",
+        "placid"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "calm",
+            "weight": 1.0,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 1,
+          "weight": 1.0,
+          "confidence": 0.97
+        }
+      }
+    },
+    "chill": {
+      "aliases": [
+        "chilled",
+        "chill-out",
+        "chill out"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.9,
+            "confidence": 0.9
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.9
+        },
+        "STYLE": [
+          {
+            "value": "chillout",
+            "weight": 0.9,
+            "confidence": 0.9
+          }
+        ]
+      }
+    },
+    "dreamy": {
+      "aliases": [
+        "dreamlike",
+        "dream-like",
+        "oneiric"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dreamy",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.96
+        }
+      }
+    },
+    "ethereal": {
+      "aliases": [
+        "otherworldly"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dreamy",
+            "weight": 0.95,
+            "confidence": 0.94
+          },
+          {
+            "value": "atmospheric",
+            "weight": 0.95,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 1,
+          "weight": 0.95,
+          "confidence": 0.94
+        },
+        "STYLE": [
+          {
+            "value": "atmospheric",
+            "weight": 0.95,
+            "confidence": 0.94
+          }
+        ]
+      }
+    },
+    "hypnotic": {
+      "aliases": [
+        "hypnotizing",
+        "mesmerizing",
+        "mesmerising"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dreamy",
+            "weight": 0.85,
+            "confidence": 0.88
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.85,
+          "confidence": 0.88
+        },
+        "STYLE": [
+          {
+            "value": "atmospheric",
+            "weight": 0.85,
+            "confidence": 0.88
+          }
+        ]
+      }
+    },
+    "romantic": {
+      "aliases": [
+        "romance",
+        "tender",
+        "intimate"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "romantic",
+            "weight": 1.0,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.95
+        }
+      }
+    },
+    "sensual": {
+      "aliases": [
+        "seductive",
+        "sultry"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "sensual",
+            "weight": 1.0,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.92
+        }
+      }
+    },
+    "dark": {
+      "aliases": [
+        "darkness",
+        "gloomy",
+        "gloom",
+        "bleak",
+        "brooding"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 1.0,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.94
+        }
+      }
+    },
+    "ominous": {
+      "aliases": [
+        "sinister",
+        "menacing",
+        "foreboding"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 0.95,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.95,
+          "confidence": 0.94
+        }
+      }
+    },
+    "haunting": {
+      "aliases": [
+        "eerie",
+        "spooky"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 0.9,
+            "confidence": 0.91
+          },
+          {
+            "value": "atmospheric",
+            "weight": 0.9,
+            "confidence": 0.91
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.91
+        },
+        "STYLE": [
+          {
+            "value": "atmospheric",
+            "weight": 0.9,
+            "confidence": 0.91
+          }
+        ]
+      }
+    },
+    "emotional": {
+      "aliases": [
+        "emotion",
+        "heartfelt",
+        "moving",
+        "touching"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "emotional",
+            "weight": 0.9,
+            "confidence": 0.88
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.9,
+          "confidence": 0.88
+        }
+      }
+    },
+    "passionate": {
+      "aliases": [
+        "passion"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "emotional",
+            "weight": 0.85,
+            "confidence": 0.88
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.85,
+          "confidence": 0.88
+        }
+      }
+    },
+    "aggressive": {
+      "aliases": [
+        "aggression",
+        "angry",
+        "anger",
+        "furious",
+        "ferocious",
+        "hostile"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "aggressive",
+            "weight": 1.0,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 1.0,
+          "confidence": 0.97
+        }
+      }
+    },
+    "intense": {
+      "aliases": [
+        "frenetic",
+        "frantic"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "intense",
+            "weight": 1.0,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 1.0,
+          "confidence": 0.94
+        }
+      }
+    },
+    "epic": {
+      "aliases": [
+        "majestic",
+        "grandiose",
+        "monumental",
+        "heroic"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "epic",
+            "weight": 0.9,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.9,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "cinematic",
+            "weight": 0.9,
+            "confidence": 0.92
+          }
+        ]
+      }
+    },
+    "dramatic": {
+      "aliases": [
+        "theatrical"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "epic",
+            "weight": 0.8,
+            "confidence": 0.82
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.8,
+          "confidence": 0.82
+        },
+        "STYLE": [
+          {
+            "value": "cinematic",
+            "weight": 0.8,
+            "confidence": 0.82
+          }
+        ]
+      }
+    },
+    "reflective": {
+      "aliases": [
+        "introspective",
+        "contemplative",
+        "thoughtful"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "reflective",
+            "weight": 1.0,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.95
+        }
+      }
+    },
+    "meditative": {
+      "aliases": [
+        "meditation"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "reflective",
+            "weight": 0.95,
+            "confidence": 0.93
+          },
+          {
+            "value": "calm",
+            "weight": 0.95,
+            "confidence": 0.93
+          }
+        ],
+        "ENERGY": {
+          "value": 1,
+          "weight": 0.95,
+          "confidence": 0.93
+        },
+        "STYLE": [
+          {
+            "value": "ambient",
+            "weight": 0.95,
+            "confidence": 0.93
+          }
+        ]
+      }
+    },
+    "playful": {
+      "aliases": [
+        "fun",
+        "bouncy",
+        "quirky"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "happy",
+            "weight": 0.85,
+            "confidence": 0.88
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.85,
+          "confidence": 0.88
+        }
+      }
+    },
+    "upbeat": {
+      "aliases": [
+        "lively",
+        "positive"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 1.0,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 1.0,
+          "confidence": 0.95
+        }
+      }
+    },
+    "ambient": {
+      "aliases": [
+        "ambient music"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "atmospheric",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 1,
+          "weight": 1.0,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "ambient",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "dark ambient": {
+      "aliases": [
+        "darkambient"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 1.0,
+            "confidence": 0.98
+          },
+          {
+            "value": "atmospheric",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 1,
+          "weight": 1.0,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "dark ambient",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "downtempo": {
+      "aliases": [
+        "down-tempo",
+        "down tempo"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "downtempo",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "trip-hop": {
+      "aliases": [
+        "trip hop",
+        "triphop"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 1.0,
+            "confidence": 0.98
+          },
+          {
+            "value": "relaxed",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "trip-hop",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "acoustic": {
+      "aliases": [
+        "unplugged",
+        "acoustic music"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "acoustic",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "electronic": {
+      "aliases": [
+        "electronica",
+        "electronic music"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "electronic",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "lo-fi": {
+      "aliases": [
+        "lofi",
+        "lo fi",
+        "low-fi",
+        "low fidelity"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "lo-fi",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "minimal": {
+      "aliases": [
+        "minimalist",
+        "minimalism",
+        "minimalistic"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.9
+        },
+        "STYLE": [
+          {
+            "value": "minimal",
+            "weight": 0.9,
+            "confidence": 0.9
+          }
+        ]
+      }
+    },
+    "atmospheric": {
+      "aliases": [
+        "atmosphere",
+        "soundscape",
+        "soundscapes"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "atmospheric",
+            "weight": 1.0,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "atmospheric",
+            "weight": 1.0,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "psychedelic": {
+      "aliases": [
+        "psychedelia",
+        "psych",
+        "trippy"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dreamy",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "psychedelic",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "experimental": {
+      "aliases": [
+        "experimental music"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "experimental",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "avant-garde": {
+      "aliases": [
+        "avant garde",
+        "avantgarde"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "avant-garde",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "progressive": {
+      "aliases": [
+        "prog"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.85,
+          "confidence": 0.85
+        },
+        "STYLE": [
+          {
+            "value": "progressive",
+            "weight": 0.85,
+            "confidence": 0.85
+          }
+        ]
+      }
+    },
+    "orchestral": {
+      "aliases": [
+        "orchestra",
+        "orchestrated"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "epic",
+            "weight": 0.9,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.9,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "orchestral",
+            "weight": 0.9,
+            "confidence": 0.92
+          }
+        ]
+      }
+    },
+    "symphonic": {
+      "aliases": [
+        "symphony"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "epic",
+            "weight": 0.9,
+            "confidence": 0.91
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.91
+        },
+        "STYLE": [
+          {
+            "value": "orchestral",
+            "weight": 0.9,
+            "confidence": 0.91
+          }
+        ]
+      }
+    },
+    "cinematic": {
+      "aliases": [
+        "film music",
+        "film score",
+        "movie soundtrack",
+        "score"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "epic",
+            "weight": 1.0,
+            "confidence": 0.96
+          },
+          {
+            "value": "atmospheric",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "cinematic",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "soundtrack": {
+      "aliases": [
+        "ost"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 1.0,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "soundtrack",
+            "weight": 1.0,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "retro": {
+      "aliases": [
+        "vintage",
+        "old-school",
+        "old school",
+        "oldschool",
+        "nostalgic"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.8,
+          "confidence": 0.84
+        },
+        "STYLE": [
+          {
+            "value": "retro",
+            "weight": 0.8,
+            "confidence": 0.84
+          }
+        ]
+      }
+    },
+    "funky": {
+      "aliases": [
+        "funkiness"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 1.0,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 1.0,
+          "confidence": 0.95
+        },
+        "STYLE": [
+          {
+            "value": "funky",
+            "weight": 1.0,
+            "confidence": 0.95
+          }
+        ]
+      }
+    },
+    "groovy": {
+      "aliases": [
+        "groove",
+        "grooves",
+        "grooving"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 1.0,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 1.0,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "groovy",
+            "weight": 1.0,
+            "confidence": 0.92
+          }
+        ]
+      }
+    },
+    "dance": {
+      "aliases": [
+        "dance music",
+        "danceable"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 0.95,
+            "confidence": 0.93
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.95,
+          "confidence": 0.93
+        },
+        "STYLE": [
+          {
+            "value": "dance",
+            "weight": 0.95,
+            "confidence": 0.93
+          }
+        ]
+      }
+    },
+    "club": {
+      "aliases": [
+        "club music",
+        "floorfiller"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 0.9,
+            "confidence": 0.88
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.9,
+          "confidence": 0.88
+        },
+        "STYLE": [
+          {
+            "value": "dance",
+            "weight": 0.9,
+            "confidence": 0.88
+          }
+        ]
+      }
+    },
+    "driving": {
+      "aliases": [
+        "propulsive",
+        "pumping",
+        "pulsating",
+        "pulsing"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 1.0,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "driving",
+            "weight": 1.0,
+            "confidence": 0.92
+          }
+        ]
+      }
+    },
+    "rhythmic": {
+      "aliases": [
+        "rhythm",
+        "percussive",
+        "percussion",
+        "beat-driven"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.9,
+          "confidence": 0.88
+        },
+        "STYLE": [
+          {
+            "value": "rhythmic",
+            "weight": 0.9,
+            "confidence": 0.88
+          }
+        ]
+      }
+    },
+    "smooth": {
+      "aliases": [
+        "silky",
+        "mellow"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.95,
+            "confidence": 0.91
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.95,
+          "confidence": 0.91
+        },
+        "STYLE": [
+          {
+            "value": "smooth",
+            "weight": 0.95,
+            "confidence": 0.91
+          }
+        ]
+      }
+    },
+    "raw": {
+      "aliases": [
+        "rough",
+        "gritty",
+        "unpolished"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "aggressive",
+            "weight": 0.85,
+            "confidence": 0.86
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.85,
+          "confidence": 0.86
+        },
+        "STYLE": [
+          {
+            "value": "raw",
+            "weight": 0.85,
+            "confidence": 0.86
+          }
+        ]
+      }
+    },
+    "heavy": {
+      "aliases": [
+        "crushing",
+        "brutal",
+        "massive"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "intense",
+            "weight": 0.95,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.95,
+          "confidence": 0.94
+        },
+        "STYLE": [
+          {
+            "value": "heavy",
+            "weight": 0.95,
+            "confidence": 0.94
+          }
+        ]
+      }
+    },
+    "singer-songwriter": {
+      "aliases": [
+        "singer songwriter"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "reflective",
+            "weight": 0.85,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.85,
+          "confidence": 0.94
+        },
+        "STYLE": [
+          {
+            "value": "singer-songwriter",
+            "weight": 0.85,
+            "confidence": 0.94
+          }
+        ]
+      }
+    },
+    "folk": {
+      "aliases": [
+        "folk music"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "folk",
+            "weight": 0.9,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "jazz": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.75,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "jazz",
+            "weight": 0.75,
+            "confidence": 0.97
+          }
+        ]
+      },
+      "note": "Broad genre: low energy confidence; BPM/audio features should dominate."
+    },
+    "smooth jazz": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 1.0,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "smooth jazz",
+            "weight": 1.0,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "bebop": {
+      "aliases": [
+        "be-bop"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "bebop",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "hard bop": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "hard bop",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "free jazz": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "intense",
+            "weight": 0.9,
+            "confidence": 0.94
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.94
+        },
+        "STYLE": [
+          {
+            "value": "free jazz",
+            "weight": 0.9,
+            "confidence": 0.94
+          }
+        ]
+      }
+    },
+    "jazz fusion": {
+      "aliases": [
+        "fusion jazz"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "jazz fusion",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "soul": {
+      "aliases": [
+        "soul music"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "emotional",
+            "weight": 0.8,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.8,
+          "confidence": 0.95
+        },
+        "STYLE": [
+          {
+            "value": "soul",
+            "weight": 0.8,
+            "confidence": 0.95
+          }
+        ]
+      }
+    },
+    "neo-soul": {
+      "aliases": [
+        "neo soul",
+        "neosoul"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "sensual",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "neo-soul",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "funk": {
+      "aliases": [
+        "funk music"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "funk",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "disco": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "disco",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "rock": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.65,
+          "confidence": 0.9
+        },
+        "STYLE": [
+          {
+            "value": "rock",
+            "weight": 0.65,
+            "confidence": 0.9
+          }
+        ]
+      },
+      "note": "Broad genre: energy varies widely."
+    },
+    "soft rock": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "soft rock",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "indie rock": {
+      "aliases": [
+        "indierock"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.75,
+          "confidence": 0.94
+        },
+        "STYLE": [
+          {
+            "value": "indie rock",
+            "weight": 0.75,
+            "confidence": 0.94
+          }
+        ]
+      }
+    },
+    "progressive rock": {
+      "aliases": [
+        "prog rock",
+        "progrock"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.8,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "progressive rock",
+            "weight": 0.8,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "post-rock": {
+      "aliases": [
+        "post rock",
+        "postrock"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "atmospheric",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "post-rock",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "shoegaze": {
+      "aliases": [
+        "shoegazing"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dreamy",
+            "weight": 0.95,
+            "confidence": 0.97
+          },
+          {
+            "value": "atmospheric",
+            "weight": 0.95,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.95,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "shoegaze",
+            "weight": 0.95,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "punk": {
+      "aliases": [
+        "punk rock",
+        "punkrock"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "aggressive",
+            "weight": 0.95,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.95,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "punk",
+            "weight": 0.95,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "post-punk": {
+      "aliases": [
+        "post punk",
+        "postpunk"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "post-punk",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "metal": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "intense",
+            "weight": 0.8,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.8,
+          "confidence": 0.95
+        },
+        "STYLE": [
+          {
+            "value": "metal",
+            "weight": 0.8,
+            "confidence": 0.95
+          }
+        ]
+      },
+      "note": "Broad genre; doom and atmospheric variants may be lower energy."
+    },
+    "heavy metal": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "intense",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "heavy metal",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "thrash metal": {
+      "aliases": [
+        "thrash"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "aggressive",
+            "weight": 1.0,
+            "confidence": 0.99
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 1.0,
+          "confidence": 0.99
+        },
+        "STYLE": [
+          {
+            "value": "thrash metal",
+            "weight": 1.0,
+            "confidence": 0.99
+          }
+        ]
+      }
+    },
+    "death metal": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 1.0,
+            "confidence": 0.99
+          },
+          {
+            "value": "aggressive",
+            "weight": 1.0,
+            "confidence": 0.99
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 1.0,
+          "confidence": 0.99
+        },
+        "STYLE": [
+          {
+            "value": "death metal",
+            "weight": 1.0,
+            "confidence": 0.99
+          }
+        ]
+      }
+    },
+    "black metal": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 0.95,
+            "confidence": 0.98
+          },
+          {
+            "value": "aggressive",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "black metal",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "doom metal": {
+      "aliases": [
+        "doom"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "doom metal",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "techno": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "techno",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "minimal techno": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "minimal techno",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "house": {
+      "aliases": [
+        "house music"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 0.85,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.85,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "house",
+            "weight": 0.85,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "deep house": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.9,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.9,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "deep house",
+            "weight": 0.9,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "trance": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "uplifting",
+            "weight": 0.9,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.9,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "trance",
+            "weight": 0.9,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "drum and bass": {
+      "aliases": [
+        "drum & bass",
+        "dnb",
+        "d&b",
+        "drum n bass"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 5,
+          "weight": 1.0,
+          "confidence": 0.99
+        },
+        "STYLE": [
+          {
+            "value": "drum and bass",
+            "weight": 1.0,
+            "confidence": 0.99
+          }
+        ]
+      }
+    },
+    "dubstep": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "dubstep",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "breakbeat": {
+      "aliases": [
+        "breakbeats"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "breakbeat",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "hip-hop": {
+      "aliases": [
+        "hip hop",
+        "hiphop",
+        "rap"
+      ],
+      "targets": {
+        "ENERGY": {
+          "value": 4,
+          "weight": 0.75,
+          "confidence": 0.95
+        },
+        "STYLE": [
+          {
+            "value": "hip-hop",
+            "weight": 0.75,
+            "confidence": 0.95
+          }
+        ]
+      }
+    },
+    "r&b": {
+      "aliases": [
+        "rnb",
+        "rhythm and blues"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "sensual",
+            "weight": 0.75,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.75,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "r&b",
+            "weight": 0.75,
+            "confidence": 0.92
+          }
+        ]
+      }
+    },
+    "reggae": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.85,
+            "confidence": 0.97
+          }
+        ],
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.85,
+          "confidence": 0.97
+        },
+        "STYLE": [
+          {
+            "value": "reggae",
+            "weight": 0.85,
+            "confidence": 0.97
+          }
+        ]
+      }
+    },
+    "dub": {
+      "aliases": [],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.9,
+            "confidence": 0.96
+          },
+          {
+            "value": "atmospheric",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.9,
+          "confidence": 0.96
+        },
+        "STYLE": [
+          {
+            "value": "dub",
+            "weight": 0.9,
+            "confidence": 0.96
+          }
+        ]
+      }
+    },
+    "bossa nova": {
+      "aliases": [
+        "bossa"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "relaxed",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.95,
+          "confidence": 0.98
+        },
+        "STYLE": [
+          {
+            "value": "bossa nova",
+            "weight": 0.95,
+            "confidence": 0.98
+          }
+        ]
+      }
+    },
+    "classical": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.6,
+          "confidence": 0.88
+        },
+        "STYLE": [
+          {
+            "value": "classical",
+            "weight": 0.6,
+            "confidence": 0.88
+          }
+        ]
+      },
+      "note": "Very broad; do not let this override audio-derived energy."
+    },
+    "baroque": {
+      "aliases": [],
+      "targets": {
+        "ENERGY": {
+          "value": 3,
+          "weight": 0.7,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "baroque",
+            "weight": 0.7,
+            "confidence": 0.92
+          }
+        ]
+      }
+    },
+    "modern classical": {
+      "aliases": [
+        "contemporary classical"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "reflective",
+            "weight": 0.85,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 2,
+          "weight": 0.85,
+          "confidence": 0.95
+        },
+        "STYLE": [
+          {
+            "value": "modern classical",
+            "weight": 0.85,
+            "confidence": 0.95
+          }
+        ]
+      }
+    },
+    "industrial": {
+      "aliases": [
+        "industrial music"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "dark",
+            "weight": 0.9,
+            "confidence": 0.95
+          },
+          {
+            "value": "intense",
+            "weight": 0.9,
+            "confidence": 0.95
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.9,
+          "confidence": 0.95
+        },
+        "STYLE": [
+          {
+            "value": "industrial",
+            "weight": 0.9,
+            "confidence": 0.95
+          }
+        ]
+      }
+    },
+    "noise": {
+      "aliases": [
+        "noise music"
+      ],
+      "targets": {
+        "MOOD": [
+          {
+            "value": "intense",
+            "weight": 0.85,
+            "confidence": 0.92
+          }
+        ],
+        "ENERGY": {
+          "value": 5,
+          "weight": 0.85,
+          "confidence": 0.92
+        },
+        "STYLE": [
+          {
+            "value": "noise",
+            "weight": 0.85,
+            "confidence": 0.92
+          }
+        ]
+      }
+    }
+  },
+  "ignore": [
+    {
+      "tag": "seen live",
+      "aliases": [
+        "seen-live"
+      ],
+      "reason": "User/community activity, not musical character"
+    },
+    {
+      "tag": "favorites",
+      "aliases": [
+        "favourites",
+        "favorite",
+        "favourite",
+        "my favorites",
+        "my favourites"
+      ],
+      "reason": "Preference, not musical character"
+    },
+    {
+      "tag": "love",
+      "aliases": [
+        "loved",
+        "songs i love",
+        "tracks i love"
+      ],
+      "reason": "Ambiguous preference signal; only explicit love song maps to romantic"
+    },
+    {
+      "tag": "awesome",
+      "aliases": [
+        "great",
+        "best",
+        "beautiful"
+      ],
+      "reason": "Subjective evaluation"
+    },
+    {
+      "tag": "spotify",
+      "aliases": [
+        "albums i own",
+        "under 2000 listeners"
+      ],
+      "reason": "Platform/library/popularity metadata"
+    },
+    {
+      "tag": "female vocalists",
+      "aliases": [
+        "female vocalist",
+        "female vocals",
+        "male vocalists",
+        "male vocalist",
+        "male vocals"
+      ],
+      "reason": "Vocal metadata belongs in a separate VOCAL field"
+    },
+    {
+      "tag": "instrumental",
+      "aliases": [
+        "instrumentals",
+        "no vocals"
+      ],
+      "reason": "Belongs in a separate VOCAL/INSTRUMENTAL field"
+    },
+    {
+      "tag": "live",
+      "aliases": [
+        "live recording",
+        "concert recording"
+      ],
+      "reason": "Belongs in a separate LIVE field"
+    }
+  ]
+}

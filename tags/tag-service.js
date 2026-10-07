@@ -411,7 +411,8 @@ function doPlays(query, cb) {
 var albums = require('./albums.js');
 var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
-var ALBUMS_VERSION = 2;                                  /* 2: mit Genre */
+var ALBUMS_VERSION = 3;                                  /* 2: mit Genre, 3: dazu library-tracks.json */
+var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei], …] für die Stimmungs-Tags */
 
 function albumsEnsure(cb) {
   cb = cb || function(){};
@@ -428,10 +429,31 @@ function albumsEnsure(cb) {
       if (!e2 && songs.length) {
         albumIdx = {v: ALBUMS_VERSION, db: stamp || null, at: Date.now(), list: albums.fromSongs(songs)};
         try { fs.writeFileSync(ALBUMS_FILE, JSON.stringify(albumIdx)); } catch (x) { /* nächstes Mal */ }
+        var tl = songs.filter(function(s){ return s.artist && s.title; }).map(function(s){ return [s.artist, s.title, s.file]; });
+        try { fs.writeFileSync(TRACKS_FILE + '.neu', JSON.stringify(tl)); fs.renameSync(TRACKS_FILE + '.neu', TRACKS_FILE); } catch (x) { /* nächstes Mal */ }
       }
     });
     if (!albumIdx) cb(null);
   });
+}
+
+/* ---------- Stimmungs-Tags ---------- */
+/* Last.fm-Tags je Titel sammeln, nur solange nichts spielt (Pause und Stopp zählen als still).
+   GET /moodtags -> {ok, status, summary}; GET /moodtags?artist=…&title=… -> Rohtags und Ergebnis für einen Titel */
+var moodtags = require('./moodtags.js');
+var moodCollector = new moodtags.Collector({
+  dir: path.join(DATA_DIR, 'moodtags'), libFile: TRACKS_FILE,
+  getCfg: function(){ return {key: process.env.LASTFM_KEY || appConfig().LASTFM_KEY}; },
+  playing: function(cb){ playerState(function(e, st){ cb(!!(e || (st && st.status === 'play'))); }); }   /* im Zweifel: spielt */
+});
+
+function doMoodtags(query, cb) {
+  if (query.artist || query.title) {
+    var ar = String(query.artist || ''), ti = String(query.title || ''), k = moodtags.trackKey(ar, ti);
+    var t = moodCollector.tracks[k], a = moodCollector.artists[moodtags.artistKey(ar)];
+    return cb(200, {ok: true, track: t ? t.g : null, artist: a ? a.g : null, result: moodCollector.moodOf(ar, ti)});
+  }
+  cb(200, {ok: true, enabled: moodCollector.running, status: moodCollector.status(), summary: moodCollector.summary()});
 }
 
 function doRandom(query, cb) {
@@ -705,6 +727,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
@@ -727,5 +750,9 @@ if (require.main === module) {
   server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
   if (process.env.HISTORY !== '0' && appConfig().HISTORY !== false) { recording = true; watchPlayer(); lfm.flush(); }
   setTimeout(function(){ albumsEnsure(); }, 90000);       /* Albenliste fürs Zufallsalbum vorbereiten */
+  if (process.env.MOODTAGS !== '0' && appConfig().MOODTAGS !== false) {
+    moodCollector.start();
+    setInterval(function(){ albumsEnsure(); }, 3600000);  /* Titelliste aktuell halten (liest nur neu, wenn MPD sich geändert hat) */
+  }
 }
-module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server, tracker: tracker, playStore: playStore, lastfm: lfm};
+module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server, tracker: tracker, playStore: playStore, lastfm: lfm, moodtags: moodCollector};

@@ -1,0 +1,122 @@
+{
+  "schema_version": "2.0",
+  "normalization": {
+    "unicode": "NFKC",
+    "case": "lower",
+    "trim": true,
+    "collapse_whitespace": true,
+    "punctuation_aliases": "Resolve through aliases; do not globally strip hyphens or ampersands."
+  },
+  "input": {
+    "max_lastfm_tags": 20,
+    "minimum_lastfm_count": 5,
+    "minimum_relative_count": 0.05,
+    "raw_tag_field": "LASTFM_TAGS"
+  },
+  "score_formula": {
+    "per_target": "normalized_lastfm_count * mapping_weight * mapping_confidence",
+    "normalized_lastfm_count": "tag_count / maximum_tag_count_for_track",
+    "duplicate_handling": "For aliases resolving to the same canonical source tag, retain only the highest source count.",
+    "note": "Weights and confidences are editorial heuristics and should be calibrated against the local collection."
+  },
+  "output": {
+    "MOOD": {
+      "max_values": 3,
+      "minimum_score": 0.18,
+      "minimum_margin_from_best": 0.2,
+      "multi_value": true
+    },
+    "STYLE": {
+      "max_values": 4,
+      "minimum_score": 0.15,
+      "minimum_margin_from_best": 0.15,
+      "multi_value": true
+    },
+    "ENERGY": {
+      "range": [
+        1,
+        5
+      ],
+      "method": "weighted_mean_then_round",
+      "minimum_total_evidence": 0.25,
+      "fallback": null,
+      "bpm_correction": {
+        "enabled": false,
+        "note": "Keep disabled initially. BPM is not equivalent to perceived energy; calibrate manually before enabling."
+      }
+    }
+  },
+  "conflict_rules": [
+    {
+      "if": [
+        "happy",
+        "sad"
+      ],
+      "action": "keep_both_only_if_each_score_at_least_0.35"
+    },
+    {
+      "if": [
+        "relaxed",
+        "aggressive"
+      ],
+      "action": "keep_both_only_if_each_score_at_least_0.35"
+    },
+    {
+      "if": [
+        "dark",
+        "uplifting"
+      ],
+      "action": "keep_both_only_if_each_score_at_least_0.35"
+    },
+    {
+      "if": "broad_genre_and_specific_style",
+      "action": "specific_style_energy_dominates"
+    },
+    {
+      "if": "no_sufficient_evidence",
+      "action": "do_not_write_or_overwrite_target_field"
+    }
+  ],
+  "write_policy": {
+    "mode_default": "dry-run",
+    "preserve_existing": true,
+    "overwrite_only_if": "explicit_flag_and_new_confidence_exceeds_existing_threshold",
+    "backup_before_write": true,
+    "store_provenance": true,
+    "provenance_fields": [
+      "TAG_SOURCE",
+      "TAG_MAPPING_VERSION",
+      "TAG_ENRICHED_AT"
+    ]
+  },
+  "format_mapping": {
+    "FLAC": {
+      "system": "Vorbis comments",
+      "MOOD": "MOOD",
+      "ENERGY": "ENERGY",
+      "STYLE": "STYLE",
+      "multi_value": "native repeated values"
+    },
+    "M4A_ALAC_AAC": {
+      "system": "MP4 freeform atoms",
+      "MOOD": "----:com.apple.iTunes:MOOD",
+      "ENERGY": "----:com.apple.iTunes:ENERGY",
+      "STYLE": "----:com.apple.iTunes:STYLE",
+      "multi_value": "implementation-dependent; UTF-8 freeform values recommended"
+    },
+    "MP3": {
+      "system": "ID3v2 TXXX",
+      "MOOD": "TXXX:MOOD",
+      "ENERGY": "TXXX:ENERGY",
+      "STYLE": "TXXX:STYLE",
+      "multi_value": "use one frame/value strategy consistently"
+    },
+    "DSF": {
+      "system": "ID3v2",
+      "MOOD": "TXXX:MOOD",
+      "ENERGY": "TXXX:ENERGY",
+      "STYLE": "TXXX:STYLE",
+      "multi_value": "use one frame/value strategy consistently"
+    }
+  }
+}
