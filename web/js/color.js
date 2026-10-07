@@ -71,7 +71,11 @@ var moodCache = {};      /* Cover-Adresse -> {…} oder null */
 var moodSeq = 0;
 
 function moodReadable(url) {
-  try { return new URL(url, location.href).origin === location.origin || url.indexOf('/albumart') > -1; }
+  try {
+    var o = new URL(url, location.href).origin;
+    return o === location.origin || url.indexOf('/albumart') > -1 ||
+           (typeof TAGS !== 'undefined' && o === new URL(TAGS).origin);          /* Tag-Dienst (Webradio-Cover) erlaubt CORS */
+  }
   catch (e) { return false; }
 }
 
