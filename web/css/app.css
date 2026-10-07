@@ -588,12 +588,13 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #topRight
 /* Bilder, die nicht laden oder keine Quelle haben: nichts zeigen (kein Fragezeichen), Platz bleibt */
 img.imgFail, img:not([src]), img[src=""] { visibility:hidden; }
 
-/* ohne TIDAL: keine Auswahl Lokal/TIDAL in der Suche */
-html.noTidal #searchSources { display:none; }
+/* ohne Streamingdienst: keine Auswahl Lokal/TIDAL/Qobuz in der Suche; je Dienst nur sein Kästchen ausblenden */
+html.noStream #searchSources { display:none; }
+html.noTidal #searchSources .srcTidal, html.noQobuz #searchSources .srcQobuz { display:none; }
 
 /* ---------- Bibliotheks-Check ---------- */
 #btnCheck svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
-html.noTidal #btnCheck { margin-left:auto; }
+html.noStream #btnCheck { margin-left:auto; }
 #overlayCheck .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 #checkBack { cursor:pointer; opacity:.7; display:flex; }
 #checkBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:#fff; }
@@ -638,7 +639,7 @@ html.noTidal #btnCheck { margin-left:auto; }
 #historyBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:#fff; }
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 #btnHistory svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
-html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
+html.noStream #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
 #histTabBar { flex:0 0 auto; display:flex; border-bottom:1px solid rgba(255,255,255,.2); margin:0 calc(5 * var(--vw)); }
 #histBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); }
 #histBody .infoSection:first-child { margin-top:calc(3 * var(--vw)); }

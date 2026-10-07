@@ -7,6 +7,7 @@ window.APP_CONFIG.LASTFM_SECRET = 'DEIN_SHARED_SECRET';
 window.APP_CONFIG.ROTEL = true;
 window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';
 */
-/* TIDAL-Teile abschalten, auch wenn das Plugin läuft:
+/* TIDAL- bzw. Qobuz-Teile abschalten, auch wenn das Plugin läuft:
 window.APP_CONFIG.TIDAL = false;
+window.APP_CONFIG.QOBUZ = false;
 */

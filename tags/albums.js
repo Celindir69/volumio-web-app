@@ -45,7 +45,7 @@ function genreIndex(list) {
     if (a.ar === 'Verschiedene') byAlbum[k] = a.ge;
   });
   return function(e) {
-    if (e.u && !/^[a-z]+:\/\//.test(e.u)) {
+    if (e.u && !/^([a-z]+:\/\/|(tidal|qobuz)\/)/i.test(e.u)) {
       var g = byDir[albumDir(e.u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, ''))];
       if (g) return g;
     }
@@ -59,7 +59,7 @@ function genreIndex(list) {
 function lastIndex(list) {
   var byDir = {}, byKey = {}, byAlbum = {};
   list.forEach(function(e){
-    if (e.u && !/^[a-z]+:\/\//.test(e.u)) {
+    if (e.u && !/^([a-z]+:\/\/|(tidal|qobuz)\/)/i.test(e.u)) {
       var d = albumDir(e.u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, ''));
       if (!(byDir[d] >= e.t)) byDir[d] = e.t;
     }
