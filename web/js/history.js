@@ -50,6 +50,7 @@ function histShow(tab) {
   var seq = ++histSeq;
   if (tab === 'recent') histRecent(seq);
   else if (tab === 'top') histTop(seq);
+  else if (tab === 'year') histYear(seq);
   else histStats(seq);
 }
 
@@ -168,6 +169,24 @@ function histRecent(seq) {
 
 /* ---------- Meistgespielt ---------- */
 
+/* eine Zeile mit Rang, Bild und Anzahl; kind track|album|artist */
+function histTopRow(kind, it, i) {
+  var title = kind === 'artist' ? it.ar : it.ti;
+  var sub = kind === 'artist' ? '' : (kind === 'track' && it.al ? it.ar + ' · ' + it.al : it.ar);
+  var art = kind === 'artist' ? histArtistArt(it.ar)
+          : kind === 'album' ? histAlbumArt(it.ar, it.ti, it.u || '')
+          : histTrackArt(it);
+  var row = histRow(title, sub, it.n + '×', function(){
+    if (kind === 'track') return histPlay({ti: it.ti, ar: it.ar, al: it.al, u: it.u});
+    if (kind === 'artist') return openBrowse({kind: 'artist', artist: it.ar});
+    openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.ti, uri: it.u ? 'music-library/' + it.u : undefined,
+                albumart: art});
+  }, histImg(art, kind === 'artist'));
+  if (kind === 'artist') histArtistFallback(row.querySelector('img'), it.ar);
+  row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
+  return row;
+}
+
 function histTop(seq) {
   tagGetJson('/plays?view=top&limit=100&kind=' + histKind + '&range=' + histRange).then(function(r){
     if (seq !== histSeq) return;
@@ -176,22 +195,7 @@ function histTop(seq) {
     histBody.appendChild(histChips(HIST_RANGES, histRange, function(k){ histRange = k; histShow('top'); }));
     var items = (r && r.items) || [];
     if (!items.length) { histBody.appendChild(browseNote('In diesem Zeitraum nichts gespielt.')); return; }
-    items.forEach(function(it, i){
-      var title = histKind === 'artist' ? it.ar : it.ti;
-      var sub = histKind === 'artist' ? '' : (histKind === 'track' && it.al ? it.ar + ' · ' + it.al : it.ar);
-      var art = histKind === 'artist' ? histArtistArt(it.ar)
-              : histKind === 'album' ? histAlbumArt(it.ar, it.ti, it.u || '')
-              : histTrackArt(it);
-      var row = histRow(title, sub, it.n + '×', function(){
-        if (histKind === 'track') return histPlay({ti: it.ti, ar: it.ar, al: it.al, u: it.u});
-        if (histKind === 'artist') return openBrowse({kind: 'artist', artist: it.ar});
-        openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.ti, uri: it.u ? 'music-library/' + it.u : undefined,
-                    albumart: art});
-      }, histImg(art, histKind === 'artist'));
-      if (histKind === 'artist') histArtistFallback(row.querySelector('img'), it.ar);
-      row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
-      histBody.appendChild(row);
-    });
+    items.forEach(function(it, i){ histBody.appendChild(histTopRow(histKind, it, i)); });
   }).catch(function(){ histFail(seq); });
 }
 
@@ -273,6 +277,84 @@ function histStats(seq) {
       if (s.first) histBody.appendChild(browseNote('Verlauf seit ' + histDay(s.first).replace(/^(Heute|Gestern)$/, function(x){ return x.toLowerCase(); })));
     }
     histBody.appendChild(histLastfm(rs[1] && rs[1].lastfm, seq));
+  }).catch(function(){ histFail(seq); });
+}
+
+/* ---------- Jahresrückblick ---------- */
+
+var histYearSel = 0;            /* 0: neuestes Jahr */
+var histYearOpen = {};          /* aufgeklappte Rubriken im Rückblick */
+var HIST_MONTHS_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+/* Veränderung zum Vorjahr in Prozent, '' ohne Vorjahr */
+function histDelta(now, before) {
+  if (!before) return '';
+  var p = Math.round((now - before) / before * 100);
+  return (p > 0 ? '+' : p < 0 ? '−' : '±') + Math.abs(p) + ' %';
+}
+
+function histYear(seq) {
+  tagGetJson('/plays?view=year' + (histYearSel ? '&y=' + histYearSel : '') + histTz()).then(function(r){
+    if (seq !== histSeq) return;
+    histClear();
+    var y = r && r.review, years = (r && r.years) || [];
+    if (!y || !years.length) { histBody.appendChild(browseNote('Noch kein Verlauf. Der Rückblick füllt sich mit jeder Wiedergabe.')); return; }
+    if (years.length > 1) histBody.appendChild(histChips(years.map(function(v){ return [v, String(v)]; }), y.year, function(v){ histYearSel = v; histShow('year'); }));
+    if (!y.plays) { histBody.appendChild(browseNote(y.year + ' wurde nichts gespielt.')); return; }
+    var hp = Math.round(y.prev.seconds / 3600), hours = Math.round(y.seconds / 3600);
+    var grid = histEl('div', 'hNums');
+    [[histNum(y.plays), 'Wiedergaben', histDelta(y.plays, y.prev.plays)],
+     [histNum(hours) + ' h', y.estimated ? 'Hörzeit ca.' : 'Hörzeit', histDelta(hours, hp)],
+     [histNum(y.tracks), 'Titel', histDelta(y.tracks, y.prev.tracks)],
+     [histNum(y.artists), 'Künstler', histDelta(y.artists, y.prev.artists)],
+     [histNum(y.albums), 'Alben', histDelta(y.albums, y.prev.albums)]].forEach(function(n){
+      var c = histEl('div', 'hNum');
+      c.appendChild(histEl('div', 'hBig', n[0]));
+      c.appendChild(histEl('div', 'hSmall', n[1]));
+      if (n[2]) c.appendChild(histEl('div', 'hDelta', n[2] + ' zu ' + (y.year - 1)));
+      grid.appendChild(c);
+    });
+    histBody.appendChild(grid);
+    if (y.partial && y.prev.plays) {
+      var td = new Date();
+      histBody.appendChild(browseNote('Vergleich mit ' + (y.year - 1) + ' bis zum ' + td.getDate() + '. ' + HIST_MONTHS_FULL[td.getMonth()]));
+    }
+    var best = y.months.indexOf(Math.max.apply(null, y.months));
+    var full = HIST_MONTHS_FULL;
+    histBody.appendChild(histBars('WIEDERGABEN PRO MONAT', y.months, HIST_MONTHS.map(function(m){ return m.charAt(0); }), 1,
+      full.map(function(m){ return m + ' ' + y.year; })));
+    histBody.appendChild(browseNote('Stärkster Monat: ' + full[best] + ' mit ' + histNum(y.months[best]) + ' Wiedergaben'));
+    /* Rubriken zum Aufklappen (anfangs zu); der Zustand bleibt beim Jahreswechsel */
+    function section(key, head, fill) {
+      var h = browseHeading(head);
+      h.classList.add('hFold');
+      var body = histEl('div', 'hFoldBody');
+      function paint() { var on = !!histYearOpen[key]; h.classList.toggle('open', on); body.style.display = on ? '' : 'none'; }
+      h.addEventListener('click', function(){ histYearOpen[key] = !histYearOpen[key]; paint(); });
+      fill(body);
+      paint();
+      histBody.appendChild(h); histBody.appendChild(body);
+    }
+    function list(key, head, kind, items, empty) {
+      if (!items.length && !empty) return;
+      section(key, head, function(body){
+        if (!items.length) body.appendChild(browseNote(empty));
+        items.forEach(function(it, i){ body.appendChild(histTopRow(kind, it, i)); });
+      });
+    }
+    list('tracks', 'MEISTGESPIELTE TITEL', 'track', y.tracks_top);
+    list('albums', 'TOP-ALBEN', 'album', y.albums_top);
+    list('artists', 'TOP-KÜNSTLER', 'artist', y.artists_top);
+    section('genres', 'TOP-GENRES', function(body){
+      if (!y.genres_top.length) { body.appendChild(browseNote('Noch keine Genres: Die Albenliste wird beim ersten Mal aus der Bibliothek gelesen, oder die Alben haben kein Genre-Tag.')); return; }
+      y.genres_top.forEach(function(g, i){
+        var row = histRow(g.g, '', histNum(g.n) + '×', function(){});
+        row.classList.add('hNoImg');
+        row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
+        body.appendChild(row);
+      });
+    });
+    if (y.hasBefore) list('new', 'NEU ENTDECKT', 'artist', y.newArtists, 'Keine neuen Künstler in diesem Jahr.');
   }).catch(function(){ histFail(seq); });
 }
 

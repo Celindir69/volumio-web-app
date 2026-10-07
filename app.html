@@ -278,6 +278,7 @@
     <div class="qTab on" data-tab="recent">Zuletzt</div>
     <div class="qTab" data-tab="top">Meistgespielt</div>
     <div class="qTab" data-tab="stats">Statistik</div>
+    <div class="qTab" data-tab="year">Rückblick</div>
   </div>
   <div class="overlayBody" id="histBody"></div>
 </div>
@@ -301,7 +302,7 @@
 
 <script>
   /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
-  ['core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
+  ['core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
     document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
   });
 </script>

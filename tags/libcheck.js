@@ -11,7 +11,7 @@ var IMG_RE = /\.(jpe?g|png)$/i;
 
 function mpdQuote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
 
-/* Alle Titel unterhalb von roots: cb(err, songs, dirCount); songs: [{file, artist, albumartist, album, title, track, date}].
+/* Alle Titel unterhalb von roots: cb(err, songs, dirCount); songs: [{file, artist, albumartist, album, title, track, date, genre}].
    onProgress(erledigte Ordner, bekannte Ordner) */
 function mpdWalk(opts, cb, onProgress) {
   var sock = net.createConnection({host: opts.host || 'localhost', port: opts.port || 6600});
@@ -50,7 +50,7 @@ function mpdWalk(opts, cb, onProgress) {
     if (i < 0) return;
     var k = l.slice(0, i).toLowerCase(), v = l.slice(i + 2);
     if (k === 'directory') { queue.push(v); song = null; return; }
-    if (k === 'file') { song = {file: v, artist: '', albumartist: '', album: '', title: '', track: '', date: ''}; songs.push(song); return; }
+    if (k === 'file') { song = {file: v, artist: '', albumartist: '', album: '', title: '', track: '', date: '', genre: ''}; songs.push(song); return; }
     if (k === 'playlist') { song = null; return; }
     if (song && song.hasOwnProperty(k) && !song[k]) song[k] = v;          /* bei Mehrfachwerten zählt der erste */
   }
@@ -62,6 +62,35 @@ function mpdWalk(opts, cb, onProgress) {
   });
   sock.on('error', function(e){ finish(e); });
   sock.on('close', function(){ if (!finished) finish(queue.length || !greeted ? new Error('MPD-Verbindung getrennt') : null); });
+}
+
+/* ein einzelner MPD-Befehl (z. B. "stats") -> cb(err, {schlüssel: wert}) */
+function mpdCommand(opts, cmd, cb) {
+  var sock = net.createConnection({host: opts.host || 'localhost', port: opts.port || 6600});
+  var buf = '', greeted = false, out = {}, finished = false;
+  function finish(err) {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    try { sock.end('close\n'); } catch (e) { /* schon zu */ }
+    cb(err, out);
+  }
+  var timer = setTimeout(function(){ finish(new Error('MPD antwortet nicht')); sock.destroy(); }, opts.timeout || 10000);
+  sock.setEncoding('utf8');
+  sock.on('data', function(d){
+    buf += d;
+    var n;
+    while ((n = buf.indexOf('\n')) >= 0) {
+      var l = buf.slice(0, n); buf = buf.slice(n + 1);
+      if (!greeted) { greeted = true; if (l.indexOf('OK MPD') !== 0) return finish(new Error('kein MPD: ' + l)); sock.write(cmd + '\n'); continue; }
+      if (l === 'OK') return finish(null);
+      if (l.indexOf('ACK') === 0) return finish(new Error(l));
+      var i = l.indexOf(': ');
+      if (i > 0) out[l.slice(0, i).toLowerCase()] = l.slice(i + 2);
+    }
+  });
+  sock.on('error', function(e){ finish(e); });
+  sock.on('close', function(){ finish(new Error('MPD-Verbindung getrennt')); });
 }
 
 /* ---------- Auswerten ---------- */
@@ -145,4 +174,4 @@ function dirsWithoutImage(songs, musicRoot) {
   return out;
 }
 
-module.exports = {mpdWalk: mpdWalk, analyze: analyze, artistKey: artistKey, dirsWithoutImage: dirsWithoutImage};
+module.exports = {mpdWalk: mpdWalk, mpdCommand: mpdCommand, analyze: analyze, artistKey: artistKey, dirsWithoutImage: dirsWithoutImage};

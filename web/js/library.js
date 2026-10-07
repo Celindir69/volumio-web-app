@@ -293,6 +293,7 @@ function renderSearchResults() {
   var tlist = searchShowTidal ? ((searchData.tidal && searchData.tidal[searchCat]) || []) : [];
 
   if (!list.length && !tlist.length) {
+    if (!searchQuery && typeof discoverShow === 'function' && discoverShow()) return;     /* Entdecken (discover.js) */
     var hint = document.createElement('div');
     hint.className = 'sHint';
     hint.textContent = (!searchShowLocal && !searchShowTidal) ? 'Lokal oder TIDAL ankreuzen'
