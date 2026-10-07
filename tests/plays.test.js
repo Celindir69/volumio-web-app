@@ -133,6 +133,14 @@ t('Jahresrückblick: Summen, Vorjahr, Monate, Top-Listen, neu entdeckt', functio
   assert.strictEqual(y25.plays, 1); assert.strictEqual(y25.hasBefore, false); assert.strictEqual(y25.newArtists.length, 0);
   assert.deepStrictEqual(plays.years(list, tz), [2026, 2025]);
 });
+t('Rückblick mit Monat: Summen fürs Jahr, Ranglisten und neu entdeckt für den Monat', function(){
+  var tz = {w: 60, s: 120}, y = plays.year(list, 2026, tz, NOW, 10, null, 8);
+  assert.strictEqual(y.plays, 7, 'Summen bleiben fürs Jahr'); assert.strictEqual(y.month, 8);
+  assert.deepStrictEqual(y.tracks_top.map(function(x){ return x.n; }), [1]);
+  assert.deepStrictEqual(y.newArtists.map(function(a){ return a.ar; }), ['Spliff']);
+  var o = plays.year(list, 2026, tz, NOW, 10, null, 9);
+  assert.deepStrictEqual(o.newArtists.map(function(a){ return a.ar; }), ['Falco'], 'Spliff lief schon im September');
+});
 t('Jahresgrenze in Ortszeit: Silvester 23:30 UTC zählt zum neuen Jahr', function(){
   var tz = {w: 60, s: 120}, l = [{t: Date.UTC(2025, 11, 31, 23, 30) / 1000, ar: 'A', ti: 'x'}];
   assert.strictEqual(plays.year(l, 2026, tz, NOW).plays, 1);
