@@ -26,6 +26,13 @@ t('Künstler-Adressen der Dienste', function(){
   assert.ok(st.streamIsArtist({service: 'spop', uri: 'spotify:artist:4Z8W4fKeB5YxbusRsdQVPb'}));
   assert.ok(!st.streamIsArtist({service: 'spop', uri: 'spotify:album:4Z8W4fKeB5YxbusRsdQVPb'}));
   assert.ok(st.streamIsArtist({service: 'hra', uri: 'hra/artist/12'}));
+  /* so liefert das HIGHRESAUDIO-Plugin am MX-Stream die Suche nach „Massive Attack“ */
+  assert.ok(st.streamIsArtist({service: 'hi_res_audio', type: 'folder', title: 'Massive Attack', artist: 'Massive Attack',
+    uri: 'hi_res_audio/artists/880cb308-6084-4800-b054-bafcbcfd0cb3'}));
+  assert.ok(!st.streamIsArtist({service: 'hi_res_audio', type: 'folder', title: 'Blue Lines (2012 Mix/Master)', artist: 'Massive Attack',
+    uri: 'hi_res_audio/artists/86dcf456-dfd2-4b7f-8572-e32d30fd2770'}));
+  assert.ok(!st.streamIsArtist({service: 'hi_res_audio', type: 'folder', uri: 'hi_res_audio/artists/'}));
+  assert.ok(st.streamIsArtist({service: 'qobuz', type: 'folder-with-favourites', title: 'Massive Attack', uri: 'qobuz://artist/53293'}));
 });
 
 t('Suchantwort: lokal, TIDAL und Qobuz getrennt', function(){
@@ -53,6 +60,15 @@ t('Suchantwort: lokal, TIDAL und Qobuz getrennt', function(){
   assert.strictEqual(d.stream.spotify.artists.length, 1);
   assert.strictEqual(d.stream.spotify.songs.length, 1);
   assert.strictEqual(d.stream.hra.albums.length, 1);
+});
+
+t('HIGHRESAUDIO-Liste ohne Überschrift: Künstler und Album getrennt, leerer Eintrag weg', function(){
+  var d = st.streamSplitSearch([{availableListViews: ['list'], items: [
+    {service: 'hi_res_audio', type: 'folder', title: 'Massive Attack', artist: 'Massive Attack', uri: 'hi_res_audio/artists/880cb308-6084-4800-b054-bafcbcfd0cb3'},
+    {service: 'hi_res_audio', type: 'folder', title: 'Blue Lines (2012 Mix/Master)', artist: 'Massive Attack', uri: 'hi_res_audio/artists/86dcf456-dfd2-4b7f-8572-e32d30fd2770'},
+    {service: 'hi_res_audio', type: 'folder', uri: 'hi_res_audio/artists/'}]}], 'massive attack');
+  assert.deepStrictEqual(d.stream.hra.artists.map(function(x){ return x.title; }), ['Massive Attack']);
+  assert.deepStrictEqual(d.stream.hra.albums.map(function(x){ return x.title; }), ['Blue Lines (2012 Mix/Master)']);
 });
 
 t('Suchbegriff in der Überschrift macht keine Dienstliste daraus', function(){
