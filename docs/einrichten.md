@@ -1,11 +1,14 @@
 # Einrichten auf dem Player
 
-Alle Befehle auf dem Player (ssh), als Benutzer mit `sudo`.
+Alle Befehle auf dem Player (ssh), als Benutzer mit `sudo`. Geschrieben für Volumio 2; was unter Volumio 4 anders ist,
+steht gesammelt unter [Volumio 4](#volumio-4).
 
 ## Oberfläche
 `app.html` und `web/` nach `/volumio/http/www3/` kopieren, Aufruf `http://<player>/app.html`.
 `kioskTV.html` nach `/volumio/http/www/` (der Volumio-Kiosk bekommt die Dateien aus `www/`).
 Nach einem Update im Browser hart neu laden. Eine vorhandene `web/config.local.js` bleibt erhalten.
+Eigene Einstellungen (Last.fm-Schlüssel, Rotel, Dienste ein/aus) kommen in `web/config.local.js`, Vorlage
+`web/config.local.js.example`.
 
 ## Aktualisieren mit mx-deploy
 Einmal einrichten:
@@ -27,17 +30,7 @@ Ziele: `app.html`, `web/`, `tools/` nach `/volumio/http/www3/`, `kioskTV.html` n
 werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen sichert es die betroffenen Dateien nach
 `/data/INTERNAL/mx-deploy/` (die letzten 5). Gelöscht wird nichts; eigene Dateien wie `web/config.local.js` bleiben.
 
-### Volumio 4
-Volumio 4 liefert die Oberfläche aus `/volumio/http/www4/` statt `www3/`. Dasselbe Skript unter dem Namen
-`volumio4-deploy` eingerichtet spielt `app.html`, `web/` und `tools/` dorthin ein; alles andere wie oben, Sicherungen unter
-`/data/INTERNAL/volumio4-deploy/`:
-```bash
-curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null
-sudo chmod +x /usr/local/bin/volumio4-deploy
-sudo volumio4-deploy -n          # erst ansehen: „geändert“ hieße, eine Datei von Volumio würde ersetzt
-```
-Aufrufe wie bei mx-deploy (`sudo volumio4-deploy <branch>`, `--zurueck` …). Ein anderer Ordner geht mit
-`MX_WWW=<ordner>`, z. B. `sudo MX_WWW=www3 volumio4-deploy`.
+Auf Volumio 4 dasselbe Skript unter dem Namen `volumio4-deploy`, siehe [Volumio 4](#volumio-4).
 
 ## Tag-Dienst (für den Tag-Editor)
 ```bash
@@ -66,8 +59,7 @@ Der Dienst schreibt als `volumio` in die Musikdateien. Ob das geht:
 Wenn nicht, `Environment=USE_SUDO=1` einkommentieren (dann läuft nur `tags.py` als root).
 Nach einem Update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
 Weitere Variablen: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_LOG`.
-Volumio 4: `tags.py` braucht dort Python 3 mit mutagen (`sudo apt install python3-mutagen`); der Dienst nimmt
-`python3`, wenn es kein `python` gibt.
+`tags.py` läuft mit Python 2.7 und 3 und bringt mutagen selbst mit; gibt es kein `python`, nimmt der Dienst `python3`.
 
 Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`. Alte Werte für „Rückgängig“ stehen in
 `/data/INTERNAL/tags/changes.jsonl`. Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
@@ -170,9 +162,18 @@ python3 analyse.py --upload http://<player>:8766
 - Mehrere Ordner lassen sich angeben, Symlinks werden verfolgt; `--exclude "*/Hörbücher/*"` lässt Pfade aus.
 - Unveränderte Dateien werden beim nächsten Lauf übersprungen; Ctrl-C bricht ab, der nächste Aufruf macht weiter.
 - `--seconds 120` (Standard) hört nur die mittleren zwei Minuten an (Valenz/Erregung davon die mittleren 45 s), `--jobs` legt die Zahl paralleler Prozesse fest.
+- Dauer: auf einem älteren Intel-Mac rund 9 s je Datei, also etwa 5 Tage für 50.000 Titel; Apple-Silicon-Macs
+  sind deutlich schneller. `--profile` zeigt die Zeit je Analyseschritt. Mehr Prozesse als Kerne bringen nichts.
+- Ein Hochladen zwischendurch geht jederzeit; der Tag-Dienst nimmt dann den bisherigen Stand.
 - Die Ergebnisdatei `essentia.jsonl` liegt auf dem Player unter `/data/INTERNAL/tags/` (ersetzt bei jedem Hochladen die
   vorige; alternativ per `scp` dorthin kopieren). Der Bibliotheks-Check zeigt unter „Stimmungs-Tags“, wie viele Titel
   zugeordnet sind.
+
+### Künstler- und Albumtexte
+Die Info-Seite fragt zuerst Volumio. Kommt dort nichts (Volumio 4 gibt die Texte nur mit Abo heraus, oder Volumio antwortet
+nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (deutsch, sonst englisch; braucht `LASTFM_KEY`),
+Künstler bei Last.fm und danach bei Wikipedia (deutsch, sonst englisch; nur Artikel, die nach Musik aussehen). Die Quelle
+steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
 
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der
@@ -204,3 +205,29 @@ echo '*/10 * * * * root /volumio/http/www3/tools/tidal-watchdog.sh' | sudo tee /
 ```
 Prüft alle 10 Minuten, ob TIDAL antwortet, und startet Volumio sonst neu (höchstens einmal je Stunde). Protokoll:
 `/var/log/tidal-watchdog.log`. Ist TIDAL nicht angemeldet, den Wächter nicht einrichten.
+
+## Volumio 4
+Die Oberfläche läuft auch unter Volumio 4 (auf einer Testinstanz erprobt). Unterschiede zu Volumio 2:
+
+- **Ordner:** Volumio 4 liefert die Oberfläche aus `/volumio/http/www4/` statt `www3/`. Aufruf weiter
+  `http://<player>/app.html`; `web/config.local.js` gehört nach `/volumio/http/www4/web/`.
+- **Aktualisieren:** dasselbe Skript wie mx-deploy, aber unter dem Namen `volumio4-deploy` eingerichtet. So spielt es
+  `app.html`, `web/` und `tools/` nach `www4/` und sichert nach `/data/INTERNAL/volumio4-deploy/`:
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null
+  sudo chmod +x /usr/local/bin/volumio4-deploy
+  sudo volumio4-deploy -n          # erst ansehen: „geändert“ hieße, eine Datei von Volumio würde ersetzt
+  sudo volumio4-deploy             # einspielen; Aufrufe sonst wie bei mx-deploy (<branch>, -n, -y, --zurueck)
+  ```
+  Am Ende muss „Eingespielt nach /volumio/http/www4“ stehen. Meldet es „zurück mit: sudo mx-deploy“, ist unter dem Namen
+  noch ein altes mx-deploy eingerichtet: die beiden Zeilen oben noch einmal ausführen. Einen anderen Ordner wählt
+  `MX_WWW=<ordner>`.
+- **Tag-Dienst:** Die Dienstdatei oben startet Node über `/usr/bin/env node` und läuft damit auf beiden Versionen. Eine
+  ältere Dienstdatei mit `/usr/local/bin/node` scheitert unter Volumio 4 mit `status=203/EXEC`; dann:
+  `sudo sed -i 's|^ExecStart=/usr/local/bin/node|ExecStart=/usr/bin/env node|' /etc/systemd/system/tag-service.service && sudo systemctl daemon-reload && sudo systemctl restart tag-service`.
+  Python 3 ist dabei, mutagen bringt der Tag-Dienst mit.
+- **Infotexte:** Volumio 4 liefert Künstler- und Albumtexte nur mit Abo; die App holt sie dann bei Last.fm und Wikipedia
+  (siehe [Künstler- und Albumtexte](#künstler--und-albumtexte)). Mit `LASTFM_KEY` in `web/config.local.js` gibt es
+  auch Albumtexte.
+- **Nicht erprobt unter Volumio 4:** `kioskTV.html` (Kiosk-Ordner), Rotel-Bridge und TIDAL-Wächter (der Wächter liegt dort
+  unter `/volumio/http/www4/tools/`; den Pfad im Cron-Eintrag entsprechend anpassen).

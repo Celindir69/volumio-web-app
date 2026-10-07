@@ -1,7 +1,7 @@
 # volumio-web-app
 
 Eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
-direkt im Browser. Neben den Dateien, die auf dem Player laufen, enthält es nur Tests (`tests/`) und die Einrichtungs-Doku;
+direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Neben den Dateien, die auf dem Player laufen, enthält es nur Tests (`tests/`) und die Einrichtungs-Doku;
 `mx-deploy` spielt nur die Laufzeitdateien ein.
 
 <p align="center">
@@ -17,7 +17,8 @@ Großes Cover, Titel und Album, Abzeichen für die Klangqualität (Hi-Res, Abtas
 Lautstärke und die üblichen Knöpfe. Die Hintergrundfarbe und der Akzent kommen aus dem Cover. Lyrics laufen synchron mit
 (lrclib.net); passt der Text nicht genau zur Aufnahme, verschieben „−“ und „+“ ihn in Schritten von 0,5 s, und der Wert
 gilt dann für diesen Titel auf allen Geräten. Die Info-Seite zeigt Album, Künstler, Mitwirkende und was von diesem
-Künstler in der Sammlung liegt.
+Künstler in der Sammlung liegt. Liefert Volumio keinen Album- oder Künstlertext (Volumio 4 nur mit Abo), holt die App
+ihn bei Last.fm bzw. Wikipedia.
 
 <p>
   <img src="docs/bilder/wiedergabe.jpg" width="200" alt="Wiedergabe">
@@ -37,7 +38,8 @@ der Anlage, ohne Bedienung.
 </p>
 
 ### Suche und Entdecken
-Die Suche findet Künstler, Alben und Titel in der eigenen Bibliothek und, falls eingeschaltet, bei TIDAL. Solange nichts
+Die Suche findet Künstler, Alben und Titel in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
+eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
 eingegeben ist, zeigt sie „Vor einem Jahr gehört“ (Alben, die um dieses Datum vor einem Jahr liefen), den Einstieg in den
 Stimmungs-Mix und ein Zufallsalbum, das lange nicht oder nie Gehörtes bevorzugt. Bei Webradio holt die App ein Cover
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
@@ -47,7 +49,8 @@ Stimmung wählen (mehrere möglich), Energie von ruhig bis kraftvoll eingrenzen 
 und Entdeckungsgrad festlegen: Favoriten, ausgewogen oder versteckte Perlen, je nach eigenem Verlauf. „Mix erstellen“
 zeigt erst eine Vorschau mit der Begründung je Titel; einzelne Titel lassen sich herausnehmen oder neu mischen. Erst
 „Mix abspielen“ ersetzt die Warteschlange. Grundlage sind Last.fm-Tags je Titel, die der Tag-Dienst sammelt, solange
-nichts spielt; die Musikdateien bleiben dabei unverändert.
+nichts spielt; die Musikdateien bleiben dabei unverändert. Optional hört Essentia auf dem Mac jeden Titel an
+(`tools/essentia/`): Dann kommen Energie und Stimmung aus dem Audio, und ein Tempo-Regler (BPM) kommt dazu.
 
 <p>
   <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
@@ -83,22 +86,26 @@ Fortschritt der Stimmungs-Tags.
 ### Weiteres
 - Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
 - TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt.
-- `mx-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`.
+- `mx-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`; auf Volumio 4
+  dasselbe Skript als `volumio4-deploy`.
 
 ## Aufbau
 
 | Datei / Ordner | Inhalt | Ort auf dem Player |
 |---|---|---|
-| `app.html` + `web/` | Oberfläche für Handy, iPad, Desktop (Wiedergabe, Queue, Suche lokal und TIDAL, Lyrics, Infos, Tag-Editor, Display-Layout für große Bildschirme) | `/volumio/http/www3/` |
+| `app.html` + `web/` | Oberfläche für Handy, iPad, Desktop (Wiedergabe, Queue, Suche lokal und bei Streamingdiensten, Lyrics, Infos, Tag-Editor, Stimmungs-Mix, Verlauf, Display-Layout für große Bildschirme) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
 | `kioskTV.html` | Seite für einen Kiosk-Bildschirm (Cover, Titel, Lyrics) | `/volumio/http/www/` |
-| `tags/` | Tag-Dienst (Port 8766) für den Tag-Editor; Python 2.7 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/INTERNAL/tags/` |
+| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/INTERNAL/tags/` |
 | `rotel/rotel-bridge.js` | optional: HTTP-Dienst (Port 8765) für einen Rotel-Verstärker im Netz (Lautstärke, Ein/Aus, Eingang) | `/data/INTERNAL/rotel/` |
-| `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt | `/volumio/http/www3/tools/` |
+| `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt (nur unter Volumio 2 erprobt) | `/volumio/http/www3/tools/` |
+| `tools/mx-deploy.sh` | aktualisiert den Player aus diesem Repository (`mx-deploy`, auf Volumio 4 `volumio4-deploy`) | `/usr/local/bin/` |
+| `tools/essentia/` | optionale Audio-Analyse auf dem Mac, Ergebnis wird zum Tag-Dienst hochgeladen | nicht auf dem Player |
 
-Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`). Einrichtung: [docs/einrichten.md](docs/einrichten.md).
-Aktualisieren direkt auf dem Player: `sudo mx-deploy` (`tools/mx-deploy.sh`, siehe dort).
+Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`) oder Volumio 4 (Node und Python 3 sind dabei). Einrichtung:
+[docs/einrichten.md](docs/einrichten.md). Aktualisieren direkt auf dem Player: `sudo mx-deploy` bzw. `sudo volumio4-deploy`
+(`tools/mx-deploy.sh`, siehe dort).
 
-Rotel-Verstärker und TIDAL sind optional (siehe Einrichtung). Eigene Einstellungen (z. B. ein Last.fm-Schlüssel für ähnliche Künstler) gehören in `web/config.local.js`
+Rotel-Verstärker und TIDAL sind optional (siehe Einrichtung). Eigene Einstellungen (z. B. ein Last.fm-Schlüssel für ähnliche Künstler, Stimmungs-Tags und Infotexte) gehören in `web/config.local.js`
 (Vorlage `web/config.local.js.example`); diese Datei ist nicht im Repository.
 
 ## Tests
