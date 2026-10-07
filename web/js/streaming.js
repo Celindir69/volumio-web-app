@@ -10,9 +10,9 @@ var STREAMS = [
   /* Qobuz-Plugin von Volumio: Adressen wie qobuz://artist/123 (ältere Fassungen qobuz/artist/123) */
   {id: 'qobuz', name: 'Qobuz', short: 'Qobuz', cfg: 'QOBUZ', key: /^qobuz/i, title: /qobuz/,
    uriRe: /^qobuz(:\/\/|\/)/i, artistRe: /^qobuz(:\/\/|\/)artists?\/[\w-]+$/i},
-  /* HIGHRESAUDIO-Plugin (hra): Adressen wie hra://artist/123 oder hra/artist/123 (noch nicht am Gerät geprüft) */
-  {id: 'hra', name: 'HIGHRESAUDIO', short: 'HRA', cfg: 'HRA', key: /^(hra|highresaudio)/i, title: /\bhra\b|highresaudio|high res audio/,
-   uriRe: /^(hra|highresaudio)(:\/\/|\/)/i, artistRe: /^(hra|highresaudio)(:\/\/|\/)artists?\/[\w-]+$/i},
+  /* HIGHRESAUDIO-Plugin: heißt in Volumio hi_res_audio (Quelle uri "hi_res_audio"), ältere Namen hra/highresaudio; Format der Adressen noch nicht am Gerät geprüft */
+  {id: 'hra', name: 'HIGHRESAUDIO', short: 'HRA', cfg: 'HRA', key: /^(hra|highresaudio|hi_res_audio)/i, title: /\bhra\b|highresaudio|hi_res_audio|high res audio/,
+   uriRe: /^(hra|highresaudio|hi_res_audio)(:\/\/|\/|:)/i, artistRe: /^(hra|highresaudio|hi_res_audio)(:\/\/|\/|:)artists?\/[\w-]+$/i},
   /* Spotify-Plugin von Volumio (spop, nur mit Premium): Adressen wie spotify:artist:4Z8W…; Spotify Connect allein bietet keine Suche */
   {id: 'spotify', name: 'Spotify', short: 'Spotify', cfg: 'SPOTIFY', key: /^(spop|spotify)/i, title: /spotify/,
    uriRe: /^spotify[:\/]/i, artistRe: /^spotify:artist:\w+$/i}
