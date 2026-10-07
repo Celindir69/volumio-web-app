@@ -130,7 +130,7 @@ def read_tags(path):
 W = {}
 
 
-def worker_init(folder, seconds):
+def worker_init(folder, seconds, profile=False):
     os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
     import essentia
     import essentia.standard as es
@@ -138,6 +138,7 @@ def worker_init(folder, seconds):
     essentia.log.warningActive = False
     W['es'] = es
     W['seconds'] = seconds
+    W['profile'] = profile
     W['rhythm'] = es.RhythmExtractor2013(method='degara')
     W['key'] = es.KeyExtractor(profileType='edma')
     W['resample'] = es.Resample(inputSampleRate=SR, outputSampleRate=SR_MODEL, quality=4)
@@ -171,7 +172,14 @@ def analyse(job):
     rec.update({'ar': ar, 'ti': ti, 'al': al})
     try:
         es = W['es']
+        tt, t0 = {}, [time.time()]
+        def lap(name):
+            if W['profile']:
+                now = time.time()
+                tt[name] = round(now - t0[0], 2)
+                t0[0] = now
         audio = es.MonoLoader(filename=path, sampleRate=SR)()
+        lap('laden')
         n = len(audio)
         if n < SR * 5:
             rec['err'] = 'zu kurz oder nicht lesbar'
@@ -182,9 +190,12 @@ def analyse(job):
             start = (n - sec * SR) // 2
             audio = audio[start:start + sec * SR]
         bpm = W['rhythm'](audio)[0]
+        lap('tempo')
         key, scale, strength = W['key'](audio)
+        lap('tonart')
         a16 = W['resample'](audio)
         emb = W['effnet'](a16)
+        lap('effnet')
         mood = {}
         for name, (model, idx) in W['heads'].items():
             p = float(mean_rows(model(emb))[idx])
@@ -195,7 +206,11 @@ def analyse(job):
         g = mean_rows(W['genre'](emb))
         top = sorted(range(len(g)), key=lambda i: -g[i])[:5]
         rec['styles'] = [[W['genre_cls'][i], round(float(g[i]), 3)] for i in top if g[i] >= 0.05]
+        lap('stimmung+genre')
         av = mean_rows(W['deam'](W['musicnn'](a16)))
+        lap('musicnn')
+        if tt:
+            rec['_t'] = tt
         cls = W['deam_cls']
         rec['val'] = round(float(av[cls.index('valence')]), 3)
         rec['aro'] = round(float(av[cls.index('arousal')]), 3)
@@ -273,6 +288,7 @@ def main():
     ap.add_argument('--jobs', type=int, default=max(1, (os.cpu_count() or 4) // 4), help='parallele Prozesse')
     ap.add_argument('--exclude', action='append', default=[], help='Muster für auszulassende Pfade, z. B. "*/Hörbücher/*"')
     ap.add_argument('--retry-errors', action='store_true', help='Dateien mit Fehler erneut versuchen')
+    ap.add_argument('--profile', action='store_true', help='Zeit je Analyseschritt ausgeben (zum Beschleunigen)')
     ap.add_argument('--limit', type=int, default=0, help='höchstens so viele Dateien analysieren (zum Ausprobieren)')
     ap.add_argument('--upload', metavar='URL', help='danach zum Tag-Dienst hochladen, z. B. http://<player>:8766')
     a = ap.parse_args()
@@ -294,12 +310,14 @@ def main():
             todo = todo[:a.limit]
         print('%d Audiodateien gefunden, %d zu analysieren (%d Prozesse).' % (len(present), len(todo), a.jobs), flush=True)
         if todo:
-            t0, n, errs = time.time(), 0, 0
+            t0, n, errs, prof = time.time(), 0, 0, {}
             ctx = mp.get_context('spawn')
             try:
                 with open(a.out, 'a', encoding='utf-8') as f, \
-                        ctx.Pool(a.jobs, initializer=worker_init, initargs=(a.models, a.seconds)) as pool:
+                        ctx.Pool(a.jobs, initializer=worker_init, initargs=(a.models, a.seconds, a.profile)) as pool:
                     for rec in pool.imap_unordered(analyse, todo, chunksize=2):
+                        for k, v in rec.pop('_t', {}).items():
+                            prof[k] = prof.get(k, 0) + v
                         f.write(json.dumps(rec, ensure_ascii=False) + '\n')
                         f.flush()
                         done[rec['p']] = rec
@@ -315,6 +333,8 @@ def main():
             except KeyboardInterrupt:
                 print('\nAbgebrochen. Beim nächsten Aufruf geht es hier weiter.')
                 sys.exit(1)
+            if prof and n:
+                print('Zeit je Datei nach Schritt: ' + ', '.join('%s %.1f s' % (k, v / n) for k, v in prof.items()))
         kept = compact(a.out, done, roots, present)
         ok = sum(1 for o in done.values() if not o.get('err'))
         print('Fertig: %d Einträge in %s, davon %d analysiert.' % (kept, a.out, ok))
