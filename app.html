@@ -283,6 +283,21 @@
   <div class="overlayBody" id="histBody"></div>
 </div>
 
+<!-- Stimmungs-Mix: Auswahl, Vorschau, abspielen -->
+<div class="overlay" id="overlayMix">
+  <div class="overlayHandle"></div>
+  <div class="overlayHead">
+    <div id="mixBack" title="Zurück">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </div>
+    <h2>Stimmungs-Mix</h2>
+    <div class="overlayClose" id="closeMix">
+      <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+    </div>
+  </div>
+  <div class="overlayBody" id="mixBody"></div>
+</div>
+
 <!-- Tag-Editor (öffnet über dem Album-Overlay) -->
 <div class="overlay" id="overlayTags">
   <div class="overlayHandle"></div>
@@ -302,7 +317,7 @@
 
 <script>
   /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
-  ['core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
+  ['core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'moodmix', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
     document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
   });
 </script>

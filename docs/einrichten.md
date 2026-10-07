@@ -117,6 +117,12 @@ liegen in `/data/INTERNAL/tags/moodtags/`, die Titelliste dazu in `/data/INTERNA
 zusammen mit der Albenliste). Fortschritt und Verteilung zeigt der Bibliotheks-Check unter „Stimmungs-Tags (Last.fm)“.
 Ausschalten: `MOODTAGS: false` in `web/config.local.js`, dann den Tag-Dienst neu starten.
 
+**Stimmungs-Mix:** In der Suche (ohne Eingabe) unter „Stimmungs-Mix“ eine Stimmung antippen. Im Blatt lassen sich
+mehrere Stimmungen, ein Energie-Bereich und unter „Feinabstimmung“ Stile, Länge und Entdeckungsgrad (nach dem Verlauf:
+Favoriten, ausgewogen, versteckte Perlen) wählen. „Mix erstellen“ zeigt nur eine Vorschau; erst „Mix abspielen“ ersetzt
+die Warteschlange (das Listensymbol daneben hängt den Mix an). Gibt es weniger als 20 genaue Treffer, nimmt der Mix
+Ähnliches dazu (Energie ±1, dann ohne Stil) und sagt das. Derselbe Künstler kommt nie direkt hintereinander.
+
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der
 Überschrift „Lyrics“ (Bühnenansicht: runde Knöpfe oben rechts) den Text um je 0,5 s. Der Wert gilt für diesen Titel auf

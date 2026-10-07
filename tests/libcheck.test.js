@@ -56,7 +56,7 @@ t('Ordner ohne Bilddatei', function(){
 var tree = {
   '': 'directory: USB\nplaylist: x.m3u\n',
   'USB': 'directory: USB/A\ndirectory: USB/kaputt\n',
-  'USB/A': 'file: USB/A/1.flac\nArtist: Spliff\nArtist: Zweiter\nAlbum: 85555\nTrack: 1\nTitle: Carbonara\nGenre: Rock\nfile: USB/A/2.flac\nTitle: Ohne Tags\n'
+  'USB/A': 'file: USB/A/1.flac\nArtist: Spliff\nArtist: Zweiter\nAlbum: 85555\nTrack: 1\nTitle: Carbonara\nGenre: Rock\nTime: 245\nfile: USB/A/2.flac\nTitle: Ohne Tags\n'
 };
 var srv = net.createServer(function(c){
   c.write('OK MPD 0.19.0\n');
@@ -80,7 +80,7 @@ srv.listen(0, function(){
       assert.ifError(err);
       assert.strictEqual(dirs, 4);
       assert.strictEqual(list.length, 2);
-      assert.deepStrictEqual(list[0], {file: 'USB/A/1.flac', artist: 'Spliff', albumartist: '', album: '85555', title: 'Carbonara', track: '1', date: '', genre: 'Rock'});
+      assert.deepStrictEqual(list[0], {file: 'USB/A/1.flac', artist: 'Spliff', albumartist: '', album: '85555', title: 'Carbonara', track: '1', date: '', genre: 'Rock', time: '245'});
       assert.strictEqual(list[1].title, 'Ohne Tags');
       assert.ok(prog.length >= 3);
     });
