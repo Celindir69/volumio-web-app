@@ -76,7 +76,7 @@ Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-
 ### Verlauf und Statistik
 In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag) und **Rückblick**
-(ein Jahr: Summen mit Vergleich zum Vorjahr, Monate, Top-Titel, -Alben, -Künstler, neu entdeckte Künstler). Antippen spielt
+(ein Jahr: Summen mit Vergleich zum Vorjahr, Monate und zum Aufklappen Top-Titel, -Alben, -Künstler, -Genres und neu entdeckte Künstler; Genres aus der Albenliste unten). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.
 
 **Entdecken:** Solange in der Suche nichts eingegeben ist, zeigt sie Alben, die um dieses Datum vor einem Jahr liefen

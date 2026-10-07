@@ -11,7 +11,7 @@ var IMG_RE = /\.(jpe?g|png)$/i;
 
 function mpdQuote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
 
-/* Alle Titel unterhalb von roots: cb(err, songs, dirCount); songs: [{file, artist, albumartist, album, title, track, date}].
+/* Alle Titel unterhalb von roots: cb(err, songs, dirCount); songs: [{file, artist, albumartist, album, title, track, date, genre}].
    onProgress(erledigte Ordner, bekannte Ordner) */
 function mpdWalk(opts, cb, onProgress) {
   var sock = net.createConnection({host: opts.host || 'localhost', port: opts.port || 6600});
@@ -50,7 +50,7 @@ function mpdWalk(opts, cb, onProgress) {
     if (i < 0) return;
     var k = l.slice(0, i).toLowerCase(), v = l.slice(i + 2);
     if (k === 'directory') { queue.push(v); song = null; return; }
-    if (k === 'file') { song = {file: v, artist: '', albumartist: '', album: '', title: '', track: '', date: ''}; songs.push(song); return; }
+    if (k === 'file') { song = {file: v, artist: '', albumartist: '', album: '', title: '', track: '', date: '', genre: ''}; songs.push(song); return; }
     if (k === 'playlist') { song = null; return; }
     if (song && song.hasOwnProperty(k) && !song[k]) song[k] = v;          /* bei Mehrfachwerten zählt der erste */
   }

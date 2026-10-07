@@ -283,6 +283,7 @@ function histStats(seq) {
 /* ---------- Jahresrückblick ---------- */
 
 var histYearSel = 0;            /* 0: neuestes Jahr */
+var histYearOpen = {};          /* aufgeklappte Rubriken im Rückblick */
 var HIST_MONTHS_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 /* Veränderung zum Vorjahr in Prozent, '' ohne Vorjahr */
@@ -323,18 +324,37 @@ function histYear(seq) {
     histBody.appendChild(histBars('WIEDERGABEN PRO MONAT', y.months, HIST_MONTHS.map(function(m){ return m.charAt(0); }), 1,
       full.map(function(m){ return m + ' ' + y.year; })));
     histBody.appendChild(browseNote('Stärkster Monat: ' + full[best] + ' mit ' + histNum(y.months[best]) + ' Wiedergaben'));
-    function list(head, kind, items) {
-      if (!items.length) return;
-      histBody.appendChild(browseHeading(head));
-      items.forEach(function(it, i){ histBody.appendChild(histTopRow(kind, it, i)); });
+    /* Rubriken zum Aufklappen (anfangs zu); der Zustand bleibt beim Jahreswechsel */
+    function section(key, head, fill) {
+      var h = browseHeading(head);
+      h.classList.add('hFold');
+      var body = histEl('div', 'hFoldBody');
+      function paint() { var on = !!histYearOpen[key]; h.classList.toggle('open', on); body.style.display = on ? '' : 'none'; }
+      h.addEventListener('click', function(){ histYearOpen[key] = !histYearOpen[key]; paint(); });
+      fill(body);
+      paint();
+      histBody.appendChild(h); histBody.appendChild(body);
     }
-    list('MEISTGESPIELTE TITEL', 'track', y.tracks_top);
-    list('TOP-ALBEN', 'album', y.albums_top);
-    list('TOP-KÜNSTLER', 'artist', y.artists_top);
-    if (y.hasBefore) {
-      list('NEU ENTDECKT', 'artist', y.newArtists);
-      if (!y.newArtists.length) { histBody.appendChild(browseHeading('NEU ENTDECKT')); histBody.appendChild(browseNote('Keine neuen Künstler in diesem Jahr.')); }
+    function list(key, head, kind, items, empty) {
+      if (!items.length && !empty) return;
+      section(key, head, function(body){
+        if (!items.length) body.appendChild(browseNote(empty));
+        items.forEach(function(it, i){ body.appendChild(histTopRow(kind, it, i)); });
+      });
     }
+    list('tracks', 'MEISTGESPIELTE TITEL', 'track', y.tracks_top);
+    list('albums', 'TOP-ALBEN', 'album', y.albums_top);
+    list('artists', 'TOP-KÜNSTLER', 'artist', y.artists_top);
+    section('genres', 'TOP-GENRES', function(body){
+      if (!y.genres_top.length) { body.appendChild(browseNote('Noch keine Genres: Die Albenliste wird beim ersten Mal aus der Bibliothek gelesen, oder die Alben haben kein Genre-Tag.')); return; }
+      y.genres_top.forEach(function(g, i){
+        var row = histRow(g.g, '', histNum(g.n) + '×', function(){});
+        row.classList.add('hNoImg');
+        row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
+        body.appendChild(row);
+      });
+    });
+    if (y.hasBefore) list('new', 'NEU ENTDECKT', 'artist', y.newArtists, 'Keine neuen Künstler in diesem Jahr.');
   }).catch(function(){ histFail(seq); });
 }
 

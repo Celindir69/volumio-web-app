@@ -37,11 +37,20 @@ function discoverShow() {
       row.appendChild(tile);
     });
     agoBox.appendChild(row);
+    discoverFit(row);
   }).catch(function(){});
 
   discoverRandom(seq);
   return true;
 }
+
+/* Kacheln gleichmäßig über die Breite verteilen, wenn sie hineinpassen; sonst links beginnend zum Wischen */
+function discoverFit(row) {
+  if (!row || !row.parentNode) return;
+  row.classList.remove('fit');
+  if (row.scrollWidth <= row.clientWidth + 1) row.classList.add('fit');
+}
+window.addEventListener('resize', function(){ discoverFit(document.querySelector('.dRow')); });
 
 function discoverRandom(seq) {
   var box = discoverRandomBox;
@@ -68,19 +77,15 @@ function discoverRandom(seq) {
     var card = histEl('div', 'dRand');
     var img = histImg(art);
     img.className = 'dBig';
-    img.title = 'Abspielen';
-    img.addEventListener('click', function(){
-      browsePlay({uri: 'music-library/' + al.dir, service: 'mpd', type: 'folder', title: al.al, artist: al.ar});
-    });
     card.appendChild(img);
     var meta = histEl('div', 'dMeta');
     meta.appendChild(histEl('div', 'dTi', al.al));
     meta.appendChild(histEl('div', 'dAr', al.ar));
     meta.appendChild(histEl('div', 'dLast', 'Zuletzt gehört: ' + (al.last ? discoverDate(al.last) : 'nie')));
-    meta.addEventListener('click', function(){
+    card.appendChild(meta);
+    card.addEventListener('click', function(){                /* wie die Kacheln: erst die Albumansicht */
       openBrowse({kind: 'album', artist: al.ar === 'Verschiedene' ? '' : al.ar, album: al.al, uri: 'music-library/' + al.dir, albumart: art});
     });
-    card.appendChild(meta);
     box.appendChild(card);
   }).catch(function(){});
 }

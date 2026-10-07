@@ -247,7 +247,7 @@ function localStart(y, m, d, tz) {
 
 /* Jahresrückblick für das Ortsjahr y: Summen, Monate, Top-Alben, -Künstler, -Titel, neu entdeckte Künstler.
    Vergleich mit dem Vorjahr; im laufenden Jahr nur mit demselben Zeitraum (bis heute) */
-function year(list, y, tz, now, limit) {
+function year(list, y, tz, now, limit, genreOf) {
   limit = limit || 10;
   var from = localStart(y, 0, 1, tz), to = localStart(y + 1, 0, 1, tz), pfrom = localStart(y - 1, 0, 1, tz);
   var part = between(list, from, to), res = totals(part);
@@ -259,6 +259,7 @@ function year(list, y, tz, now, limit) {
   res.albums_top  = top(list, 'album', from, limit, to);
   res.artists_top = top(list, 'artist', from, limit, to);
   res.tracks_top  = top(list, 'track', from, 5, to);
+  res.genres_top  = genreOf ? topGenres(part, genreOf, limit) : [];
   /* neu entdeckt: Künstler, die vor diesem Jahr nie liefen; nur wenn der Verlauf vor dem Jahr beginnt */
   res.newArtists = [];
   res.hasBefore = !!list.length && list[0].t < from;
@@ -268,6 +269,23 @@ function year(list, y, tz, now, limit) {
     res.newArtists = top(list, 'artist', from, 1000, to).filter(function(a){ return !before[norm(a.ar)]; }).slice(0, limit);
   }
   return res;
+}
+
+/* Top-Genres: Wiedergaben je Genre; mehrere Genres ("Rock; Pop", "Rock/Pop") zählen je einzeln */
+function topGenres(part, genreOf, limit) {
+  var groups = {};
+  part.forEach(function(e){
+    var seen = {};
+    String(genreOf(e) || '').split(/\s*[;\/,|]\s*/).forEach(function(g){
+      g = g.trim();
+      var k = g.toLowerCase();
+      if (!g || seen[k]) return;
+      seen[k] = true;
+      (groups[k] || (groups[k] = {g: g, n: 0})).n++;
+    });
+  });
+  return Object.keys(groups).map(function(k){ return groups[k]; })
+    .sort(function(a, b){ return b.n - a.n || a.g.localeCompare(b.g); }).slice(0, limit);
 }
 
 /* Jahre mit Wiedergaben (Ortszeit), neueste zuerst */

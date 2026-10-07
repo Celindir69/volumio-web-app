@@ -13,22 +13,46 @@ function albumDir(file) {
   return DISC_RE.test(path.basename(d)) ? path.dirname(d) : d;
 }
 
-/* songs wie libcheck.mpdWalk -> [{dir, al, ar}] */
+/* songs wie libcheck.mpdWalk -> [{dir, al, ar, ge}]; ge: häufigstes Genre im Ordner (fehlt ohne Genre) */
 function fromSongs(songs) {
   var dirs = {}, order = [];
   songs.forEach(function(s){
     var d = albumDir(s.file);
-    if (!dirs[d]) { dirs[d] = {al: '', aa: '', artists: {}, n: 0}; order.push(d); }
+    if (!dirs[d]) { dirs[d] = {al: '', aa: '', artists: {}, genres: {}, n: 0}; order.push(d); }
     var g = dirs[d];
     if (!g.al && s.album) g.al = s.album;
     if (!g.aa && s.albumartist) g.aa = s.albumartist;
     if (s.artist) g.artists[s.artist] = true;
+    if (s.genre) g.genres[s.genre] = (g.genres[s.genre] || 0) + 1;
     g.n++;
   });
   return order.sort().map(function(d){
     var g = dirs[d], artists = Object.keys(g.artists);
-    return {dir: d, al: g.al || path.basename(d), ar: g.aa || (artists.length === 1 ? artists[0] : 'Verschiedene')};
+    var o = {dir: d, al: g.al || path.basename(d), ar: g.aa || (artists.length === 1 ? artists[0] : 'Verschiedene')};
+    var ge = Object.keys(g.genres).sort(function(a, b){ return g.genres[b] - g.genres[a]; })[0];
+    if (ge) o.ge = ge;
+    return o;
   });
+}
+
+/* Albenliste -> genreOf(Verlaufseintrag): Genre über den Ordner, sonst Album+Künstler, bei Samplern nur Albumname */
+function genreIndex(list) {
+  var byDir = {}, byKey = {}, byAlbum = {};
+  list.forEach(function(a){
+    if (!a.ge) return;
+    var k = plays.norm(a.al);
+    byDir[a.dir] = a.ge; byKey[k + '|' + plays.norm(a.ar)] = a.ge;
+    if (a.ar === 'Verschiedene') byAlbum[k] = a.ge;
+  });
+  return function(e) {
+    if (e.u && !/^[a-z]+:\/\//.test(e.u)) {
+      var g = byDir[albumDir(e.u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, ''))];
+      if (g) return g;
+    }
+    if (!e.al) return '';
+    var k = plays.norm(e.al);
+    return byKey[k + '|' + plays.norm(e.ar)] || byAlbum[k] || '';
+  };
 }
 
 /* Verlauf -> wann zuletzt gelaufen: nach Ordner (lokal gespielt) und nach Album+Künstler (auch Last.fm) */
@@ -77,4 +101,4 @@ function pick(albums, last, now, picks, rnd) {
   return {dir: c.a.dir, al: c.a.al, ar: c.a.ar, last: c.last};
 }
 
-module.exports = {albumDir: albumDir, fromSongs: fromSongs, lastIndex: lastIndex, pick: pick, weight: weight};
+module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, lastIndex: lastIndex, pick: pick, weight: weight};

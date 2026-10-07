@@ -6,8 +6,9 @@ function S(file, o) { var s = {file: file, artist: '', albumartist: '', album: '
 var D = 86400, NOW = 1800000000;
 
 var songs = [
-  S('USB/Spliff/85555/01.flac', {artist: 'Spliff', album: '85555'}),
-  S('USB/Spliff/85555/02.flac', {artist: 'Spliff', album: '85555'}),
+  S('USB/Spliff/85555/01.flac', {artist: 'Spliff', album: '85555', genre: 'NDW'}),
+  S('USB/Spliff/85555/02.flac', {artist: 'Spliff', album: '85555', genre: 'NDW'}),
+  S('USB/Spliff/85555/03.flac', {artist: 'Spliff', album: '85555', genre: 'Rock'}),
   S('USB/Bravo/CD1/01.flac', {artist: 'Falco', album: 'Bravo Hits'}),
   S('USB/Bravo/CD 2/01.flac', {artist: 'Nena', album: 'Bravo Hits'}),
   S('USB/Ohne/01.mp3', {artist: 'X'})
@@ -17,7 +18,7 @@ t('Alben je Ordner, CD-Unterordner zusammen, Verschiedene, Ordnername ohne Album
   assert.deepStrictEqual(list, [
     {dir: 'USB/Bravo', al: 'Bravo Hits', ar: 'Verschiedene'},
     {dir: 'USB/Ohne', al: 'Ohne', ar: 'X'},
-    {dir: 'USB/Spliff/85555', al: '85555', ar: 'Spliff'}]);
+    {dir: 'USB/Spliff/85555', al: '85555', ar: 'Spliff', ge: 'NDW'}]);
 });
 t('zuletzt gehört: nach Ordner, nach Album+Künstler (Last.fm), Sampler nach Albumname', function(){
   var last = albums.lastIndex([
@@ -27,6 +28,18 @@ t('zuletzt gehört: nach Ordner, nach Album+Künstler (Last.fm), Sampler nach Al
   assert.strictEqual(last(list[2]), 300);
   assert.strictEqual(last(list[0]), 200);
   assert.strictEqual(last(list[1]), null);
+});
+t('Genre zu Verlaufseinträgen: über Ordner oder Album+Künstler', function(){
+  var g = albums.genreIndex(list);
+  assert.strictEqual(g({u: 'music-library/USB/Spliff/85555/02.flac', al: 'x', ar: 'y'}), 'NDW');
+  assert.strictEqual(g({al: '85555', ar: 'SPLIFF'}), 'NDW');
+  assert.strictEqual(g({al: 'Bravo Hits', ar: 'Falco'}), '');
+});
+t('Top-Genres im Rückblick: mehrere Genres je einzeln, Groß/klein zusammen', function(){
+  var pl = require('../tags/plays.js');
+  var y = pl.year([{t: NOW, ar: 'a', ti: '1', al: 'x'}, {t: NOW + 1, ar: 'a', ti: '2', al: 'y'}, {t: NOW + 2, ar: 'a', ti: '3', al: 'z'}],
+                  2027, {w: 60, s: 120}, NOW + 9, 10, function(e){ return {x: 'Rock; Pop', y: 'rock', z: ''}[e.al]; });
+  assert.deepStrictEqual(y.genres_top, [{g: 'Rock', n: 2}, {g: 'Pop', n: 1}]);
 });
 t('Gewicht: nie oder über ein Jahr 4, über 3 Monate 2, sonst 1', function(){
   assert.strictEqual(albums.weight(null, NOW), 4); assert.strictEqual(albums.weight(NOW - 400 * D, NOW), 4);

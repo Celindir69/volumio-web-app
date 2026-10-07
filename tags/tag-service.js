@@ -388,7 +388,10 @@ function doPlays(query, cb) {
   if (view === 'stats') return cb(200, {ok: true, recording: recording, stats: plays.stats(list, query.range, now, tz)});
   if (view === 'year') {
     var ys = plays.years(list, tz), y = parseInt(query.y, 10) || ys[0] || plays.local(now, tz).getUTCFullYear();
-    var yr = plays.year(list, y, tz, now);
+    albumsEnsure();                                      /* Genres kommen aus der Albenliste */
+    var gi = albumIdx && albumIdx.list;
+    if (gi && (!albumGenre || albumGenre.list !== gi)) albumGenre = {list: gi, fn: albums.genreIndex(gi)};
+    var yr = plays.year(list, y, tz, now, 10, gi ? albumGenre.fn : null);
     yr.albums_top.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
     return cb(200, {ok: true, years: ys, review: yr});
   }
@@ -406,7 +409,8 @@ function doPlays(query, cb) {
    wenn MPDs Datenbank sich geändert hat (Prüfung höchstens alle 10 Minuten). */
 var albums = require('./albums.js');
 var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
-var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null;
+var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
+var ALBUMS_VERSION = 2;                                  /* 2: mit Genre */
 
 function albumsEnsure(cb) {
   cb = cb || function(){};
@@ -415,13 +419,13 @@ function albumsEnsure(cb) {
   albumChecked = Date.now();
   libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'stats', function(err, st){
     var stamp = !err && st.db_update;
-    if (albumIdx && (err || stamp === albumIdx.db)) return cb(albumIdx.list);
+    if (albumIdx && (err || stamp === albumIdx.db) && albumIdx.v === ALBUMS_VERSION) return cb(albumIdx.list);
     albumBuilding = true;
     if (albumIdx) cb(albumIdx.list);                     /* alte Liste bis die neue fertig ist */
     libcheck.mpdWalk({host: MPD_HOST, port: MPD_PORT}, function(e2, songs){
       albumBuilding = false;
       if (!e2 && songs.length) {
-        albumIdx = {db: stamp || null, at: Date.now(), list: albums.fromSongs(songs)};
+        albumIdx = {v: ALBUMS_VERSION, db: stamp || null, at: Date.now(), list: albums.fromSongs(songs)};
         try { fs.writeFileSync(ALBUMS_FILE, JSON.stringify(albumIdx)); } catch (x) { /* nächstes Mal */ }
       }
     });
