@@ -101,10 +101,12 @@ function readJsonl(file, into) {
 }
 
 /* opts: dir, libFile (Titelliste [[Künstler, Titel, Datei], …]), getCfg() -> {key}, playing(cb(true/false));
+   audio: essentia.Store (Audio-Analyse vom Mac), optional;
    stepMs, idleMs, waitMs, backoffMs nur für Tests */
 function Collector(opts) {
   this.t = {step: opts.stepMs || STEP_MS, idle: opts.idleMs || IDLE_MS, wait: opts.waitMs || WAIT_MS, backoff: opts.backoffMs || BACKOFF_MS};
   this.dir = opts.dir; this.libFile = opts.libFile; this.getCfg = opts.getCfg; this.playing = opts.playing;
+  this.audio = opts.audio || null;
   this.tracks = {}; this.artists = {}; this.lib = null; this.libAt = 0;
   this.pos = 0; this.timer = null; this.running = false; this.state = 'aus'; this.error = null;
   this.lastIdleCheck = 0; this.idle = false; this.fetched = 0; this.summaryCache = null; this.doneLib = 0;
@@ -206,14 +208,15 @@ Collector.prototype.step = function() {
   });
 };
 
-/* Ergebnis für einen Titel: Titel-Tags, sonst Künstler-Tags (abgeschwächt) */
-Collector.prototype.moodOf = function(ar, ti) {
+/* Ergebnis für einen Titel: Titel-Tags, sonst Künstler-Tags (abgeschwächt); mit Audio-Analyse ergänzt (al: Album) */
+Collector.prototype.moodOf = function(ar, ti, al) {
   var r = clsOf(this.tracks[trackKey(ar, ti)]);
-  if (r) { r.src = 'track'; return r; }
-  var a = this.artists[artistKey(ar)];
-  r = clsOf(a, ARTIST_FACTOR);
-  if (r) r.src = 'artist';
-  return r || null;
+  if (r) r.src = 'track';
+  else {
+    r = clsOf(this.artists[artistKey(ar)], ARTIST_FACTOR);
+    if (r) r.src = 'artist';
+  }
+  return this.audio ? this.audio.combine(r || null, ar, ti, al) : (r || null);
 };
 
 Collector.prototype.status = function() {
@@ -224,18 +227,20 @@ Collector.prototype.status = function() {
 
 /* Verteilung über die Bibliothek (für die Anzeige); höchstens einmal pro Minute neu */
 Collector.prototype.summary = function() {
-  if (this.summaryCache && Date.now() - this.summaryCache.at < 60000) return this.summaryCache.s;
-  var self = this, s = {track: 0, artist: 0, none: 0, moods: {}, energy: [0, 0, 0, 0, 0], styles: {}};
+  var am = this.audio ? (this.audio.reload(), this.audio.mtime) : 0;
+  if (this.summaryCache && Date.now() - this.summaryCache.at < 60000 && this.summaryCache.am === am) return this.summaryCache.s;
+  var self = this, s = {track: 0, artist: 0, audio: 0, audioOnly: 0, none: 0, moods: {}, energy: [0, 0, 0, 0, 0], styles: {}};
   this.loadLib().forEach(function(it){
-    if (!self.tracks[it.k]) return;
-    var r = self.moodOf(it.ar, it.ti);
+    var r = self.moodOf(it.ar, it.ti, it.al);
+    if (!self.tracks[it.k] && !(r && r.audio)) return;
     if (!r) { s.none++; return; }
-    s[r.src]++;
+    if (r.src === 'audio') s.audioOnly++; else s[r.src]++;
+    if (r.audio) s.audio++;
     r.mood.forEach(function(m){ s.moods[m] = (s.moods[m] || 0) + 1; });
     if (r.energy) s.energy[r.energy - 1]++;
     r.style.forEach(function(m){ s.styles[m] = (s.styles[m] || 0) + 1; });
   });
-  this.summaryCache = {at: Date.now(), s: s};
+  this.summaryCache = {at: Date.now(), am: am, s: s};
   return s;
 };
 

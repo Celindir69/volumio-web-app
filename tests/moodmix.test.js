@@ -23,8 +23,8 @@ function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
 
 t('Kriterien lesen: Grenzen und Standardwerte', function(){
   var c = mm.parse({moods: 'Relaxed, dreamy', emin: '4', emax: '2', n: '999', disc: '7', match: 'x'});
-  assert.deepStrictEqual(c, {moods: ['relaxed', 'dreamy'], styles: [], match: 'any', emin: 2, emax: 4, n: 200, disc: 0.5});
-  assert.deepStrictEqual(mm.parse({}), {moods: [], styles: [], match: 'any', emin: 1, emax: 5, n: 50, disc: 0.5});
+  assert.deepStrictEqual(c, {moods: ['relaxed', 'dreamy'], styles: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, n: 200, disc: 0.5});
+  assert.deepStrictEqual(mm.parse({}), {moods: [], styles: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, n: 50, disc: 0.5});
 });
 
 t('Trefferzahl und Stile unter den Treffern', function(){

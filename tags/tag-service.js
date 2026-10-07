@@ -441,8 +441,12 @@ function albumsEnsure(cb) {
 /* Last.fm-Tags je Titel sammeln, nur solange nichts spielt (Pause und Stopp zählen als still).
    GET /moodtags -> {ok, status, summary}; GET /moodtags?artist=…&title=… -> Rohtags und Ergebnis für einen Titel */
 var moodtags = require('./moodtags.js');
+var essentia = require('./essentia.js');
+var ESSENTIA_FILE = path.join(DATA_DIR, 'essentia.jsonl');      /* Audio-Analyse vom Mac (tools/essentia), per POST /essentia oder scp */
+var ESSENTIA_MAX = 300 * 1024 * 1024;
+var audioStore = new essentia.Store(ESSENTIA_FILE);
 var moodCollector = new moodtags.Collector({
-  dir: path.join(DATA_DIR, 'moodtags'), libFile: TRACKS_FILE,
+  dir: path.join(DATA_DIR, 'moodtags'), libFile: TRACKS_FILE, audio: audioStore,
   getCfg: function(){ return {key: process.env.LASTFM_KEY || appConfig().LASTFM_KEY}; },
   playing: function(cb){ playerState(function(e, st){ cb(!!(e || (st && st.status === 'play'))); }); }   /* im Zweifel: spielt */
 });
@@ -450,10 +454,36 @@ var moodCollector = new moodtags.Collector({
 function doMoodtags(query, cb) {
   if (query.artist || query.title) {
     var ar = String(query.artist || ''), ti = String(query.title || ''), k = moodtags.trackKey(ar, ti);
-    var t = moodCollector.tracks[k], a = moodCollector.artists[moodtags.artistKey(ar)];
-    return cb(200, {ok: true, track: t ? t.g : null, artist: a ? a.g : null, result: moodCollector.moodOf(ar, ti)});
+    var t = moodCollector.tracks[k], a = moodCollector.artists[moodtags.artistKey(ar)], au = audioStore.get(ar, ti, query.album);
+    return cb(200, {ok: true, track: t ? t.g : null, artist: a ? a.g : null, audio: au ? strip(au) : null,
+                    result: moodCollector.moodOf(ar, ti, query.album)});
   }
-  cb(200, {ok: true, enabled: moodCollector.running, status: moodCollector.status(), summary: moodCollector.summary()});
+  cb(200, {ok: true, enabled: moodCollector.running, status: moodCollector.status(), summary: moodCollector.summary(),
+           audio: audioStore.status()});
+}
+function strip(o) { var r = {}; Object.keys(o).forEach(function(k){ if (k.charAt(0) !== '_') r[k] = o[k]; }); return r; }
+
+/* POST /essentia: Ergebnisdatei des Analyse-Skripts (JSON Lines) ersetzt die bisherige */
+function doEssentiaUpload(req, res) {
+  try { mkdirs(DATA_DIR); } catch (e) { /* existiert */ }
+  var tmp = ESSENTIA_FILE + '.neu', out = fs.createWriteStream(tmp), size = 0, failed = false;
+  function fail(code, msg) {
+    if (failed) return; failed = true;
+    out.destroy(); try { fs.unlinkSync(tmp); } catch (e) { /* schon weg */ }
+    send(res, code, {ok: false, error: msg});
+  }
+  req.on('data', function(d){ size += d.length; if (size > ESSENTIA_MAX) { fail(413, 'Datei zu groß'); req.destroy(); } });
+  req.on('error', function(){ fail(400, 'Übertragung abgebrochen'); });
+  out.on('error', function(e){ fail(500, 'Schreiben fehlgeschlagen: ' + e.message); });
+  out.on('finish', function(){
+    if (failed) return;
+    try { fs.renameSync(tmp, ESSENTIA_FILE); } catch (e) { return fail(500, 'Speichern fehlgeschlagen'); }
+    audioStore.reload(true);
+    var st = audioStore.status(), lib = moodCollector.loadLib(), matched = 0;
+    lib.forEach(function(it){ if (audioStore.get(it.ar, it.ti, it.al)) matched++; });
+    send(res, 200, {ok: true, tracks: st.tracks, library: lib.length, matched: matched});
+  });
+  req.pipe(out);
 }
 
 /* GET /moodmix?moods=a,b&emin=&emax=&styles=&match=any|all&n=&disc=0..1 -> {ok, level, matches, tracks}
@@ -749,6 +779,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'POST' && route === '/essentia') return doEssentiaUpload(req, res);
   if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/lastfm', '/lyricsoffset'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
