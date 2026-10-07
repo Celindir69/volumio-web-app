@@ -27,6 +27,18 @@ Ziele: `app.html`, `web/`, `tools/` nach `/volumio/http/www3/`, `kioskTV.html` n
 werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen sichert es die betroffenen Dateien nach
 `/data/INTERNAL/mx-deploy/` (die letzten 5). Gelöscht wird nichts; eigene Dateien wie `web/config.local.js` bleiben.
 
+### Volumio 4
+Volumio 4 liefert die Oberfläche aus `/volumio/http/www4/` statt `www3/`. Dasselbe Skript unter dem Namen
+`volumio4-deploy` eingerichtet spielt `app.html`, `web/` und `tools/` dorthin ein; alles andere wie oben, Sicherungen unter
+`/data/INTERNAL/volumio4-deploy/`:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null
+sudo chmod +x /usr/local/bin/volumio4-deploy
+sudo volumio4-deploy -n          # erst ansehen: „geändert“ hieße, eine Datei von Volumio würde ersetzt
+```
+Aufrufe wie bei mx-deploy (`sudo volumio4-deploy <branch>`, `--zurueck` …). Ein anderer Ordner geht mit
+`MX_WWW=<ordner>`, z. B. `sudo MX_WWW=www3 volumio4-deploy`.
+
 ## Tag-Dienst (für den Tag-Editor)
 ```bash
 sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
