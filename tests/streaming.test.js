@@ -76,6 +76,10 @@ t('Einschalten: fest, auto nach Volumios Quellen, bis dahin nur TIDAL', function
   assert.deepStrictEqual([tidal.on, qobuz.on, hra.on, spotify.on], [false, false, true, true]);
   st.streamConfigure({}, [{plugin_name: 'volspotconnect2', uri: 'volspotconnect2'}]);
   assert.strictEqual(spotify.on, false);
+  /* so meldet sich das HIGHRESAUDIO-Plugin am MX-Stream (Quellenliste von browse) */
+  st.streamConfigure({}, [{plugin_name: 'qobuz', uri: 'qobuz://'}, {plugin_name: 'hi_res_audio', uri: 'hi_res_audio', name: 'HIGHRESAUDIO'}]);
+  assert.deepStrictEqual([tidal.on, qobuz.on, hra.on, spotify.on], [false, true, true, false]);
+  assert.strictEqual(st.streamOf({service: 'hi_res_audio', uri: 'hi_res_audio/album/1'}).id, 'hra');
 });
 
 console.log(n + ' Prüfungen bestanden');
