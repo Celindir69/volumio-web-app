@@ -24,7 +24,7 @@ import sys
 import time
 import urllib.request
 
-VERSION = 1
+VERSION = 2
 AUDIO_EXT = {'.flac', '.m4a', '.mp4', '.mp3', '.wav', '.aif', '.aiff', '.dsf', '.dff', '.ogg', '.oga', '.opus',
              '.wv', '.ape', '.wma', '.alac'}
 MODEL_URL = 'https://essentia.upf.edu/models/'
@@ -43,6 +43,12 @@ GENRE = 'classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1
 DEAM = 'classification-heads/deam/deam-msd-musicnn-2'
 SR = 44100
 SR_MODEL = 16000
+# Die Discogs-Effnet-Fassung rechnet immer 64 Ausschnitte auf einmal (rund 131 s Musik ohne Überlappung); bis dahin
+# kostet längeres Anhören also nichts extra. MusiCNN (nur für Valenz/Erregung) ist auf dem Mac der teuerste Schritt
+# und bekommt deshalb nur die mittleren 45 s, so lang wie die DEAM-Ausschnitte, mit denen das Modell gelernt hat.
+EFFNET_HOP = 128
+MUSICNN_SECONDS = 45
+MUSICNN_HOP = 187
 
 
 def head_path(model):
@@ -142,8 +148,10 @@ def worker_init(folder, seconds, profile=False):
     W['rhythm'] = es.RhythmExtractor2013(method='degara')
     W['key'] = es.KeyExtractor(profileType='edma')
     W['resample'] = es.Resample(inputSampleRate=SR, outputSampleRate=SR_MODEL, quality=4)
-    W['effnet'] = es.TensorflowPredictEffnetDiscogs(graphFilename=model_file(folder, EFFNET), output='PartitionedCall:1')
-    W['musicnn'] = es.TensorflowPredictMusiCNN(graphFilename=model_file(folder, MUSICNN), output='model/dense/BiasAdd')
+    W['effnet'] = es.TensorflowPredictEffnetDiscogs(graphFilename=model_file(folder, EFFNET), output='PartitionedCall:1',
+                                                    patchHopSize=EFFNET_HOP)
+    W['musicnn'] = es.TensorflowPredictMusiCNN(graphFilename=model_file(folder, MUSICNN), output='model/dense/BiasAdd',
+                                               patchHopSize=MUSICNN_HOP)
     W['heads'] = {}
     for name, (m, want) in HEADS.items():
         cls = classes_of(folder, head_path(m))
@@ -207,7 +215,9 @@ def analyse(job):
         top = sorted(range(len(g)), key=lambda i: -g[i])[:5]
         rec['styles'] = [[W['genre_cls'][i], round(float(g[i]), 3)] for i in top if g[i] >= 0.05]
         lap('stimmung+genre')
-        av = mean_rows(W['deam'](W['musicnn'](a16)))
+        m = MUSICNN_SECONDS * SR_MODEL
+        mid = a16[(len(a16) - m) // 2:(len(a16) - m) // 2 + m] if len(a16) > m else a16
+        av = mean_rows(W['deam'](W['musicnn'](mid)))
         lap('musicnn')
         if tt:
             rec['_t'] = tt
@@ -284,7 +294,7 @@ def main():
     ap.add_argument('roots', nargs='*', help='Musikordner (mehrere möglich; Symlinks werden verfolgt)')
     ap.add_argument('--out', default='essentia.jsonl', help='Ergebnisdatei (Standard: essentia.jsonl)')
     ap.add_argument('--models', default=os.path.expanduser('~/.cache/mx-essentia'), help='Ordner für die Modelle')
-    ap.add_argument('--seconds', type=int, default=180, help='nur so viele Sekunden aus der Mitte anhören (0 = ganz)')
+    ap.add_argument('--seconds', type=int, default=120, help='nur so viele Sekunden aus der Mitte anhören (0 = ganz)')
     ap.add_argument('--jobs', type=int, default=max(1, (os.cpu_count() or 4) // 4), help='parallele Prozesse')
     ap.add_argument('--exclude', action='append', default=[], help='Muster für auszulassende Pfade, z. B. "*/Hörbücher/*"')
     ap.add_argument('--retry-errors', action='store_true', help='Dateien mit Fehler erneut versuchen')
