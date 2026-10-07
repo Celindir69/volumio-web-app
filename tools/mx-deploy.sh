@@ -10,26 +10,36 @@
 # Vor jedem Einspielen werden die betroffenen Dateien gesichert (die letzten 5 Sicherungen bleiben).
 # Eigene Dateien wie web/config.local.js stehen nicht im Repo und bleiben unberührt; gelöscht wird nichts.
 # Einrichten:  curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/mx-deploy >/dev/null && sudo chmod +x /usr/local/bin/mx-deploy
+#
+# Volumio 4 liefert die Oberfläche aus /volumio/http/www4/ statt www3/. Dasselbe Skript, unter dem Namen
+# volumio4-deploy eingerichtet, spielt dorthin ein (eigene Sicherungen unter /data/INTERNAL/volumio4-deploy):
+#   curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null && sudo chmod +x /usr/local/bin/volumio4-deploy
 set -e
 
 REPO=${MX_REPO:-Celindir69/volumio-web-app}
 ROOT=${MX_ROOT:-}                                   # nur für Tests: alles unter diesem Ordner statt unter /
-STATE=$ROOT/data/INTERNAL/mx-deploy
+PROG=$(basename "$0" .sh)
+case "$PROG" in
+  volumio4-deploy*) WWW=www4 ;;
+  *)                PROG=mx-deploy; WWW=www3 ;;
+esac
+WWW=${MX_WWW:-$WWW}                                 # Ordner der Oberfläche unter /volumio/http/
+STATE=$ROOT/data/INTERNAL/$PROG
 KEEP=5
 
 # Ziel je Datei im Repo (leer = nicht auf den Player)
 target() {
   case "$1" in
-    app.html|web/*)          echo "$ROOT/volumio/http/www3/$1" ;;
+    app.html|web/*)          echo "$ROOT/volumio/http/$WWW/$1" ;;
     kioskTV.html)            echo "$ROOT/volumio/http/www/$1" ;;
     tags/*)                  echo "$ROOT/data/INTERNAL/$1" ;;
     rotel/rotel-bridge.js)   echo "$ROOT/data/INTERNAL/$1" ;;
-    tools/mx-deploy.sh)      echo "$ROOT/usr/local/bin/mx-deploy" ;;
-    tools/*)                 echo "$ROOT/volumio/http/www3/$1" ;;
+    tools/mx-deploy.sh)      echo "$ROOT/usr/local/bin/$PROG" ;;
+    tools/*)                 echo "$ROOT/volumio/http/$WWW/$1" ;;
   esac
 }
 
-die() { echo "mx-deploy: $*" >&2; exit 1; }
+die() { echo "$PROG: $*" >&2; exit 1; }
 [ -n "$ROOT" ] || [ "$(id -u)" = 0 ] || die "bitte mit sudo aufrufen"
 
 restart_services() {               # $1: Liste geänderter Repo-Pfade
@@ -125,11 +135,11 @@ while IFS= read -r f; do
   t=$(target "$f")
   mkdir -p "$(dirname "$t")"
   case "$t" in
-    */mx-deploy) cp "$f" "$t.neu" && chmod +x "$t.neu" && mv "$t.neu" "$t" ;;   # läuft gerade: neue Datei statt überschreiben
+    */"$PROG")   cp "$f" "$t.neu" && chmod +x "$t.neu" && mv "$t.neu" "$t" ;;   # läuft gerade: neue Datei statt überschreiben
     *.sh)        cp "$f" "$t" && chmod +x "$t" ;;
     *)           cp "$f" "$t" ;;                                               # vorhandene Datei: Besitzer und Rechte bleiben
   esac
 done <<< "$ALL"
-echo "Eingespielt. Sicherung: $(basename "$base") (zurück mit: sudo mx-deploy --zurueck)"
+echo "Eingespielt nach /volumio/http/$WWW. Sicherung: $(basename "$base") (zurück mit: sudo $PROG --zurueck)"
 restart_services "$ALL"
 echo "Im Browser hart neu laden."

@@ -9,7 +9,9 @@ var vm    = require('vm');
 
 var HTTP_PORT   = parseInt(process.env.HTTP_PORT || '8766', 10);
 var MUSIC_ROOT  = process.env.MUSIC_ROOT  || '/mnt';
-var PYTHON      = process.env.PYTHON      || 'python';
+/* Volumio 2: python (2.7); Volumio 4 (Debian 12) hat nur python3 */
+var PYTHON      = process.env.PYTHON      || (['/usr/bin/python', '/usr/local/bin/python'].some(function(p){
+  try { return fs.statSync(p).isFile(); } catch (e) { return false; } }) ? 'python' : 'python3');
 var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
 var MPC         = process.env.MPC         || 'mpc';
 var LOG_FILE    = process.env.TAGS_LOG    || '/data/INTERNAL/tags/changes.jsonl';
