@@ -1,4 +1,4 @@
-/* Suche ohne Eingabe: "Entdecken" mit Alben von vor einem Jahr und einem Zufallsalbum (Tag-Dienst GET /plays?view=ago, /random).
+/* Suche ohne Eingabe: "Entdecken" mit Alben von vor einem Jahr, dem Einstieg in den Stimmungs-Mix und einem Zufallsalbum (Tag-Dienst GET /plays?view=ago, /random).
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach library.js und history.js geladen. */
 var discoverReady = false;       /* Tag-Dienst erreichbar */
 var discoverSeq   = 0;
@@ -14,8 +14,8 @@ function discoverShow() {
   clearTimeout(discoverTimer);
   while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
   var box = histEl('div', 'dBox');
-  var agoBox = histEl('div', 'dSec'), randBox = histEl('div', 'dSec');
-  box.appendChild(agoBox); box.appendChild(randBox);
+  var agoBox = histEl('div', 'dSec'), mixBox = histEl('div', 'dSec'), randBox = histEl('div', 'dSec');
+  box.appendChild(agoBox); box.appendChild(mixBox); box.appendChild(randBox);
   searchResults.appendChild(box);
   discoverRandomBox = randBox;
 
@@ -40,6 +40,7 @@ function discoverShow() {
     discoverFit(row);
   }).catch(function(){});
 
+  discoverMix(mixBox);
   discoverRandom(seq);
   return true;
 }
@@ -51,6 +52,18 @@ function discoverFit(row) {
   if (row.scrollWidth <= row.clientWidth + 1) row.classList.add('fit');
 }
 window.addEventListener('resize', function(){ discoverFit(document.querySelector('.dRow')); });
+
+/* Stimmungs-Mix: ein paar Stimmungen zum direkten Einstieg, "Mehr" öffnet die ganze Auswahl */
+function discoverMix(box) {
+  if (typeof openMoodMix !== 'function') return;
+  box.appendChild(browseHeading('STIMMUNGS-MIX'));
+  var chips = histEl('div', 'mxChips dMix');
+  MIX_CORE.slice(0, 6).forEach(function(m){
+    chips.appendChild(mixChip(mixName(m), false, function(){ openMoodMix(m); }));
+  });
+  chips.appendChild(mixChip('Mehr …', false, function(){ openMoodMix(); }, 'mxMore'));
+  box.appendChild(chips);
+}
 
 function discoverRandom(seq) {
   var box = discoverRandomBox;

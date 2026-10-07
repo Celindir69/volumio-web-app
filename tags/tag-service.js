@@ -411,8 +411,8 @@ function doPlays(query, cb) {
 var albums = require('./albums.js');
 var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
-var ALBUMS_VERSION = 3;                                  /* 2: mit Genre, 3: dazu library-tracks.json */
-var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei], …] für die Stimmungs-Tags */
+var ALBUMS_VERSION = 4;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album */
+var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album], …] für die Stimmungs-Tags */
 
 function albumsEnsure(cb) {
   cb = cb || function(){};
@@ -429,7 +429,7 @@ function albumsEnsure(cb) {
       if (!e2 && songs.length) {
         albumIdx = {v: ALBUMS_VERSION, db: stamp || null, at: Date.now(), list: albums.fromSongs(songs)};
         try { fs.writeFileSync(ALBUMS_FILE, JSON.stringify(albumIdx)); } catch (x) { /* nächstes Mal */ }
-        var tl = songs.filter(function(s){ return s.artist && s.title; }).map(function(s){ return [s.artist, s.title, s.file]; });
+        var tl = songs.filter(function(s){ return s.artist && s.title; }).map(function(s){ return [s.artist, s.title, s.file, parseInt(s.time, 10) || 0, s.album]; });
         try { fs.writeFileSync(TRACKS_FILE + '.neu', JSON.stringify(tl)); fs.renameSync(TRACKS_FILE + '.neu', TRACKS_FILE); } catch (x) { /* nächstes Mal */ }
       }
     });
@@ -454,6 +454,21 @@ function doMoodtags(query, cb) {
     return cb(200, {ok: true, track: t ? t.g : null, artist: a ? a.g : null, result: moodCollector.moodOf(ar, ti)});
   }
   cb(200, {ok: true, enabled: moodCollector.running, status: moodCollector.status(), summary: moodCollector.summary()});
+}
+
+/* GET /moodmix?moods=a,b&emin=&emax=&styles=&match=any|all&n=&disc=0..1 -> {ok, level, matches, tracks}
+   mit count=1 nur {ok, count, rated, styles} (Trefferanzeige und Stil-Chips) */
+var moodmix = require('./moodmix.js');
+var mixPlays = null;
+function doMoodmix(query, cb) {
+  var c = moodmix.parse(query);
+  if (query.count) { var r = moodmix.count(moodCollector, c); r.ok = true; return cb(200, r); }
+  var pl = playStore.load();
+  if (!mixPlays || mixPlays.n !== pl.length) mixPlays = {n: pl.length, pc: moodmix.playCounts(pl)};
+  var m = moodmix.build(moodCollector, mixPlays.pc, c);
+  m.ok = true;
+  m.tracks.forEach(function(t){ t.f = relUri(t.f) || t.f; });
+  cb(200, m);
 }
 
 function doRandom(query, cb) {
@@ -727,6 +742,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/moodmix')  return doMoodmix(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
