@@ -1,11 +1,21 @@
-/* Streamingdienste neben der eigenen Sammlung (TIDAL, Qobuz): welche es gibt, woran man ihre Einträge erkennt
-   und wie Volumios Suchergebnisse aufgeteilt werden. Eingeschaltet über APP_CONFIG.TIDAL / APP_CONFIG.QOBUZ
-   (true, false oder 'auto' = nur, wenn das Plugin in Volumio aktiv ist).
+/* Streamingdienste neben der eigenen Sammlung (TIDAL, Qobuz, HIGHRESAUDIO, Spotify): welche es gibt, woran man
+   ihre Einträge erkennt und wie Volumios Suchergebnisse aufgeteilt werden. Eingeschaltet über APP_CONFIG.TIDAL,
+   .QOBUZ, .HRA, .SPOTIFY (true, false oder 'auto' = nur, wenn das Plugin in Volumio aktiv ist).
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; als erstes App-Skript geladen (vor core.js). */
+/* key: Plugin- bzw. Dienstname (service, plugin_name) und Anfang der Adressen; short: Beschriftung des Kästchens in der Suche;
+   title: Überschrift einer Ergebnisliste dieses Dienstes */
 var STREAMS = [
-  {id: 'tidal', name: 'TIDAL', cfg: 'TIDAL', uriRe: /^tidal:/i, artistRe: /^tidal:\/\/artist\/\d+$/i},
+  {id: 'tidal', name: 'TIDAL', short: 'TIDAL', cfg: 'TIDAL', key: /^tidal/i, title: /tidal/,
+   uriRe: /^tidal:/i, artistRe: /^tidal:\/\/artist\/\d+$/i},
   /* Qobuz-Plugin von Volumio: Adressen wie qobuz://artist/123 (ältere Fassungen qobuz/artist/123) */
-  {id: 'qobuz', name: 'Qobuz', cfg: 'QOBUZ', uriRe: /^qobuz(:\/\/|\/)/i, artistRe: /^qobuz(:\/\/|\/)artists?\/[\w-]+$/i}
+  {id: 'qobuz', name: 'Qobuz', short: 'Qobuz', cfg: 'QOBUZ', key: /^qobuz/i, title: /qobuz/,
+   uriRe: /^qobuz(:\/\/|\/)/i, artistRe: /^qobuz(:\/\/|\/)artists?\/[\w-]+$/i},
+  /* HIGHRESAUDIO-Plugin (hra): Adressen wie hra://artist/123 oder hra/artist/123 (noch nicht am Gerät geprüft) */
+  {id: 'hra', name: 'HIGHRESAUDIO', short: 'HRA', cfg: 'HRA', key: /^(hra|highresaudio)/i, title: /\bhra\b|highresaudio|high res audio/,
+   uriRe: /^(hra|highresaudio)(:\/\/|\/)/i, artistRe: /^(hra|highresaudio)(:\/\/|\/)artists?\/[\w-]+$/i},
+  /* Spotify-Plugin von Volumio (spop, nur mit Premium): Adressen wie spotify:artist:4Z8W…; Spotify Connect allein bietet keine Suche */
+  {id: 'spotify', name: 'Spotify', short: 'Spotify', cfg: 'SPOTIFY', key: /^(spop|spotify)/i, title: /spotify/,
+   uriRe: /^spotify[:\/]/i, artistRe: /^spotify:artist:\w+$/i}
 ];
 STREAMS.forEach(function(s){ s.on = false; s.show = true; s.downUntil = 0; });
 
@@ -15,7 +25,8 @@ function streamById(id) { return STREAMS.filter(function(s){ return s.id === id;
 function streamOf(x) {
   if (!x) return null;
   if (typeof x === 'string') return STREAMS.filter(function(s){ return s.uriRe.test(x); })[0] || null;
-  return streamById(String(x.service || '').toLowerCase()) || streamOf(x.uri || '');
+  var sv = String(x.service || '');
+  return (sv && STREAMS.filter(function(s){ return s.key.test(sv); })[0]) || streamOf(x.uri || '');
 }
 function streamIsArtist(it) {
   var s = streamOf(it);
@@ -47,9 +58,9 @@ function streamEmptySearch() {
 function streamSplitSearch(lists, query) {
   var d = streamEmptySearch(), q = String(query || '').toLowerCase();
   (lists || []).forEach(function(l){
-    var items = l.items || [], title = String(l.title || '').toLowerCase();
+    var items = l.items || [], title = String(l.title || '').toLowerCase().split("'")[0];   /* ohne den Suchbegriff */
     if (title.indexOf('internetradio') > -1 || title.indexOf('webradio') > -1) return;
-    var svc = STREAMS.filter(function(s){ return title.indexOf(s.id) > -1; })[0] || (items[0] && streamOf(items[0]));
+    var svc = STREAMS.filter(function(s){ return s.title.test(title); })[0] || (items[0] && streamOf(items[0]));
     var cat = streamListCat(l.title, items);
     if (!cat) return;
     if (svc) { d.stream[svc.id][cat] = d.stream[svc.id][cat].concat(items); return; }
@@ -69,7 +80,7 @@ function streamConfigure(cfg, sources) {
     var v = cfg ? cfg[s.cfg] : undefined;
     if (v === true || v === false) { s.on = v; return; }
     if (!sources) { s.on = s.id === 'tidal'; return; }      /* bis Volumio antwortet: wie bisher nur TIDAL annehmen */
-    s.on = sources.some(function(x){ var re = new RegExp('^' + s.id, 'i'); return re.test(x.plugin_name || '') || re.test(x.uri || ''); });
+    s.on = sources.some(function(x){ return s.key.test(x.plugin_name || '') || s.key.test(x.uri || ''); });
   });
 }
 function streamNeedsSources(cfg) {

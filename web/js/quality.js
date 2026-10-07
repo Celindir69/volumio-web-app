@@ -7,7 +7,7 @@
 var Q_LOSSLESS = ['flac', 'wav', 'aiff', 'aif', 'alac', 'ape', 'wv', 'tta', 'tak'];
 var Q_DSD      = ['dsf', 'dff', 'dsd'];
 var Q_LOSSY    = ['mp3', 'mp2', 'aac', 'ogg', 'oga', 'opus', 'wma'];
-var Q_SERVICES = ['tidal', 'qobuz'];       /* Streaming mit Qualitätsstufen: Einordnung über Rate, Bit-Tiefe, Bitrate */
+var Q_SERVICES = ['tidal', 'qobuz', 'hra'];       /* Streaming mit Qualitätsstufen: Einordnung über Rate, Bit-Tiefe, Bitrate */
 
 /* "44.1 kHz" -> 44100, "2.82 MHz" -> 2820000, sonst 0 */
 function qParseRate(s) {
@@ -47,7 +47,7 @@ function classifyQuality(st, cfg) {
   var lossless = null;                      /* true, false oder null = unbekannt */
   if (Q_DSD.indexOf(type) > -1 || rate >= 2.8e6) { kind = 'dsd'; label = qDsdName(rate || 2822400); }
   else if (Q_LOSSLESS.indexOf(type) > -1) lossless = true;
-  else if (Q_LOSSY.indexOf(type) > -1 || service === 'spotify') lossless = false;
+  else if (Q_LOSSY.indexOf(type) > -1 || service === 'spotify' || service === 'spop') lossless = false;
   else if (type === 'm4a' || type === 'mp4') {
     var fc = st.fileCodec;
     if (fc && fc.codec === 'alac') { lossless = true; if (fc.bits) bits = fc.bits; }

@@ -18,6 +18,8 @@ window.APP_CONFIG = {
                          'auto' = nur, wenn das TIDAL-Plugin in Volumio aktiv ist; true = immer; false = nie */
   QOBUZ: 'auto',      /* Qobuz genauso wie TIDAL (Auswahl in der Suche, ähnliche Künstler bei Qobuz):
                          'auto' = nur, wenn das Qobuz-Plugin in Volumio aktiv ist; true = immer; false = nie */
+  HRA: 'auto',        /* HIGHRESAUDIO genauso (Plugin "hra"); 'auto' / true / false wie oben */
+  SPOTIFY: 'auto',    /* Spotify genauso (Volumios Spotify-Plugin mit Suche, braucht Premium); 'auto' / true / false wie oben */
   ROTEL_CMD_POWER_ON:  'power_on',    /* Befehlsnamen für /cmd?c=... des Rotel-Dienstes */
   ROTEL_CMD_POWER_OFF: 'power_off'
 };

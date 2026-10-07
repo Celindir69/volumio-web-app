@@ -66,6 +66,7 @@ function streamsApply() {
     if (box) box.checked = s.show;
   });
   root.classList.toggle('noStream', !streamsOn().length);
+  root.classList.toggle('manyStreams', streamsOn().length > 2);
   tidalOn = streamById('tidal').on;
   if (!streamsOn().length && typeof searchShowLocal !== 'undefined') {
     searchShowLocal = true;
