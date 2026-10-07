@@ -27,6 +27,18 @@ Ziele: `app.html`, `web/`, `tools/` nach `/volumio/http/www3/`, `kioskTV.html` n
 werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen sichert es die betroffenen Dateien nach
 `/data/INTERNAL/mx-deploy/` (die letzten 5). Gelöscht wird nichts; eigene Dateien wie `web/config.local.js` bleiben.
 
+### Volumio 4
+Volumio 4 liefert die Oberfläche aus `/volumio/http/www4/` statt `www3/`. Dasselbe Skript unter dem Namen
+`volumio4-deploy` eingerichtet spielt `app.html`, `web/` und `tools/` dorthin ein; alles andere wie oben, Sicherungen unter
+`/data/INTERNAL/volumio4-deploy/`:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null
+sudo chmod +x /usr/local/bin/volumio4-deploy
+sudo volumio4-deploy -n          # erst ansehen: „geändert“ hieße, eine Datei von Volumio würde ersetzt
+```
+Aufrufe wie bei mx-deploy (`sudo volumio4-deploy <branch>`, `--zurueck` …). Ein anderer Ordner geht mit
+`MX_WWW=<ordner>`, z. B. `sudo MX_WWW=www3 volumio4-deploy`.
+
 ## Tag-Dienst (für den Tag-Editor)
 ```bash
 sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
@@ -37,7 +49,7 @@ Description=Tag-Dienst fuer app.html
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/node /data/INTERNAL/tags/tag-service.js
+ExecStart=/usr/bin/env node /data/INTERNAL/tags/tag-service.js
 WorkingDirectory=/data/INTERNAL/tags
 Restart=always
 User=volumio
@@ -54,6 +66,8 @@ Der Dienst schreibt als `volumio` in die Musikdateien. Ob das geht:
 Wenn nicht, `Environment=USE_SUDO=1` einkommentieren (dann läuft nur `tags.py` als root).
 Nach einem Update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
 Weitere Variablen: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_LOG`.
+Volumio 4: `tags.py` braucht dort Python 3 mit mutagen (`sudo apt install python3-mutagen`); der Dienst nimmt
+`python3`, wenn es kein `python` gibt.
 
 Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`. Alte Werte für „Rückgängig“ stehen in
 `/data/INTERNAL/tags/changes.jsonl`. Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste

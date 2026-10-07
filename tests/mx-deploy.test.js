@@ -44,4 +44,23 @@ t('noch einmal --zurueck entfernt die neu angelegten Dateien', function(){
   assert.ok(!fs.existsSync(path.join(R, 'volumio/http/www3/web/js/core.js')));
   assert.strictEqual(fs.readFileSync(path.join(R, 'volumio/http/www3/web/config.local.js'), 'utf8'), 'lokal');
 });
+/* derselbe Skript als volumio4-deploy: Oberfläche nach www4, eigene Sicherungen, richtet sich selbst unter seinem Namen ein */
+var v4 = path.join(T, 'volumio4-deploy.sh'), R4 = path.join(T, 'root4');
+fs.copyFileSync(path.join(repo, 'tools/mx-deploy.sh'), v4);
+function sh4(cmd) { return cp.execSync(cmd, {cwd: repo, env: Object.assign({}, process.env, {MX_ROOT: R4}), encoding: 'utf8'}); }
+t('volumio4-deploy spielt nach www4 ein', function(){
+  var o = sh4('MX_SOURCE=' + v1 + ' bash ' + v4 + ' -y');
+  assert.ok(/Eingespielt nach \/volumio\/http\/www4/.test(o), o);
+  assert.ok(/sudo volumio4-deploy --zurueck/.test(o));
+  assert.ok(fs.existsSync(path.join(R4, 'volumio/http/www4/app.html')));
+  assert.ok(fs.existsSync(path.join(R4, 'volumio/http/www4/web/js/core.js')));
+  assert.ok(!fs.existsSync(path.join(R4, 'volumio/http/www3')));
+  assert.ok(fs.statSync(path.join(R4, 'usr/local/bin/volumio4-deploy')).mode & 0o100);
+  assert.ok(!fs.existsSync(path.join(R4, 'usr/local/bin/mx-deploy')));
+  assert.ok(fs.readdirSync(path.join(R4, 'data/INTERNAL/volumio4-deploy')).some(function(f){ return /^backup-/.test(f); }));
+});
+t('volumio4-deploy --zurueck', function(){
+  sh4('bash ' + v4 + ' --zurueck');
+  assert.ok(!fs.existsSync(path.join(R4, 'volumio/http/www4/app.html')));
+});
 console.log(n + ' Prüfungen');
