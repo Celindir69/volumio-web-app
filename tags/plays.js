@@ -169,7 +169,7 @@ function top(list, kind, from, limit, to) {
   var part = between(list, from, to), groups = {}, order = [];
   var albumDir = {};                                     /* Album+Interpret -> Ordner: Sampler-Titel verschiedener Interpreten zusammen */
   if (kind === 'album') part.forEach(function(e){
-    if (e.al && e.u && !/^[a-z]+:\/\//.test(e.u)) albumDir[keys(e).al + '|' + keys(e).ar] = path.dirname(e.u);
+    if (e.al && e.u && !/^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio)\/|spotify:)/i.test(e.u)) albumDir[keys(e).al + '|' + keys(e).ar] = path.dirname(e.u);
   });
   for (var i = part.length - 1; i >= 0; i--) {           /* neueste zuerst: Anzeige und uri vom letzten Mal */
     var e = part[i], k;
@@ -185,7 +185,7 @@ function top(list, kind, from, limit, to) {
     }
     g.n++;
     g.artists[keys(e).ar] = true;
-    if (!g.u && e.u) g.u = kind === 'album' && !/^[a-z]+:\/\//.test(e.u) ? path.dirname(e.u) : (kind === 'track' ? e.u : undefined);
+    if (!g.u && e.u) g.u = kind === 'album' && !/^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio)\/|spotify:)/i.test(e.u) ? path.dirname(e.u) : (kind === 'track' ? e.u : undefined);
   }
   return order.map(function(k){
     var g = groups[k], o = {n: g.n, last: g.last, ar: g.ar};

@@ -75,7 +75,7 @@ function histChips(list, cur, onPick) {
 
 /* uri bzw. Ordner relativ zu /mnt ("USB/…"); '' bei TIDAL und Co. */
 function histRel(u) {
-  if (!u || /^[a-z]+:\/\//.test(u)) return '';
+  if (!u || /^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio)\/|spotify:)/i.test(u)) return '';
   return u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, '');
 }
 function histAlbumArt(artist, album, dir) {

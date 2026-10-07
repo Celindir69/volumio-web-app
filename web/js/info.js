@@ -78,13 +78,19 @@ function renderInfo(dir) {
     loading.textContent = 'Suche ähnliche Künstler…';
     infoContent.appendChild(loading);
     loadSimilarArtists(it.artist).then(function(matches){
-      it.data = {kind:'similarArtists', value: matches, tidal: null};
+      var streams = {};                                    /* je Dienst: null = wird noch gesucht */
+      streamsOn().forEach(function(svc){ streams[svc.id] = null; });
+      it.data = {kind:'similarArtists', value: matches, streams: streams};
       if (infoItems[infoIdx] === it) renderInfo(false);
-      var data = it.data;                                  /* TIDAL danach, damit die Sammlung sofort erscheint */
-      loadTidalSimilar(it.artist, matches).then(function(list){
-        data.tidal = list;
-        if (infoItems[infoIdx] === it && it.data === data) renderInfo(false);
-      });
+      var data = it.data;                                  /* Dienste danach (nacheinander), damit die Sammlung sofort erscheint */
+      streamsOn().reduce(function(chain, svc){
+        return chain.then(function(){
+          return loadStreamSimilar(svc, it.artist, matches).then(function(list){
+            data.streams[svc.id] = list;
+            if (infoItems[infoIdx] === it && it.data === data) renderInfo(false);
+          });
+        });
+      }, Promise.resolve());
     });
     return;
   }
@@ -125,10 +131,10 @@ if (!it.data || it.data.kind === 'story') {
 
 
   if (it.data.kind === 'similarArtists') {
-    var tidal = it.data.tidal;                      /* null: wird noch gesucht */
-    if (!it.data.value.length && tidal && tidal.length) {
-      /* nichts in der Sammlung, aber bei TIDAL: kein Hinweis "nichts gefunden" nötig */
-    } else if (!it.data.value.length && tidal) {
+    var st = it.data.streams || {}, ids = Object.keys(st);
+    var pending = ids.filter(function(id){ return st[id] === null; });
+    var found = ids.filter(function(id){ return st[id] && st[id].length; });
+    if (!it.data.value.length && !found.length && !pending.length) {
       var none = document.createElement('div');
       none.className = 'plHint';
       none.textContent = 'Keine ähnlichen Künstler gefunden';
@@ -144,23 +150,26 @@ if (!it.data || it.data.kind === 'story') {
       });
       infoContent.appendChild(row);
     });
-    if (tidal === null) {
-      var wait = document.createElement('div');
-      wait.className = 'plHint'; wait.textContent = 'Suche bei TIDAL…';
-      infoContent.appendChild(wait);
-    } else if (tidal.length) {
+    found.forEach(function(id){
+      var svc = streamById(id);
       var hd = document.createElement('div');
-      hd.className = 'infoSection'; hd.textContent = 'TIDAL';
+      hd.className = 'infoSection'; hd.textContent = svc.name;
       infoContent.appendChild(hd);
-      tidal.forEach(function(t){
+      st[id].forEach(function(t){
         var row = document.createElement('div');
         row.className = 'disc-row';
         row.textContent = t.title;
         row.addEventListener('click', function(){
-          openBrowse({kind:'artist', artist:t.title, uri:t.uri});     /* Alben bei TIDAL (browse.js) */
+          openBrowse({kind:'artist', artist:t.title, uri:t.uri});     /* Alben beim Dienst (browse.js) */
         });
         infoContent.appendChild(row);
       });
+    });
+    if (pending.length) {
+      var wait = document.createElement('div');
+      wait.className = 'plHint';
+      wait.textContent = 'Suche bei ' + pending.map(function(id){ return streamById(id).name; }).join(' und ') + '…';
+      infoContent.appendChild(wait);
     }
     return;
   }

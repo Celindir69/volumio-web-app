@@ -15,7 +15,7 @@ var tagCommon   = {};     /* Feldname -> {input, mixed} */
 var tagBatch    = null;
 var tagMode     = 'album';  /* 'album': Editor für ausgewählte Dateien; 'artist': Mehrfachbearbeitung je Künstler */
 
-/* nur lokale Dateien auf dem Player lassen sich bearbeiten (nicht TIDAL, Radio) */
+/* nur lokale Dateien auf dem Player lassen sich bearbeiten (nicht TIDAL, Qobuz, Radio) */
 function isLocalTrack(t) {
   return !!t && (t.service || 'mpd') === 'mpd' && TAG_LOCAL_RE.test(t.uri || '');
 }
@@ -57,7 +57,7 @@ function tagTrackButton(t) {
 
 /* Stift für ein Album in einer Liste (Suche, Künstlerseite): liest die Titel erst beim Tippen; nur lokal, sonst null */
 function tagAlbumButton(al) {
-  if (!al || !al.uri || (al.service || 'mpd') !== 'mpd' || /^tidal:/.test(al.uri)) return null;
+  if (!al || !al.uri || (al.service || 'mpd') !== 'mpd' || streamOf(al.uri)) return null;
   return tagPenButton('tagEditMini', 'Tags bearbeiten', function(){
     showToast('Lade Titel…');
     browseGet(al.uri).then(function(j){

@@ -53,25 +53,32 @@ socket.on('pushState', function(st){
   }
 });
 
-/* TIDAL-Teile der Oberfläche: APP_CONFIG.TIDAL true/false, 'auto' = nach den Quellen von Volumio.
-   Bis die Antwort da ist, gilt TIDAL als vorhanden (so bleibt beim Laden nichts hängen). */
-var tidalCfg = window.APP_CONFIG && window.APP_CONFIG.TIDAL;
-var tidalOn = tidalCfg !== false;
-function tidalApply() {
-  document.documentElement.classList.toggle('noTidal', !tidalOn);
-  if (!tidalOn && typeof searchShowLocal !== 'undefined') {
-    searchShowLocal = true; searchShowTidal = false;
+/* Streamingdienste (streaming.js): eingeschaltet nach APP_CONFIG.TIDAL / QOBUZ, 'auto' nach den Quellen von Volumio.
+   Bis die Antwort da ist, gilt nur TIDAL als vorhanden (so bleibt beim Laden nichts hängen). */
+var appCfg = window.APP_CONFIG || {};
+var tidalOn = false;                                   /* Kurzform für Stellen, die nur TIDAL betreffen */
+function streamCap(s) { return s.id.charAt(0).toUpperCase() + s.id.slice(1); }
+function streamsApply() {
+  var root = document.documentElement;
+  STREAMS.forEach(function(s){
+    root.classList.toggle('no' + streamCap(s), !s.on);         /* blendet das Kästchen des Dienstes in der Suche aus */
+    var box = document.getElementById('src' + streamCap(s));
+    if (box) box.checked = s.show;
+  });
+  root.classList.toggle('noStream', !streamsOn().length);
+  root.classList.toggle('manyStreams', streamsOn().length > 2);
+  tidalOn = streamById('tidal').on;
+  if (!streamsOn().length && typeof searchShowLocal !== 'undefined') {
+    searchShowLocal = true;
     document.getElementById('srcLocal').checked = true;
   }
 }
-if (tidalCfg !== true && tidalCfg !== false) {
-  socket.on('pushBrowseSources', function(list){
-    tidalOn = (list || []).some(function(s){ return /^tidal/i.test(s.plugin_name || '') || /^tidal/i.test(s.uri || ''); });
-    tidalApply();
-  });
+streamConfigure(appCfg, null);
+if (streamNeedsSources(appCfg)) {
+  socket.on('pushBrowseSources', function(list){ streamConfigure(appCfg, list || []); streamsApply(); });
   socket.emit('getBrowseSources');
 }
-tidalApply();
+streamsApply();
 
 function fmtTime(s) {
   s = Math.floor(s || 0);
@@ -139,7 +146,7 @@ var drag        = null;
 var swipe       = null;
 var plTabActive = 1;
 
-var searchData  = {artists:[], albums:[], songs:[], tidal:{artists:[], albums:[], songs:[]}};
+var searchData  = streamEmptySearch();
 var searchCat   = 'artists';
 var searchQuery = '';
 

@@ -357,8 +357,9 @@
     cursor:pointer; opacity:.6; padding:calc(1.2 * var(--vw)); }
   #searchClear:active { opacity:1; }
   #searchClear svg { display:block; fill:#fff; width:calc(5 * var(--vw)); height:calc(5 * var(--vw)); max-width:22px; max-height:22px; }
-  #searchSources { display:flex; gap:calc(4 * var(--vw)); margin-left:calc(4 * var(--vw)); margin-right:auto; font-size:calc(3.4 * var(--vw)); }
-  #searchSources label { display:flex; align-items:center; gap:calc(1.2 * var(--vw)); cursor:pointer; opacity:.85; }
+  #searchSources { display:flex; gap:calc(4 * var(--vw)); margin-left:calc(4 * var(--vw)); margin-right:auto; min-width:0; overflow-x:auto; scrollbar-width:none; white-space:nowrap; font-size:calc(3.4 * var(--vw)); }
+  #searchSources::-webkit-scrollbar { display:none; }
+  #searchSources label { flex:0 0 auto; display:flex; align-items:center; gap:calc(1.2 * var(--vw)); cursor:pointer; opacity:.85; }
   /* eigene Kästchen: ohne Akzentfarbe (TIDAL, Radio) zeichnet Safari sonst einen weißen Haken auf weißem Grund */
   #searchSources input { -webkit-appearance:none; appearance:none; margin:0; flex:0 0 auto; cursor:pointer;
     width:calc(4.4 * var(--vw)); height:calc(4.4 * var(--vw)); max-width:20px; max-height:20px;
@@ -588,12 +589,17 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #topRight
 /* Bilder, die nicht laden oder keine Quelle haben: nichts zeigen (kein Fragezeichen), Platz bleibt */
 img.imgFail, img:not([src]), img[src=""] { visibility:hidden; }
 
-/* ohne TIDAL: keine Auswahl Lokal/TIDAL in der Suche */
-html.noTidal #searchSources { display:none; }
+/* ohne Streamingdienst: keine Auswahl Lokal/TIDAL/Qobuz in der Suche; je Dienst nur sein Kästchen ausblenden */
+html.noStream #searchSources { display:none; }
+/* mehr als zwei Dienste: Kästchen in eigener Zeile unter der Überschrift */
+html.manyStreams #overlaySearch .overlayHead { flex-wrap:wrap; }
+html.manyStreams #searchSources { order:10; flex-basis:100%; margin:calc(2 * var(--vw)) 0 calc(2 * var(--vw)); }
+html.noTidal #searchSources .srcTidal, html.noQobuz #searchSources .srcQobuz,
+html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { display:none; }
 
 /* ---------- Bibliotheks-Check ---------- */
 #btnCheck svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
-html.noTidal #btnCheck { margin-left:auto; }
+html.noStream #btnCheck { margin-left:auto; }
 #overlayCheck .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 #checkBack { cursor:pointer; opacity:.7; display:flex; }
 #checkBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:#fff; }
@@ -638,7 +644,7 @@ html.noTidal #btnCheck { margin-left:auto; }
 #historyBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:#fff; }
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 #btnHistory svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
-html.noTidal #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
+html.noStream #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
 #histTabBar { flex:0 0 auto; display:flex; border-bottom:1px solid rgba(255,255,255,.2); margin:0 calc(5 * var(--vw)); }
 #histBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); }
 #histBody .infoSection:first-child { margin-top:calc(3 * var(--vw)); }
