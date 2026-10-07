@@ -711,3 +711,11 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
                border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(45deg); transition:transform .2s; }
 .hFold.open:after { transform:rotate(-135deg); }
 .hNoImg .sMeta { padding-left:calc(1 * var(--vw)); }
+
+/* Rückblick: Monat für die Ranglisten wählen */
+.hSelect .hBar { cursor:pointer; }
+.hHasSel .hBar:not(.sel) .hFill { opacity:.35; }
+.hScope { display:flex; align-items:center; justify-content:space-between; gap:calc(2 * var(--vw)); margin-top:calc(3 * var(--vw));
+          font-size:calc(3.2 * var(--vw)); font-weight:600; }
+.hScope .hChip { flex:0 0 auto; }
+.hBar.sel .hFill { opacity:1; box-shadow:0 0 0 1px #fff; }

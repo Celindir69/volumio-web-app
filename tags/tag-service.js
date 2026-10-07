@@ -391,7 +391,8 @@ function doPlays(query, cb) {
     albumsEnsure();                                      /* Genres kommen aus der Albenliste */
     var gi = albumIdx && albumIdx.list;
     if (gi && (!albumGenre || albumGenre.list !== gi)) albumGenre = {list: gi, fn: albums.genreIndex(gi)};
-    var yr = plays.year(list, y, tz, now, 10, gi ? albumGenre.fn : null);
+    var m = parseInt(query.m, 10);
+    var yr = plays.year(list, y, tz, now, 10, gi ? albumGenre.fn : null, m >= 1 && m <= 12 ? m - 1 : -1);
     yr.albums_top.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
     return cb(200, {ok: true, years: ys, review: yr});
   }

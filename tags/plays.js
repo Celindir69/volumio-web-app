@@ -247,7 +247,7 @@ function localStart(y, m, d, tz) {
 
 /* Jahresrückblick für das Ortsjahr y: Summen, Monate, Top-Alben, -Künstler, -Titel, neu entdeckte Künstler.
    Vergleich mit dem Vorjahr; im laufenden Jahr nur mit demselben Zeitraum (bis heute) */
-function year(list, y, tz, now, limit, genreOf) {
+function year(list, y, tz, now, limit, genreOf, month) {
   limit = limit || 10;
   var from = localStart(y, 0, 1, tz), to = localStart(y + 1, 0, 1, tz), pfrom = localStart(y - 1, 0, 1, tz);
   var part = between(list, from, to), res = totals(part);
@@ -256,11 +256,13 @@ function year(list, y, tz, now, limit, genreOf) {
   res.prev = totals(between(list, pfrom, res.partial ? pfrom + Math.max(0, now - from) : from));
   res.months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   part.forEach(function(e){ res.months[local(e.t, tz).getUTCMonth()]++; });
+  /* Ranglisten für das ganze Jahr oder einen Monat (month 0-11) */
+  if (month >= 0 && month < 12) { res.month = month; from = localStart(y, month, 1, tz); to = localStart(y, month + 1, 1, tz); part = between(list, from, to); }
   res.albums_top  = top(list, 'album', from, limit, to);
   res.artists_top = top(list, 'artist', from, limit, to);
   res.tracks_top  = top(list, 'track', from, 5, to);
   res.genres_top  = genreOf ? topGenres(part, genreOf, limit) : [];
-  /* neu entdeckt: Künstler, die vor diesem Jahr nie liefen; nur wenn der Verlauf vor dem Jahr beginnt */
+  /* neu entdeckt: Künstler, die vorher nie liefen; nur wenn der Verlauf vorher beginnt */
   res.newArtists = [];
   res.hasBefore = !!list.length && list[0].t < from;
   if (res.hasBefore) {

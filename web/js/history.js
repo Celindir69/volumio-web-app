@@ -204,7 +204,9 @@ function histTop(seq) {
 function histNum(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
 /* Balken: Tippen (oder Mauszeiger) zeigt den Wert in der Überschrift; details[i] ist die ausführliche Beschriftung */
-function histBars(title, values, labels, every, details) {
+/* opts.onSel(i oder -1): Tippen wählt einen Balken aus (Rückblick: Monat), opts.sel ist vorgewählt */
+function histBars(title, values, labels, every, details, opts) {
+  opts = opts || {};
   var box = histEl('div', 'hChart');
   var head = browseHeading(title);
   var info = histEl('span', 'hPick');
@@ -223,12 +225,16 @@ function histBars(title, values, labels, every, details) {
     var fill = histEl('div', 'hFill');
     fill.style.height = Math.round(v / max * 100) + '%';
     b.appendChild(fill);
-    b.addEventListener('click', function(){ pick(b, i); });
+    if (i === opts.sel) b.classList.add('sel');
+    b.addEventListener('click', function(){ if (opts.onSel) opts.onSel(i === opts.sel ? -1 : i); else pick(b, i); });
     b.addEventListener('pointerenter', function(e){ if (e.pointerType === 'mouse' && picked !== b) pick(b, i); });   /* Touch: nur Tippen */
     bars.appendChild(b);
     lab.appendChild(histEl('div', 'hLabel', i % every === 0 ? labels[i] : ''));
   });
   bars.addEventListener('pointerleave', function(e){ if (e.pointerType === 'mouse' && picked) pick(picked, 0); });
+  if (opts.onSel) bars.classList.add('hSelect');
+  if (opts.onSel && opts.sel >= 0) bars.classList.add('hHasSel');
+  if (opts.sel >= 0) info.textContent = (details || labels)[opts.sel] + ': ' + histNum(values[opts.sel]);
   box.appendChild(bars); box.appendChild(lab);
   return box;
 }
@@ -283,7 +289,8 @@ function histStats(seq) {
 /* ---------- Jahresrückblick ---------- */
 
 var histYearSel = 0;            /* 0: neuestes Jahr */
-var histYearOpen = {};          /* aufgeklappte Rubriken im Rückblick */
+var histYearOpen = {};
+var histYearMonth = -1;         /* gewählter Monat (0-11) für die Ranglisten, -1: ganzes Jahr */          /* aufgeklappte Rubriken im Rückblick */
 var HIST_MONTHS_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 /* Veränderung zum Vorjahr in Prozent, '' ohne Vorjahr */
@@ -294,12 +301,13 @@ function histDelta(now, before) {
 }
 
 function histYear(seq) {
-  tagGetJson('/plays?view=year' + (histYearSel ? '&y=' + histYearSel : '') + histTz()).then(function(r){
+  tagGetJson('/plays?view=year' + (histYearSel ? '&y=' + histYearSel : '') + (histYearMonth >= 0 ? '&m=' + (histYearMonth + 1) : '') + histTz()).then(function(r){
     if (seq !== histSeq) return;
+    var keep = histBody.scrollTop;                       /* Monat gewählt: an der Stelle bleiben */
     histClear();
     var y = r && r.review, years = (r && r.years) || [];
     if (!y || !years.length) { histBody.appendChild(browseNote('Noch kein Verlauf. Der Rückblick füllt sich mit jeder Wiedergabe.')); return; }
-    if (years.length > 1) histBody.appendChild(histChips(years.map(function(v){ return [v, String(v)]; }), y.year, function(v){ histYearSel = v; histShow('year'); }));
+    if (years.length > 1) histBody.appendChild(histChips(years.map(function(v){ return [v, String(v)]; }), y.year, function(v){ histYearSel = v; histYearMonth = -1; histShow('year'); }));
     if (!y.plays) { histBody.appendChild(browseNote(y.year + ' wurde nichts gespielt.')); return; }
     var hp = Math.round(y.prev.seconds / 3600), hours = Math.round(y.seconds / 3600);
     var grid = histEl('div', 'hNums');
@@ -322,8 +330,22 @@ function histYear(seq) {
     var best = y.months.indexOf(Math.max.apply(null, y.months));
     var full = HIST_MONTHS_FULL;
     histBody.appendChild(histBars('WIEDERGABEN PRO MONAT', y.months, HIST_MONTHS.map(function(m){ return m.charAt(0); }), 1,
-      full.map(function(m){ return m + ' ' + y.year; })));
+      full.map(function(m){ return m + ' ' + y.year; }), {sel: histYearMonth, onSel: function(i){
+        histYearMonth = i;
+        histYear(++histSeq);
+      }}));
     histBody.appendChild(browseNote('Stärkster Monat: ' + full[best] + ' mit ' + histNum(y.months[best]) + ' Wiedergaben'));
+    var inMonth = y.month >= 0 && y.month < 12, suffix = inMonth ? ' · ' + full[y.month].toUpperCase() : '';
+    if (inMonth) {
+      var scope = histEl('div', 'hScope');
+      scope.appendChild(histEl('span', '', 'Ranglisten für ' + full[y.month] + ' ' + y.year));
+      var whole = histEl('button', 'hChip', 'Ganzes Jahr');
+      whole.addEventListener('click', function(){ histYearMonth = -1; histYear(++histSeq); });
+      scope.appendChild(whole);
+      histBody.appendChild(scope);
+    } else {
+      histBody.appendChild(browseNote('Tipp auf einen Monat zeigt die Ranglisten für diesen Monat.'));
+    }
     /* Rubriken zum Aufklappen (anfangs zu); der Zustand bleibt beim Jahreswechsel */
     function section(key, head, fill) {
       var h = browseHeading(head);
@@ -342,10 +364,10 @@ function histYear(seq) {
         items.forEach(function(it, i){ body.appendChild(histTopRow(kind, it, i)); });
       });
     }
-    list('tracks', 'MEISTGESPIELTE TITEL', 'track', y.tracks_top);
-    list('albums', 'TOP-ALBEN', 'album', y.albums_top);
-    list('artists', 'TOP-KÜNSTLER', 'artist', y.artists_top);
-    section('genres', 'TOP-GENRES', function(body){
+    list('tracks', 'MEISTGESPIELTE TITEL' + suffix, 'track', y.tracks_top);
+    list('albums', 'TOP-ALBEN' + suffix, 'album', y.albums_top);
+    list('artists', 'TOP-KÜNSTLER' + suffix, 'artist', y.artists_top);
+    section('genres', 'TOP-GENRES' + suffix, function(body){
       if (!y.genres_top.length) { body.appendChild(browseNote('Noch keine Genres: Die Albenliste wird beim ersten Mal aus der Bibliothek gelesen, oder die Alben haben kein Genre-Tag.')); return; }
       y.genres_top.forEach(function(g, i){
         var row = histRow(g.g, '', histNum(g.n) + '×', function(){});
@@ -354,7 +376,9 @@ function histYear(seq) {
         body.appendChild(row);
       });
     });
-    if (y.hasBefore) list('new', 'NEU ENTDECKT', 'artist', y.newArtists, 'Keine neuen Künstler in diesem Jahr.');
+    if (y.hasBefore) list('new', 'NEU ENTDECKT' + suffix, 'artist', y.newArtists, inMonth ? 'Keine neuen Künstler in diesem Monat.' : 'Keine neuen Künstler in diesem Jahr.');
+    if (inMonth && !y.tracks_top.length) histBody.appendChild(browseNote('In diesem Monat nichts gespielt.'));
+    histBody.scrollTop = keep;
   }).catch(function(){ histFail(seq); });
 }
 
