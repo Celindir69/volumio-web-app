@@ -370,7 +370,7 @@ function watchPlayer() {
 /* Volumio-uri -> Pfad relativ zum Musikordner ("USB/…"), sonst '' */
 function relUri(u) {
   u = String(u || '');
-  if (/^[a-z]+:\/\//.test(u)) return '';
+  if (/^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio|hi_res_audio)\/|spotify:)/i.test(u)) return '';
   return u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, '');
 }
 

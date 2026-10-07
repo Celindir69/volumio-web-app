@@ -16,14 +16,14 @@ function browseItems(j) {
   return out;
 }
 
-var TIDAL_TIMEOUT_MS = 12000;     /* TIDAL antwortet manchmal nicht mehr (Session-Timeout in Volumio) */
-var tidalDownUntil = 0;           /* nach einem Timeout TIDAL kurz in Ruhe lassen */
+var STREAM_TIMEOUT_MS = 12000;    /* TIDAL/Qobuz antworten manchmal nicht mehr (Session-Timeout in Volumio) */
 
 function browseGet(uri) {
   var p = fetch('/api/v1/browse?uri=' + encodeURIComponent(uri)).then(function(r){ return r.json(); });
-  if (!/^tidal:/.test(uri)) return p;
-  return withTimeout(p, TIDAL_TIMEOUT_MS).catch(function(err){
-    tidalDownUntil = Date.now() + 60000;
+  var svc = streamOf(uri);
+  if (!svc) return p;
+  return withTimeout(p, STREAM_TIMEOUT_MS).catch(function(err){
+    svc.downUntil = Date.now() + 60000;              /* nach einem Timeout den Dienst kurz in Ruhe lassen */
     throw err;
   });
 }
@@ -44,46 +44,46 @@ function browseNote(text, cls) {
   return d;
 }
 
-/* ---------- TIDAL: ähnliche Künstler ---------- */
-var TIDAL_ARTIST_RE = /^tidal:\/\/artist\/\d+$/;
-var TIDAL_FALLBACK_MAX = 8;       /* so viele Last.fm-Namen höchstens einzeln bei TIDAL suchen */
-var tidalSimilarCache = {};
+/* ---------- Streamingdienste: ähnliche Künstler ---------- */
+var STREAM_FALLBACK_MAX = 8;      /* so viele Last.fm-Namen höchstens einzeln beim Dienst suchen */
+var streamSimilarCache = {};
 
-function tidalArtistItems(j) {
-  return browseItems(j).filter(function(it){ return it.service === 'tidal' && it.uri && TIDAL_ARTIST_RE.test(it.uri); });
+function streamArtistItems(svc, j) {
+  return browseItems(j).filter(function(it){ return streamOf(it) === svc && streamIsArtist(it); });
 }
 
-/* Künstler bei TIDAL suchen; nur ein Treffer mit genau gleichem Namen zählt */
-function tidalFindArtist(name) {
-  if (!tidalOn || Date.now() < tidalDownUntil) return Promise.resolve(null);
-  return withTimeout(fetch('/api/v1/search?query=' + encodeURIComponent(name)).then(function(r){ return r.json(); }), TIDAL_TIMEOUT_MS).then(function(j){
+/* Künstler bei einem Dienst suchen; nur ein Treffer mit genau gleichem Namen zählt */
+function streamFindArtist(svc, name) {
+  if (!svc.on || Date.now() < svc.downUntil) return Promise.resolve(null);
+  return withTimeout(fetch('/api/v1/search?query=' + encodeURIComponent(name)).then(function(r){ return r.json(); }), STREAM_TIMEOUT_MS).then(function(j){
     var hit = null;
-    tidalArtistItems(j).forEach(function(it){
+    streamArtistItems(svc, j).forEach(function(it){
       if (!hit && (it.title || '').toLowerCase() === name.toLowerCase()) hit = it;
     });
     return hit;
-  }).catch(function(){ tidalDownUntil = Date.now() + 60000; return null; });
+  }).catch(function(){ svc.downUntil = Date.now() + 60000; return null; });
 }
 
-/* Liefert [{title, uri, albumart}]. Erst die eigene Künstlerseite bei TIDAL (falls sie ähnliche Künstler enthält),
+/* Liefert [{title, uri, albumart}]. Erst die eigene Künstlerseite beim Dienst (falls sie ähnliche Künstler enthält),
    sonst die Last.fm-Namen, die nicht in der Sammlung sind, einzeln nachschlagen. */
-function loadTidalSimilar(artist, localNames) {
-  if (!tidalOn) return Promise.resolve([]);
-  if (tidalSimilarCache[artist]) return Promise.resolve(tidalSimilarCache[artist]);
-  function done(list) { if (list.length || Date.now() >= tidalDownUntil) tidalSimilarCache[artist] = list; return list; }   /* leere Antwort nach Timeout nicht merken */
-  return tidalFindArtist(artist).then(function(self){
+function loadStreamSimilar(svc, artist, localNames) {
+  if (!svc.on) return Promise.resolve([]);
+  var key = svc.id + '|' + artist;
+  if (streamSimilarCache[key]) return Promise.resolve(streamSimilarCache[key]);
+  function done(list) { if (list.length || Date.now() >= svc.downUntil) streamSimilarCache[key] = list; return list; }   /* leere Antwort nach Timeout nicht merken */
+  return streamFindArtist(svc, artist).then(function(self){
     var viaPage = self ? browseGet(self.uri).then(function(j){
-      return tidalArtistItems(j).filter(function(it){ return it.uri !== self.uri; });
+      return streamArtistItems(svc, j).filter(function(it){ return it.uri !== self.uri; });
     }).catch(function(){ return []; }) : Promise.resolve([]);
     return viaPage.then(function(list){
       if (list.length) return list;
       var have = {};
       (localNames || []).forEach(function(n){ have[n.toLowerCase()] = true; });
-      var names = (similarAllCache[artist] || []).filter(function(n){ return !have[n.toLowerCase()]; }).slice(0, TIDAL_FALLBACK_MAX);
+      var names = (similarAllCache[artist] || []).filter(function(n){ return !have[n.toLowerCase()]; }).slice(0, STREAM_FALLBACK_MAX);
       var found = [];
       return names.reduce(function(chain, n){            /* nacheinander, schont den Player */
         return chain.then(function(){
-          return tidalFindArtist(n).then(function(it){ if (it) found.push(it); });
+          return streamFindArtist(svc, n).then(function(it){ if (it) found.push(it); });
         });
       }, Promise.resolve()).then(function(){ return found; });
     });
@@ -187,20 +187,20 @@ function browseTrackRow(t, e, showAlbum) {
 }
 
 function browseArtist(e, seq) {
-  var isTidal = !!(e.uri && /^tidal:/.test(e.uri));
+  var isStream = !!streamOf(e.uri || '');
   browseGet(e.uri || ('artists://' + e.artist)).then(function(j){
     if (seq !== browseSeq) return;
     var seenUri = {};
     var all = browseItems(j);
     var albums = all.filter(function(it){
       if (!it.title || !it.uri || !/^folder/.test(it.type || '') || seenUri[it.uri]) return false;
-      if (it.service === 'tidal' && TIDAL_ARTIST_RE.test(it.uri)) return false;       /* andere Künstler nicht als Album */
+      if (streamIsArtist(it)) return false;           /* andere Künstler nicht als Album */
       seenUri[it.uri] = true;
       return true;
     });
-    var pageTracks = all.filter(function(it){ return it.uri && it.title && !/^folder/.test(it.type || '') && it.type === 'song'; });   /* z. B. Top-Titel bei TIDAL */
+    var pageTracks = all.filter(function(it){ return it.uri && it.title && !/^folder/.test(it.type || '') && it.type === 'song'; });   /* z. B. Top-Titel bei TIDAL/Qobuz */
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    if (!albums.length && !pageTracks.length && isTidal) { browseBody.appendChild(browseNote('Keine Alben gefunden')); return; }
+    if (!albums.length && !pageTracks.length && isStream) { browseBody.appendChild(browseNote('Keine Alben gefunden')); return; }
 
     var photo = document.createElement('img');      /* Künstlerfoto vom Tag-Dienst (Deezer); ohne Foto fällt es weg */
     photo.id = 'browseArtistPhoto';
@@ -209,7 +209,7 @@ function browseArtist(e, seq) {
     photo.src = TAGS + '/artistimage?name=' + encodeURIComponent(e.artist);
     browseBody.appendChild(photo);
 
-    if (!isTidal) {                                   /* alles vom Künstler abspielen (Alben und Einzeltitel) */
+    if (!isStream) {                                  /* alles vom Künstler abspielen (Alben und Einzeltitel) */
       var head = document.createElement('div');
       head.id = 'browseArtistHead';
       head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
@@ -226,7 +226,7 @@ function browseArtist(e, seq) {
     var albumHead = browseHeading('Alben');
     albumHead.style.display = 'none';
     browseBody.appendChild(albumHead);
-    if (!albums.length && !isTidal) browseBody.appendChild(browseNote('Keine Alben in der Sammlung gefunden'));
+    if (!albums.length && !isStream) browseBody.appendChild(browseNote('Keine Alben in der Sammlung gefunden'));
 
     albums.forEach(function(al){
       var row = document.createElement('div');
@@ -239,7 +239,7 @@ function browseArtist(e, seq) {
       var ti = document.createElement('div');
       ti.className = 'sTitle'; ti.textContent = al.title;
       meta.appendChild(ti);
-      var subText = al.service === 'tidal' ? [al.year, al.audioQuality && al.audioQuality !== 'LOSSLESS' ? al.audioQuality : ''].filter(function(x){ return x; }).join('  ·  ') : (al.artist || '');
+      var subText = streamOf(al) ? [al.year, al.audioQuality && al.audioQuality !== 'LOSSLESS' ? al.audioQuality : ''].filter(function(x){ return x; }).join('  ·  ') : (al.artist || '');
       if (subText) { var sub = document.createElement('div'); sub.className = 'sSub'; sub.textContent = subText; meta.appendChild(sub); }
       row.appendChild(img); row.appendChild(meta);
       var apen = tagAlbumButton(al);                  /* lokales Album: Tags aller Titel */
@@ -257,7 +257,7 @@ function browseArtist(e, seq) {
       browseBody.appendChild(browseHeading('Titel'));
       list.forEach(function(t){ browseBody.appendChild(browseTrackRow(t, e, showAlbum)); });
     }
-    if (isTidal) addTitles(pageTracks, true);
+    if (isStream) addTitles(pageTracks, true);
     else localExtraTitles(e.artist, albums.map(function(a){ return a.title; })).then(function(list){ addTitles(list, true); });
   }).catch(function(){
     if (seq !== browseSeq) return;

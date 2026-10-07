@@ -207,7 +207,7 @@ document.getElementById('searchTabBar').querySelectorAll('.qTab').forEach(functi
 function triggerSearch() {
   var q = searchInput.value.trim();
   if (q.length < 2) {
-    searchData = {artists:[], albums:[], songs:[], tidal:{artists:[], albums:[], songs:[]}};
+    searchData = streamEmptySearch();
     searchSeq++;
     renderSearchResults();
     return;
@@ -215,9 +215,9 @@ function triggerSearch() {
   doSearch(q);
 }
 
-var searchShowLocal = true, searchShowTidal = true;     /* Kontrollkästchen "Lokal" und "TIDAL" neben der Überschrift */
+var searchShowLocal = true;     /* Kontrollkästchen "Lokal" neben der Überschrift; die der Streamingdienste: STREAMS[i].show */
 var searchSeq = 0;          /* verwirft Antworten veralteter Suchen */
-var SEARCH_SLOW_MS = 5000;  /* danach Hinweis "Warte auf TIDAL" */
+var SEARCH_SLOW_MS = 5000;  /* danach Hinweis "Warte auf TIDAL/Qobuz" */
 var SEARCH_TIMEOUT_MS = 20000;
 
 function searchMessage(text) {
@@ -231,43 +231,22 @@ function doSearch(q) {
   searchQuery = q;
   var seq = ++searchSeq;
   searchMessage('Suche…');
-  var slow = setTimeout(function(){ if (seq === searchSeq) searchMessage(tidalOn ? 'Suche läuft… (Warte auf TIDAL)' : 'Suche läuft…'); }, SEARCH_SLOW_MS);
+  var slow = setTimeout(function(){ if (seq === searchSeq) searchMessage(streamsOn().length ? 'Suche läuft… (Warte auf ' + streamNames() + ')' : 'Suche läuft…'); }, SEARCH_SLOW_MS);
   withTimeout(fetch('/api/v1/search?query=' + encodeURIComponent(q)).then(function(r){ return r.json(); }), SEARCH_TIMEOUT_MS)
     .then(function(j){
       clearTimeout(slow);
       if (seq !== searchSeq) return;
-      searchData = {artists:[], albums:[], songs:[], tidal:{artists:[], albums:[], songs:[]}};
-      var lists = (j && j.navigation && j.navigation.lists) || [];
-      var q_lower = q.toLowerCase();
-      lists.forEach(function(l){
-        var t = (l.title || '').toLowerCase().split("'")[0];      /* nur der Teil vor dem Suchbegriff: "gefunden 1 Album 'Begriff'" */
-        var items = l.items || [];
-        if (t.indexOf('internetradio') > -1) return;
-        if (t.indexOf('tidal') > -1) {                            /* "TIDAL Interpreten" / "TIDAL Alben" / "TIDAL Titel"; Playlisten bleiben draußen */
-          if (t.indexOf('interpret') > -1) searchData.tidal.artists = items;
-          else if (t.indexOf('album') > -1 || t.indexOf('alben') > -1) searchData.tidal.albums = items;
-          else if (t.indexOf('titel') > -1) searchData.tidal.songs = items;
-          return;
-        }
-        if (t.indexOf('interpret') > -1)  searchData.artists = items;
-        else if (t.indexOf('album') > -1 || t.indexOf('alben') > -1) searchData.albums = items;     /* Volumio schreibt "1 Album" und "2 Alben" */
-        else if (t.indexOf('titel') > -1) {
-          searchData.songs = items.filter(function(it){
-            return (it.title || it.name || '').toLowerCase().indexOf(q_lower) > -1 ||
-                   (it.artist || '').toLowerCase().indexOf(q_lower) > -1;
-          });
-        }
-      });
+      searchData = streamSplitSearch((j && j.navigation && j.navigation.lists) || [], q);
 
       renderSearchResults();
     }).catch(function(){
       clearTimeout(slow);
       if (seq !== searchSeq) return;
-      searchMessage('Keine Antwort von Volumio' + (tidalOn ? ' (TIDAL?)' : '') + '. Bitte erneut versuchen.');
+      searchMessage('Keine Antwort von Volumio' + (streamsOn().length ? ' (' + streamNames() + '?)' : '') + '. Bitte erneut versuchen.');
     });
 }
 
-function searchRow(it, tidal) {
+function searchRow(it, stream) {
   var row = document.createElement('div');
   row.className = 'sRow';
   var img = document.createElement('img');
@@ -283,18 +262,18 @@ function searchRow(it, tidal) {
   meta.appendChild(ti);
   if (sub.textContent) meta.appendChild(sub);
   row.appendChild(img); row.appendChild(meta);
-  if (searchCat === 'songs' && !tidal) {                   /* lokaler Titel: Tags bearbeiten */
+  if (searchCat === 'songs' && !stream) {                   /* lokaler Titel: Tags bearbeiten */
     var pen = tagTrackButton(it);
     if (pen) row.appendChild(pen);
   }
-  if (searchCat === 'albums' && !tidal) {                  /* lokales Album: Tags aller Titel */
+  if (searchCat === 'albums' && !stream) {                  /* lokales Album: Tags aller Titel */
     var apen = tagAlbumButton(it);
     if (apen) row.appendChild(apen);
   }
   row.addEventListener('click', function(){
     if (searchCat === 'songs') { playSearchItem(it); closeAllOverlays(); return; }
     if (searchCat === 'artists') {
-      openBrowse({kind:'artist', artist:it.title || it.name || '', uri:tidal ? it.uri : undefined});
+      openBrowse({kind:'artist', artist:it.title || it.name || '', uri:stream ? it.uri : undefined});
       return;
     }
     openBrowse({kind:'album', artist:it.artist || '', album:it.title || it.name || '', uri:it.uri,
@@ -303,16 +282,21 @@ function searchRow(it, tidal) {
   return row;
 }
 
+function streamNames() { return streamsOn().map(function(s){ return s.name; }).join('/'); }
+
 function renderSearchResults() {
   while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
   var list = searchShowLocal ? (searchData[searchCat] || []) : [];
-  var tlist = searchShowTidal ? ((searchData.tidal && searchData.tidal[searchCat]) || []) : [];
+  var parts = streamsOn().filter(function(s){ return s.show; }).map(function(s){
+    return {s: s, list: (searchData.stream && searchData.stream[s.id] && searchData.stream[s.id][searchCat]) || []};
+  }).filter(function(p){ return p.list.length; });
 
-  if (!list.length && !tlist.length) {
+  if (!list.length && !parts.length) {
     if (!searchQuery && typeof discoverShow === 'function' && discoverShow()) return;     /* Entdecken (discover.js) */
     var hint = document.createElement('div');
     hint.className = 'sHint';
-    hint.textContent = (!searchShowLocal && !searchShowTidal) ? 'Lokal oder TIDAL ankreuzen'
+    var none = !searchShowLocal && !streamsOn().some(function(s){ return s.show; });
+    hint.textContent = none ? 'Lokal oder ' + streamsOn().map(function(s){ return s.name; }).join(' oder ') + ' ankreuzen'
                      : (searchQuery ? 'Keine Ergebnisse' : 'Mind. 2 Zeichen eingeben und Los tippen');
     searchResults.appendChild(hint);
     return;
@@ -324,12 +308,12 @@ function renderSearchResults() {
     searchResults.appendChild(lh);
   }
   list.forEach(function(it){ searchResults.appendChild(searchRow(it, false)); });
-  if (tlist.length) {
+  parts.forEach(function(p){
     var hd = document.createElement('div');
-    hd.className = 'infoSection'; hd.textContent = 'TIDAL';
+    hd.className = 'infoSection'; hd.textContent = p.s.name;
     searchResults.appendChild(hd);
-    tlist.forEach(function(it){ searchResults.appendChild(searchRow(it, true)); });
-  }
+    p.list.forEach(function(it){ searchResults.appendChild(searchRow(it, true)); });
+  });
 
   var hint = document.createElement('div');
   hint.className = 'sHint'; hint.textContent = searchCat === 'songs' ? 'Tippen zum Abspielen' : 'Tippen zum Öffnen';
@@ -357,9 +341,12 @@ searchInput.addEventListener('keydown', function(e){
 document.getElementById('searchGoBtn').addEventListener('click', triggerSearch);
 
 
-tidalApply();
+streamsApply();
 document.getElementById('srcLocal').addEventListener('change', function(){ searchShowLocal = this.checked; renderSearchResults(); });
-document.getElementById('srcTidal').addEventListener('change', function(){ searchShowTidal = this.checked; renderSearchResults(); });
+STREAMS.forEach(function(s){
+  var box = document.getElementById('src' + streamCap(s));
+  if (box) box.addEventListener('change', function(){ s.show = this.checked; renderSearchResults(); });
+});
 
 /* x im Suchfeld: Eingabe löschen */
 var searchClear = document.getElementById('searchClear');
@@ -370,7 +357,7 @@ searchClear.addEventListener('click', function(){
   paintSearchClear();
   searchSeq++;                                  /* laufende Suche verwerfen */
   searchQuery = '';
-  searchData = {artists:[], albums:[], songs:[], tidal:{artists:[], albums:[], songs:[]}};
+  searchData = streamEmptySearch();
   renderSearchResults();
   searchInput.focus();
 });

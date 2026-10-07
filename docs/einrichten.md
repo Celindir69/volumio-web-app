@@ -137,9 +137,12 @@ window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';   // Adresse des Verstärkers, li
 Danach die Bridge neu starten. Damit der Verstärker im Standby per Netz einschaltbar ist, dort Power Mode „Quick“ einstellen.
 Ohne `ROTEL: true` regelt die Oberfläche die Lautstärke von Volumio (falls dort eingeschaltet).
 
-## TIDAL
-Die TIDAL-Teile (Auswahl Lokal/TIDAL in der Suche, ähnliche Künstler bei TIDAL) erscheinen nur, wenn das TIDAL-Plugin in Volumio
-aktiv ist. Fest ein- oder ausschalten: `window.APP_CONFIG.TIDAL = true;` bzw. `false` in `web/config.local.js`.
+## Streamingdienste (TIDAL, Qobuz, HIGHRESAUDIO, Spotify)
+Die Teile für Streamingdienste (Kästchen in der Suche, ähnliche Künstler beim Dienst in den Infos, Künstler- und
+Albumseiten des Dienstes) erscheinen nur, wenn das jeweilige Plugin in Volumio aktiv ist. Fest ein- oder ausschalten:
+`window.APP_CONFIG.TIDAL = true;` bzw. `false` (ebenso `QOBUZ`, `HRA`, `SPOTIFY`) in `web/config.local.js`. Sind
+mehrere Dienste aktiv, zeigt die Suche ihre Treffer in eigenen Abschnitten. Spotify braucht Volumios Spotify-Plugin
+mit Suche (Premium-Konto); Spotify Connect allein bringt keine Suche mit. Der TIDAL-Wächter unten gilt nur für TIDAL.
 
 ## TIDAL-Wächter (optional)
 ```bash
