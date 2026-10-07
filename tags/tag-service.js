@@ -443,6 +443,29 @@ function doArtistImage(query, res) {
   });
 }
 
+/* Webradio: GET /radiocover?artist=…&title=… (Cover zum laufenden Titel) und GET /stationlogo?name=…[&url=…] (Senderlogo);
+   beides auf dem Player gespeichert unter radio-covers/ bzw. stations/; 404 ohne Bild */
+var radio = require('./radio.js');
+var radioCovers = new artistimg.Store(path.join(DATA_DIR, 'radio-covers'), {lookup: radio.songLookup, noneTtl: 7 * 86400000});
+var stationLogos = new artistimg.Store(path.join(DATA_DIR, 'stations'), {lookup: radio.logoLookup});
+
+function sendImage(res, buf) {
+  var type = buf && radio.mime(buf);
+  if (!type) { res.writeHead(404, {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600'}); return res.end(); }
+  res.writeHead(200, {'Content-Type': type, 'Content-Length': buf.length, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=2592000'});
+  res.end(buf);
+}
+function doRadioCover(query, res) {
+  var artist = String(query.artist || '').trim(), title = String(query.title || '').trim();
+  if (!artist || !title || artist.length + title.length > 300) return send(res, 400, {ok: false, error: 'artist und title nötig'});
+  radioCovers.get(artist + '\n' + title, function(e, buf){ sendImage(res, buf); });
+}
+function doStationLogo(query, res) {
+  var name = String(query.name || '').trim(), u = String(query.url || '').trim();
+  if (!name || name.length > 200 || u.length > 1000) return send(res, 400, {ok: false, error: 'name fehlt'});
+  stationLogos.get(name, function(e, buf){ sendImage(res, buf); }, u);
+}
+
 /* GET /lyricsoffset?key=… -> {ok, ms}; POST /lyricsoffset {key, ms}: Versatz der synchronen Lyrics je Titel
    (in ms, positiv = Text kommt später), für alle Geräte gemeinsam in lyrics-offsets.json */
 var OFFSET_FILE = path.join(DATA_DIR, 'lyrics-offsets.json');
@@ -626,6 +649,8 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
