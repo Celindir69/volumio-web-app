@@ -384,11 +384,58 @@ function doPlays(query, cb) {
     if (kind === 'album') items.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
     return cb(200, {ok: true, items: items});
   }
-  if (view === 'stats') {
-    var tz = {w: parseInt(query.tzw, 10) || 0, s: parseInt(query.tzs, 10) || 0};
-    return cb(200, {ok: true, recording: recording, stats: plays.stats(list, query.range, now, tz)});
+  var tz = {w: parseInt(query.tzw, 10) || 0, s: parseInt(query.tzs, 10) || 0};
+  if (view === 'stats') return cb(200, {ok: true, recording: recording, stats: plays.stats(list, query.range, now, tz)});
+  if (view === 'year') {
+    var ys = plays.years(list, tz), y = parseInt(query.y, 10) || ys[0] || plays.local(now, tz).getUTCFullYear();
+    var yr = plays.year(list, y, tz, now);
+    yr.albums_top.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
+    return cb(200, {ok: true, years: ys, review: yr});
+  }
+  if (view === 'ago') {
+    var ag = plays.ago(list, now, tz);
+    ag.items.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
+    return cb(200, {ok: true, ago: ag});
   }
   cb(400, {ok: false, error: 'view fehlt'});
+}
+
+/* ---------- Zufallsalbum ---------- */
+/* GET /random -> {ok, album: {dir, al, ar, last}} oder {ok: false, building: true}, solange die Albenliste entsteht.
+   Die Liste kommt aus MPD (wie beim Bibliotheks-Check), liegt in albums.json und wird neu gelesen,
+   wenn MPDs Datenbank sich geändert hat (Prüfung höchstens alle 10 Minuten). */
+var albums = require('./albums.js');
+var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
+var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null;
+
+function albumsEnsure(cb) {
+  cb = cb || function(){};
+  if (!albumIdx) { try { albumIdx = JSON.parse(fs.readFileSync(ALBUMS_FILE, 'utf8')); } catch (e) { /* noch nie gelesen */ } }
+  if (albumBuilding || (albumIdx && Date.now() - albumChecked < 600000)) return cb(albumIdx && albumIdx.list);
+  albumChecked = Date.now();
+  libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'stats', function(err, st){
+    var stamp = !err && st.db_update;
+    if (albumIdx && (err || stamp === albumIdx.db)) return cb(albumIdx.list);
+    albumBuilding = true;
+    if (albumIdx) cb(albumIdx.list);                     /* alte Liste bis die neue fertig ist */
+    libcheck.mpdWalk({host: MPD_HOST, port: MPD_PORT}, function(e2, songs){
+      albumBuilding = false;
+      if (!e2 && songs.length) {
+        albumIdx = {db: stamp || null, at: Date.now(), list: albums.fromSongs(songs)};
+        try { fs.writeFileSync(ALBUMS_FILE, JSON.stringify(albumIdx)); } catch (x) { /* nächstes Mal */ }
+      }
+    });
+    if (!albumIdx) cb(null);
+  });
+}
+
+function doRandom(query, cb) {
+  albumsEnsure(function(list){
+    if (!list || !list.length) return cb(200, {ok: false, building: albumBuilding, error: albumBuilding ? null : 'keine Alben gefunden'});
+    var pl = playStore.load();
+    if (!albumLast || albumLast.n !== pl.length) albumLast = {n: pl.length, fn: albums.lastIndex(pl)};
+    cb(200, {ok: true, album: albums.pick(list, albumLast.fn, Math.floor(Date.now() / 1000), albumPicks)});
+  });
 }
 
 /* GET /plays/resolve?artist=…&title=…: lokale Datei zu einem Titel aus dem Verlauf (z. B. von Last.fm eingelesen) */
@@ -628,6 +675,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
@@ -648,5 +696,6 @@ var server = http.createServer(function(req, res){
 if (require.main === module) {
   server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
   if (process.env.HISTORY !== '0' && appConfig().HISTORY !== false) { recording = true; watchPlayer(); lfm.flush(); }
+  setTimeout(function(){ albumsEnsure(); }, 90000);       /* Albenliste fürs Zufallsalbum vorbereiten */
 }
 module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server, tracker: tracker, playStore: playStore, lastfm: lfm};

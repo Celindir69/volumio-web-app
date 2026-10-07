@@ -148,11 +148,14 @@ function rangeStart(range, now) {
   if (range === 'm12') return now - 365 * DAY;
   return 0;
 }
-function since(list, t) {
+function firstAt(list, t) {
   var lo = 0, hi = list.length;                           /* Liste ist nach t sortiert */
   while (lo < hi) { var mid = (lo + hi) >> 1; if (list[mid].t < t) lo = mid + 1; else hi = mid; }
-  return list.slice(lo);
+  return lo;
 }
+function since(list, t) { return list.slice(firstAt(list, t)); }
+/* Einträge mit from <= t < to (to fehlt: bis jetzt) */
+function between(list, from, to) { return list.slice(firstAt(list, from), to ? firstAt(list, to) : list.length); }
 
 /* neueste zuerst, vor "before" */
 function recent(list, before, limit) {
@@ -162,8 +165,8 @@ function recent(list, before, limit) {
 }
 
 /* Meistgespielt: kind track|album|artist */
-function top(list, kind, from, limit) {
-  var part = since(list, from), groups = {}, order = [];
+function top(list, kind, from, limit, to) {
+  var part = between(list, from, to), groups = {}, order = [];
   var albumDir = {};                                     /* Album+Interpret -> Ordner: Sampler-Titel verschiedener Interpreten zusammen */
   if (kind === 'album') part.forEach(function(e){
     if (e.al && e.u && !/^[a-z]+:\/\//.test(e.u)) albumDir[keys(e).al + '|' + keys(e).ar] = path.dirname(e.u);
@@ -194,16 +197,28 @@ function top(list, kind, from, limit) {
   }).sort(function(a, b){ return b.n - a.n || b.last - a.last; }).slice(0, limit);
 }
 
+/* Summen: Wiedergaben, Hörzeit (ohne bekannte Länge geschätzt mit dem Median), verschiedene Titel, Künstler, Alben */
+function totals(part) {
+  var known = part.filter(function(e){ return e.d > 0; }).map(function(e){ return e.d; }).sort(function(a, b){ return a - b; });
+  var est = known.length ? known[known.length >> 1] : MAX_NEEDED;
+  var res = {plays: part.length, seconds: 0, estimated: 0, tracks: 0, artists: 0, albums: 0}, tr = {}, ar = {}, al = {};
+  part.forEach(function(e){
+    if (e.d > 0) res.seconds += e.d; else { res.seconds += est; res.estimated++; }
+    tr[trackKey(e)] = 1; ar[keys(e).ar] = 1;
+    if (e.al) al[keys(e).al + '|' + keys(e).ar] = 1;
+  });
+  res.tracks = Object.keys(tr).length; res.artists = Object.keys(ar).length; res.albums = Object.keys(al).length;
+  return res;
+}
+
 /* Statistik: Summen, Verlauf (Tage/Monate/Jahre), Tageszeit, Wochentag */
 function stats(list, range, now, tz) {
   var from = rangeStart(range, now), part = since(list, from);
-  var known = part.filter(function(e){ return e.d > 0; }).map(function(e){ return e.d; }).sort(function(a, b){ return a - b; });
-  var est = known.length ? known[known.length >> 1] : MAX_NEEDED;
-  var res = {plays: part.length, seconds: 0, estimated: 0, tracks: 0, artists: 0, albums: 0,
-             unit: range === 'd30' ? 'day' : range === 'm12' ? 'month' : 'year', buckets: [],
-             hours: [], weekdays: [0, 0, 0, 0, 0, 0, 0], first: list.length ? list[0].t : null};
+  var res = totals(part);
+  res.unit = range === 'd30' ? 'day' : range === 'm12' ? 'month' : 'year';
+  res.buckets = []; res.hours = []; res.weekdays = [0, 0, 0, 0, 0, 0, 0]; res.first = list.length ? list[0].t : null;
   for (var h = 0; h < 24; h++) res.hours.push(0);
-  var bkeys = [], idx = {}, tr = {}, ar = {}, al = {};
+  var bkeys = [], idx = {};
   function bucket(k) { if (!(k in idx)) { idx[k] = bkeys.length; bkeys.push(k); } }
   var nowL = local(now, tz);
   if (res.unit === 'day') for (var i = 29; i >= 0; i--) bucket(dayKey(local(now - i * DAY, tz)));
@@ -219,14 +234,62 @@ function stats(list, range, now, tz) {
     if (k in idx) counts[idx[k]]++;
     res.hours[d.getUTCHours()]++;
     res.weekdays[(d.getUTCDay() + 6) % 7]++;            /* Montag zuerst */
-    if (e.d > 0) res.seconds += e.d; else { res.seconds += est; res.estimated++; }
-    tr[trackKey(e)] = 1; ar[keys(e).ar] = 1;
-    if (e.al) al[keys(e).al + '|' + keys(e).ar] = 1;
   });
   res.buckets = bkeys.map(function(k, i){ return {k: k, n: counts[i]}; });
-  res.tracks = Object.keys(tr).length; res.artists = Object.keys(ar).length; res.albums = Object.keys(al).length;
   return res;
 }
 
+/* Beginn eines Ortsdatums (Jahr, Monat 0-11, Tag) als Unix-Sekunden */
+function localStart(y, m, d, tz) {
+  var t = Date.UTC(y, m, d) / 1000 - tz.w * 60;
+  return t - (local(t, tz).getUTCHours() ? (tz.s - tz.w) * 60 : 0);     /* Sommerzeit */
+}
+
+/* Jahresrückblick für das Ortsjahr y: Summen, Monate, Top-Alben, -Künstler, -Titel, neu entdeckte Künstler.
+   Vergleich mit dem Vorjahr; im laufenden Jahr nur mit demselben Zeitraum (bis heute) */
+function year(list, y, tz, now, limit) {
+  limit = limit || 10;
+  var from = localStart(y, 0, 1, tz), to = localStart(y + 1, 0, 1, tz), pfrom = localStart(y - 1, 0, 1, tz);
+  var part = between(list, from, to), res = totals(part);
+  res.year = y;
+  res.partial = now < to;
+  res.prev = totals(between(list, pfrom, res.partial ? pfrom + Math.max(0, now - from) : from));
+  res.months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  part.forEach(function(e){ res.months[local(e.t, tz).getUTCMonth()]++; });
+  res.albums_top  = top(list, 'album', from, limit, to);
+  res.artists_top = top(list, 'artist', from, limit, to);
+  res.tracks_top  = top(list, 'track', from, 5, to);
+  /* neu entdeckt: Künstler, die vor diesem Jahr nie liefen; nur wenn der Verlauf vor dem Jahr beginnt */
+  res.newArtists = [];
+  res.hasBefore = !!list.length && list[0].t < from;
+  if (res.hasBefore) {
+    var before = {};
+    for (var i = 0; i < list.length && list[i].t < from; i++) before[keys(list[i]).ar] = true;
+    res.newArtists = top(list, 'artist', from, 1000, to).filter(function(a){ return !before[norm(a.ar)]; }).slice(0, limit);
+  }
+  return res;
+}
+
+/* Jahre mit Wiedergaben (Ortszeit), neueste zuerst */
+function years(list, tz) {
+  if (!list.length) return [];
+  var out = [], a = local(list[0].t, tz).getUTCFullYear(), b = local(list[list.length - 1].t, tz).getUTCFullYear();
+  for (var y = b; y >= a; y--) if (firstAt(list, localStart(y + 1, 0, 1, tz)) > firstAt(list, localStart(y, 0, 1, tz))) out.push(y);
+  return out;
+}
+
+/* "Vor einem Jahr gehört": Alben, die um dieses Datum (±3 Tage) vor einem Jahr liefen; sonst vor 2, 3 … Jahren */
+var AGO_DAYS = 3;
+function ago(list, now, tz, limit) {
+  if (!list.length) return {years: 0, items: []};
+  var d = local(now, tz);
+  for (var k = 1; ; k++) {
+    var c = localStart(d.getUTCFullYear() - k, d.getUTCMonth(), d.getUTCDate(), tz) + 12 * 3600;
+    if (c + AGO_DAYS * DAY < list[0].t) return {years: 0, items: []};
+    var items = top(list, 'album', c - AGO_DAYS * DAY, limit || 12, c + AGO_DAYS * DAY);
+    if (items.length) return {years: k, at: c, items: items};
+  }
+}
+
 module.exports = {Store: Store, Tracker: Tracker, recent: recent, top: top, stats: stats, rangeStart: rangeStart,
-                  norm: norm, trackKey: trackKey, local: local};
+                  year: year, years: years, ago: ago, localStart: localStart, norm: norm, trackKey: trackKey, local: local};

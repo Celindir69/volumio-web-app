@@ -120,4 +120,34 @@ t('Ortszeit: Umstellung Ende März und Ende Oktober', function(){
   assert.strictEqual(plays.local(Date.UTC(2026, 9, 25, 0, 30) / 1000, tz).getUTCHours(), 2);
   assert.strictEqual(plays.local(Date.UTC(2026, 9, 25, 1, 30) / 1000, tz).getUTCHours(), 2);
 });
+t('Jahresrückblick: Summen, Vorjahr, Monate, Top-Listen, neu entdeckt', function(){
+  var tz = {w: 60, s: 120}, y = plays.year(list, 2026, tz, NOW + 100 * D);
+  assert.strictEqual(y.plays, 7); assert.strictEqual(y.prev.plays, 1);
+  assert.strictEqual(plays.year(list, 2026, tz, Date.UTC(2026, 1, 1) / 1000).prev.plays, 0, 'laufendes Jahr: Vorjahr nur bis zum selben Tag');
+  assert.strictEqual(y.months[9], 6); assert.strictEqual(y.months[8], 1);
+  assert.strictEqual(y.albums_top[0].ti, '85555'); assert.strictEqual(y.artists_top[0].n, 5);
+  assert.strictEqual(y.tracks_top[0].n, 3);
+  assert.ok(y.hasBefore);
+  assert.deepStrictEqual(y.newArtists.map(function(a){ return a.ar; }), ['spliff', 'Falco'], 'Nena lief schon 2025');
+  var y25 = plays.year(list, 2025, tz, NOW);
+  assert.strictEqual(y25.plays, 1); assert.strictEqual(y25.hasBefore, false); assert.strictEqual(y25.newArtists.length, 0);
+  assert.deepStrictEqual(plays.years(list, tz), [2026, 2025]);
+});
+t('Jahresgrenze in Ortszeit: Silvester 23:30 UTC zählt zum neuen Jahr', function(){
+  var tz = {w: 60, s: 120}, l = [{t: Date.UTC(2025, 11, 31, 23, 30) / 1000, ar: 'A', ti: 'x'}];
+  assert.strictEqual(plays.year(l, 2026, tz, NOW).plays, 1);
+  assert.strictEqual(plays.year(l, 2025, tz, NOW).plays, 0);
+  assert.strictEqual(plays.localStart(2026, 6, 1, tz), Date.UTC(2026, 5, 30, 22) / 1000, 'Sommerzeit');
+});
+t('Vor einem Jahr: ±3 Tage, sonst weiter zurück, sonst leer', function(){
+  var tz = {w: 60, s: 120};
+  var l = [{t: NOW - 2 * 365 * D - 2 * D, ar: 'Nena', ti: 'a', al: 'Fragezeichen'}, {t: NOW - 365 * D - 10 * D, ar: 'X', ti: 'b', al: 'Zu weit'}, {t: NOW, ar: 'Y', ti: 'c', al: 'Heute'}];
+  var a = plays.ago(l, NOW, tz);
+  assert.strictEqual(a.years, 2); assert.strictEqual(a.items[0].ti, 'Fragezeichen');
+  l.push({t: NOW - 365 * D + 2 * D, ar: 'Z', ti: 'd', al: 'Genau'});
+  l.sort(function(x, z){ return x.t - z.t; });
+  a = plays.ago(l, NOW, tz);
+  assert.strictEqual(a.years, 1); assert.strictEqual(a.items[0].ti, 'Genau');
+  assert.strictEqual(plays.ago([{t: NOW, ar: 'Y', ti: 'c', al: 'Heute'}], NOW, tz).items.length, 0);
+});
 console.log(n + ' Prüfungen');

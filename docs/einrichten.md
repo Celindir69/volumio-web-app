@@ -75,8 +75,14 @@ Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-
 
 ### Verlauf und Statistik
 In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
-30 Tage, 12 Monate oder gesamt) und **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag). Antippen spielt
+30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag) und **Rückblick**
+(ein Jahr: Summen mit Vergleich zum Vorjahr, Monate, Top-Titel, -Alben, -Künstler, neu entdeckte Künstler). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.
+
+**Entdecken:** Solange in der Suche nichts eingegeben ist, zeigt sie Alben, die um dieses Datum vor einem Jahr liefen
+(sonst vor 2, 3 … Jahren), und ein **Zufallsalbum** (Cover tippen spielt ab, Würfel wählt neu). Bevorzugt kommen Alben, die
+lange nicht oder nie liefen. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
+`/data/INTERNAL/tags/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert.
 Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/INTERNAL/tags/artists/`
 (Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.
 

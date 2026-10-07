@@ -64,6 +64,35 @@ function mpdWalk(opts, cb, onProgress) {
   sock.on('close', function(){ if (!finished) finish(queue.length || !greeted ? new Error('MPD-Verbindung getrennt') : null); });
 }
 
+/* ein einzelner MPD-Befehl (z. B. "stats") -> cb(err, {schlüssel: wert}) */
+function mpdCommand(opts, cmd, cb) {
+  var sock = net.createConnection({host: opts.host || 'localhost', port: opts.port || 6600});
+  var buf = '', greeted = false, out = {}, finished = false;
+  function finish(err) {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    try { sock.end('close\n'); } catch (e) { /* schon zu */ }
+    cb(err, out);
+  }
+  var timer = setTimeout(function(){ finish(new Error('MPD antwortet nicht')); sock.destroy(); }, opts.timeout || 10000);
+  sock.setEncoding('utf8');
+  sock.on('data', function(d){
+    buf += d;
+    var n;
+    while ((n = buf.indexOf('\n')) >= 0) {
+      var l = buf.slice(0, n); buf = buf.slice(n + 1);
+      if (!greeted) { greeted = true; if (l.indexOf('OK MPD') !== 0) return finish(new Error('kein MPD: ' + l)); sock.write(cmd + '\n'); continue; }
+      if (l === 'OK') return finish(null);
+      if (l.indexOf('ACK') === 0) return finish(new Error(l));
+      var i = l.indexOf(': ');
+      if (i > 0) out[l.slice(0, i).toLowerCase()] = l.slice(i + 2);
+    }
+  });
+  sock.on('error', function(e){ finish(e); });
+  sock.on('close', function(){ finish(new Error('MPD-Verbindung getrennt')); });
+}
+
 /* ---------- Auswerten ---------- */
 
 /* Schlüssel für Schreibweisen: ohne Akzente, Groß-/Kleinschreibung, "The " am Anfang, Satzzeichen; & = and */
@@ -145,4 +174,4 @@ function dirsWithoutImage(songs, musicRoot) {
   return out;
 }
 
-module.exports = {mpdWalk: mpdWalk, analyze: analyze, artistKey: artistKey, dirsWithoutImage: dirsWithoutImage};
+module.exports = {mpdWalk: mpdWalk, mpdCommand: mpdCommand, analyze: analyze, artistKey: artistKey, dirsWithoutImage: dirsWithoutImage};
