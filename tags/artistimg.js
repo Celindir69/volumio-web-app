@@ -15,8 +15,13 @@ function norm(s) {
   return s.replace(/[̀-ͯ]/g, '').toLowerCase().replace(/^the\s+/, '').replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
 }
 
-function Store(dir) {
+/* dir: Ablage; opts.lookup(name, cb(Bild oder null, vorübergehend?), extra) ersetzt die Deezer-Künstlersuche,
+   opts.noneTtl: so lange gilt "nichts gefunden" */
+function Store(dir, opts) {
   this.dir = dir; this.waiting = {}; this.queue = []; this.running = 0;
+  opts = opts || {};
+  if (opts.lookup) this.lookup = opts.lookup;
+  this.noneTtl = opts.noneTtl || NONE_TTL;
 }
 
 Store.prototype.files = function(name) {
@@ -24,14 +29,14 @@ Store.prototype.files = function(name) {
   return {img: path.join(this.dir, h + '.jpg'), none: path.join(this.dir, h + '.none')};
 };
 
-/* cb(null, Buffer) oder cb(null, null) wenn es kein Foto gibt */
-Store.prototype.get = function(name, cb) {
+/* cb(null, Buffer) oder cb(null, null) wenn es kein Foto gibt; extra geht an lookup */
+Store.prototype.get = function(name, cb, extra) {
   var self = this, f = this.files(name);
   fs.readFile(f.img, function(e, buf){
     if (!e) return cb(null, buf);
     var none = null;
     try { none = fs.statSync(f.none); } catch (x) { /* noch nie gesucht */ }
-    if (none && Date.now() - none.mtime.getTime() < NONE_TTL) return cb(null, null);
+    if (none && Date.now() - none.mtime.getTime() < self.noneTtl) return cb(null, null);
     if (self.waiting[f.img]) return self.waiting[f.img].push(cb);
     self.waiting[f.img] = [cb];
     self.queue.push(function(done){
@@ -43,7 +48,7 @@ Store.prototype.get = function(name, cb) {
         var list = self.waiting[f.img]; delete self.waiting[f.img];
         list.forEach(function(c){ c(null, buf); });
         done();
-      });
+      }, extra);
     });
     self.next();
   });

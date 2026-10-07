@@ -701,6 +701,27 @@ function poll() {
   });
 }
 
+/* Webradio: Cover zum laufenden Titel vom Tag-Dienst (iTunes/Deezer); bis es geladen ist und ohne Treffer das Senderlogo */
+var TAGS = 'http://' + location.hostname + ':8766';
+var radioCovers = {};
+function radioArt(st, stationArt) {
+  if (st.trackType !== 'webradio') return stationArt;
+  var t = st.title || '', p = t.indexOf(' - ');
+  if (p <= 0) return stationArt;
+  var artist = t.slice(0, p).trim(), title = t.slice(p + 3).trim(), k = artist + '|' + title;
+  if (!artist || !title) return stationArt;
+  if (radioCovers[k]) return radioCovers[k];
+  if (radioCovers[k] === undefined) {
+    radioCovers[k] = null;
+    var u = TAGS + '/radiocover?artist=' + encodeURIComponent(artist) + '&title=' + encodeURIComponent(title);
+    var img = new Image();
+    img.onload = function(){ radioCovers[k] = u; poll(); };
+    img.onerror = function(){ radioCovers[k] = false; };
+    img.src = u;
+  }
+  return stationArt;
+}
+
 function handleState(st) {
     var dur = Number(st.duration) || 0;
     var pos = Number(st.seek) || 0;
@@ -711,7 +732,7 @@ function handleState(st) {
     updateSyncedLyrics();
     updatePlainLyrics();                           /* Position oder Pause hat sich geändert: Seite neu bestimmen */
 
-    var art = artUrl(st.albumart);
+    var art = radioArt(st, artUrl(st.albumart));
     if (art && art !== lastArt) {
       lastArt = art;
       cover.src = art;

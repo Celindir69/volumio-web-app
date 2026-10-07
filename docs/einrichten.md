@@ -73,6 +73,12 @@ Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-
 `localhost:6600`) und die Ordner, ändert nichts an den Dateien und läuft nur auf Knopfdruck. Ergebnis:
 `/data/INTERNAL/tags/check.json`, bis neu geprüft wird.
 
+### Webradio: Cover und Senderlogos
+Sendet ein Webradio „Künstler - Titel“, sucht der Tag-Dienst das Cover dazu bei iTunes (sonst Deezer) und zeigt es in der
+App und auf dem Kiosk-TV; ohne Titel oder ohne Treffer bleibt das Senderlogo. Die Radio-Liste zeigt die Senderlogos
+(Adresse aus Volumio, sonst über den Sendernamen von radio-browser.info). Beides speichert der Tag-Dienst unter
+`/data/INTERNAL/tags/radio-covers/` und `/data/INTERNAL/tags/stations/`.
+
 ### Verlauf und Statistik
 In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag) und **Rückblick**

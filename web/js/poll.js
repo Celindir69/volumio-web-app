@@ -11,6 +11,26 @@ function paintQuality(st) {
   mBadge.className = 'qBadge' + (q.kind ? ' ' + q.kind : '');
 }
 
+/* Webradio: Cover zum laufenden Titel vom Tag-Dienst (iTunes/Deezer); bis es geladen ist und ohne Treffer das Senderlogo */
+var radioCovers = {};            /* "Künstler|Titel" -> Bildadresse, false (kein Cover) oder null (lädt) */
+function radioArt(st, stationArt) {
+  if (st.trackType !== 'webradio' || typeof TAGS === 'undefined') return stationArt;
+  var t = st.title || '', p = t.indexOf(' - ');
+  if (p <= 0) return stationArt;
+  var artist = t.slice(0, p).trim(), title = t.slice(p + 3).trim(), k = artist + '|' + title;
+  if (!artist || !title) return stationArt;
+  if (radioCovers[k]) return radioCovers[k];
+  if (radioCovers[k] === undefined) {
+    radioCovers[k] = null;
+    var u = TAGS + '/radiocover?artist=' + encodeURIComponent(artist) + '&title=' + encodeURIComponent(title);
+    var img = new Image();
+    img.onload = function(){ radioCovers[k] = u; poll(); };
+    img.onerror = function(){ radioCovers[k] = false; };
+    img.src = u;
+  }
+  return stationArt;
+}
+
 function poll() {
   if (document.hidden) return;
   if (!volDrag && ROTEL_ON) rotel('/state');  
@@ -35,7 +55,7 @@ updateSyncedLyrics();
     }
     updateCtrlUI();
 
-    var art = artUrl(st.albumart);
+    var art = radioArt(st, artUrl(st.albumart));
     if (art && art !== lastArt) {
       lastArt = art;
       cover.src = art;
