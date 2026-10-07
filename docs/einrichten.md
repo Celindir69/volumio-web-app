@@ -108,6 +108,15 @@ https://www.last.fm/api/accounts) in `web/config.local.js`. Dann unter Statistik
 Der Sitzungsschlüssel liegt in `/data/INTERNAL/tags/lastfm.json` und bleibt auf dem Player. Falls ein anderes
 Last.fm-Plugin in Volumio scrobbelt, eines davon abschalten, sonst kommt jeder Titel doppelt bei Last.fm an.
 
+### Stimmungs-Tags
+Mit `LASTFM_KEY` holt der Tag-Dienst für jeden Titel der Bibliothek die Last.fm-Tags (`track.getTopTags`, ohne
+brauchbare Titel-Tags ersatzweise die Tags des Künstlers) und rechnet sie nach `tags/mood/lastfm_mapping.json` und
+`tags/mood/classification_rules.json` in Stimmung, Energie (1–5) und Stil um. Abgefragt wird nur, solange nichts spielt
+(Stopp oder Pause; geprüft alle 5 s), mit etwa 4 Anfragen je Sekunde. Die Musikdateien bleiben unverändert; die Rohtags
+liegen in `/data/INTERNAL/tags/moodtags/`, die Titelliste dazu in `/data/INTERNAL/tags/library-tracks.json` (entsteht
+zusammen mit der Albenliste). Fortschritt und Verteilung zeigt der Bibliotheks-Check unter „Stimmungs-Tags (Last.fm)“.
+Ausschalten: `MOODTAGS: false` in `web/config.local.js`, dann den Tag-Dienst neu starten.
+
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der
 Überschrift „Lyrics“ (Bühnenansicht: runde Knöpfe oben rechts) den Text um je 0,5 s. Der Wert gilt für diesen Titel auf

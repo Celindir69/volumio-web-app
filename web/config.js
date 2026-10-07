@@ -4,6 +4,7 @@ window.APP_CONFIG = {
   LASTFM_KEY: '',     /* leer = keine ähnlichen Künstler */
   LASTFM_SECRET: '',  /* "Shared secret" zum Schlüssel: nur nötig zum Scrobbeln (Verlauf) */
   HISTORY: true,      /* Verlauf: Tag-Dienst schreibt gespielte Titel mit; false = aus (Tag-Dienst neu starten) */
+  MOODTAGS: true,     /* Stimmungs-Tags: Last.fm-Tags je Titel sammeln, nur wenn nichts spielt (braucht LASTFM_KEY); false = aus */
   COLOR_MOOD: true,   /* Farbstimmung aus dem Cover (nur Cover vom Player selbst); false = aus */
   M4A_PROBE: true,    /* m4a: Codec (ALAC/AAC) aus der Datei lesen; false = nur M4A_LOSSLESS */
   M4A_LOSSLESS: true, /* m4a als verlustfrei (ALAC) einstufen; false = kein Abzeichen für m4a (AAC wäre sonst falsch eingestuft) */

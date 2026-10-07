@@ -33,10 +33,14 @@ function openCheck() {
 
 function checkLoad() {
   clearTimeout(checkTimer);
-  tagGetJson('/check').then(function(res){
+  Promise.all([tagGetJson('/check'), tagGetJson('/moodtags').catch(function(){ return null; })]).then(function(both){
+    var res = both[0];
     if (!overlayCheck.classList.contains('on')) return;
+    checkMood = both[1];
     checkRender(res);
+    var mt = checkMood && checkMood.enabled && checkMood.status;
     if (res.running) checkTimer = setTimeout(checkLoad, 2000);
+    else if (mt && mt.state === 'läuft') checkTimer = setTimeout(checkLoad, 10000);
   }).catch(function(){
     while (checkBody.firstChild) checkBody.removeChild(checkBody.firstChild);
     checkBody.appendChild(browseNote('Tag-Dienst nicht erreichbar (Port ' + ((window.APP_CONFIG && window.APP_CONFIG.TAGS_PORT) || 8766) + ')'));
@@ -70,7 +74,7 @@ function checkRender(res) {
   btn.addEventListener('click', function(){ btn.disabled = true; btn.textContent = 'Läuft…'; checkStart(); });
   head.appendChild(info); head.appendChild(btn);
   checkBody.appendChild(head);
-  if (!r) return;
+  if (!r) { checkMoodSection(); checkBody.scrollTop = keepScroll; return; }
 
   CHECK_CATS.forEach(function(cat){
     var list = r[cat.key] || [];
@@ -89,7 +93,66 @@ function checkRender(res) {
     checkBody.appendChild(row); checkBody.appendChild(box);
     if (checkOpen[cat.key]) checkFill(box, cat, list);
   });
+  checkMoodSection();
   checkBody.scrollTop = keepScroll;
+}
+
+/* ---------- Stimmungs-Tags (Tag-Dienst GET /moodtags) ---------- */
+var checkMood = null;
+var MOOD_NAMES = {aggressive: 'aggressiv', atmospheric: 'atmosphärisch', calm: 'ruhig', dark: 'düster', dreamy: 'verträumt',
+  emotional: 'emotional', epic: 'episch', happy: 'fröhlich', intense: 'intensiv', melancholic: 'melancholisch',
+  reflective: 'nachdenklich', relaxed: 'entspannt', romantic: 'romantisch', sad: 'traurig', sensual: 'sinnlich', uplifting: 'aufbauend'};
+var MOOD_STATES = {'läuft': 'Fragt Last.fm ab…', wartet: 'Pausiert, solange Musik läuft.', fertig: 'Alle Titel abgefragt.',
+  leer: 'Wartet auf die Titelliste (entsteht kurz nach dem Start des Tag-Dienstes).', fehler: 'Angehalten.', aus: 'Ausgeschaltet.'};
+
+function checkMoodSection() {
+  var m = checkMood;
+  if (!m || !m.ok) return;
+  var st = m.status, sum = m.summary, key = 'moodtags';
+  var row = document.createElement('div'); row.className = 'ckCat ckMoodCat' + (checkOpen[key] ? ' open' : '');
+  row.innerHTML = '<div class="ckName">Stimmungs-Tags (Last.fm)</div><div class="ckNum"></div>' + CHECK_CHEVRON;
+  row.querySelector('.ckNum').textContent = !m.enabled ? 'aus' : st.total ? Math.floor(st.done * 100 / st.total) + ' %' : '–';
+  var box = document.createElement('div'); box.className = 'ckList ckMood';
+  row.addEventListener('click', function(){ checkOpen[key] = !checkOpen[key]; row.classList.toggle('open', checkOpen[key]); });
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; box.appendChild(e); return e; }
+  el('div', 'ckCatHint', 'Last.fm-Tags je Titel, umgerechnet in Stimmung, Energie (1 ruhig bis 5 kraftvoll) und Stil. ' +
+    'Abgefragt wird nur, solange nichts spielt; die Musikdateien bleiben unverändert. Grundlage für die Stimmungs-Playlist.');
+  var line = !m.enabled ? 'Ausgeschaltet (MOODTAGS: false).'
+    : checkNum(st.done) + ' von ' + checkNum(st.total) + ' Titeln abgefragt. ' + (MOOD_STATES[st.state] || '');
+  if (st.error) line += ' ' + st.error;
+  el('div', 'ckMoodLine', line);
+  if (st.total) { var bar = el('div', 'ckMoodBar'); var fill = document.createElement('div'); fill.style.width = (st.done * 100 / st.total) + '%'; bar.appendChild(fill); }
+
+  var rated = sum.track + sum.artist;
+  if (rated) {
+    el('div', 'ckMoodLine', checkNum(rated) + ' Titel eingeordnet (' + checkNum(sum.artist) + ' davon nur über die Künstler-Tags), ' +
+      checkNum(sum.none) + ' ohne passende Tags.');
+    el('div', 'ckMoodHead', 'Stimmung');
+    var chips = el('div', 'ckChips');
+    Object.keys(sum.moods).sort(function(a, b){ return sum.moods[b] - sum.moods[a]; }).forEach(function(k){
+      var c = document.createElement('span'); c.className = 'ckChip';
+      c.textContent = (MOOD_NAMES[k] || k) + ' ' + checkNum(sum.moods[k]);
+      chips.appendChild(c);
+    });
+    el('div', 'ckMoodHead', 'Energie');
+    var max = Math.max.apply(null, sum.energy) || 1, bars = el('div', 'ckEnergy');
+    sum.energy.forEach(function(n, i){
+      var col = document.createElement('div'); col.className = 'ckEnCol';
+      col.innerHTML = '<div class="ckEnN"></div><div class="ckEnBar"><div></div></div><div class="ckEnL"></div>';
+      col.querySelector('.ckEnN').textContent = checkNum(n);
+      col.querySelector('.ckEnBar div').style.height = (n * 100 / max) + '%';
+      col.querySelector('.ckEnL').textContent = String(i + 1);
+      bars.appendChild(col);
+    });
+    var styles = Object.keys(sum.styles).sort(function(a, b){ return sum.styles[b] - sum.styles[a]; }).slice(0, 15);
+    if (styles.length) {
+      el('div', 'ckMoodHead', 'Häufigste Stile');
+      var sc = el('div', 'ckChips');
+      styles.forEach(function(k){ var c = document.createElement('span'); c.className = 'ckChip'; c.textContent = k + ' ' + checkNum(sum.styles[k]); sc.appendChild(c); });
+    }
+  }
+  checkBody.appendChild(row); checkBody.appendChild(box);
 }
 
 function checkFill(box, cat, list) {
