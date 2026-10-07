@@ -30,7 +30,9 @@ function streamOf(x) {
 }
 function streamIsArtist(it) {
   var s = streamOf(it);
-  return !!(s && it.uri && s.artistRe.test(it.uri));
+  if (!s || !it.uri || !s.artistRe.test(it.uri)) return false;
+  /* HIGHRESAUDIO liefert auch Alben mit einer artists/-Adresse; die tragen einen anderen Namen als den Künstler */
+  return !it.artist || String(it.artist).toLowerCase() === String(it.title || '').toLowerCase();
 }
 function streamsOn() { return STREAMS.filter(function(s){ return s.on; }); }
 
@@ -63,7 +65,16 @@ function streamSplitSearch(lists, query) {
     var svc = STREAMS.filter(function(s){ return s.title.test(title); })[0] || (items[0] && streamOf(items[0]));
     var cat = streamListCat(l.title, items);
     if (!cat) return;
-    if (svc) { d.stream[svc.id][cat] = d.stream[svc.id][cat].concat(items); return; }
+    if (svc) {
+      var into = d.stream[svc.id], byTitle = streamListCat(l.title, []);
+      items.forEach(function(it){
+        if (!it.title && !it.name) return;                  /* HIGHRESAUDIO hängt einen leeren Eintrag an */
+        /* Liste ohne Überschrift (TIDAL, HIGHRESAUDIO): jeden Eintrag selbst einordnen, die Dienste mischen Arten */
+        var c = byTitle || (it.type === 'song' ? 'songs' : streamIsArtist(it) ? 'artists' : 'albums');
+        into[c].push(it);
+      });
+      return;
+    }
     if (cat === 'songs') {                                  /* lokale Titel: nur echte Treffer im Titel oder Künstler */
       items = items.filter(function(it){
         return (it.title || it.name || '').toLowerCase().indexOf(q) > -1 || (it.artist || '').toLowerCase().indexOf(q) > -1;
