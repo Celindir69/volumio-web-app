@@ -207,7 +207,11 @@ function ask(payload) {
       if (j.data.type === 'credits' && j.data.value.length)
                                      return {kind:'credits', value:j.data.value};
       return null;
-    }).catch(function(){ return null; });
+    }).catch(function(){ return null; })
+    .then(function(res){                       /* nichts von Volumio (Volumio 4 ohne Abo): Texte selbst holen (infotext.js) */
+      if (res || !/^story/.test(payload.mode)) return res;
+      return infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album);
+    });
 }
 
 function askDiscography(artist) {

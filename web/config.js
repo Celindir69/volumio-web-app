@@ -1,7 +1,7 @@
 /* Einstellungen der App. Eigene Werte (z. B. den Last.fm-Schlüssel) NICHT hier eintragen,
    sondern in web/config.local.js; diese Datei ist nicht im Repository (.gitignore). */
 window.APP_CONFIG = {
-  LASTFM_KEY: '',     /* leer = keine ähnlichen Künstler */
+  LASTFM_KEY: '',     /* leer = keine ähnlichen Künstler; auch für Künstler-/Albumtexte, wenn Volumio keine liefert */
   LASTFM_SECRET: '',  /* "Shared secret" zum Schlüssel: nur nötig zum Scrobbeln (Verlauf) */
   HISTORY: true,      /* Verlauf: Tag-Dienst schreibt gespielte Titel mit; false = aus (Tag-Dienst neu starten) */
   MOODTAGS: true,     /* Stimmungs-Tags: Last.fm-Tags je Titel sammeln, nur wenn nichts spielt (braucht LASTFM_KEY); false = aus */
