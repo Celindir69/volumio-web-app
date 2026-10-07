@@ -4,6 +4,89 @@ Eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stre
 direkt im Browser. Neben den Dateien, die auf dem Player laufen, enthält es nur Tests (`tests/`) und die Einrichtungs-Doku;
 `mx-deploy` spielt nur die Laufzeitdateien ein.
 
+<p align="center">
+  <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
+</p>
+
+Alle Bilder in dieser Datei zeigen eine erfundene Beispiel-Bibliothek (Künstler, Cover und Texte sind ausgedacht).
+
+## Funktionen
+
+### Wiedergabe, Lyrics und Infos
+Großes Cover, Titel und Album, Abzeichen für die Klangqualität (Hi-Res, Abtastrate, Bittiefe, Format), Fortschritt,
+Lautstärke und die üblichen Knöpfe. Die Hintergrundfarbe und der Akzent kommen aus dem Cover. Lyrics laufen synchron mit
+(lrclib.net); passt der Text nicht genau zur Aufnahme, verschieben „−“ und „+“ ihn in Schritten von 0,5 s, und der Wert
+gilt dann für diesen Titel auf allen Geräten. Die Info-Seite zeigt Album, Künstler, Mitwirkende und was von diesem
+Künstler in der Sammlung liegt.
+
+<p>
+  <img src="docs/bilder/wiedergabe.jpg" width="200" alt="Wiedergabe">
+  <img src="docs/bilder/lyrics.jpg" width="200" alt="Synchrone Lyrics">
+  <img src="docs/bilder/info.jpg" width="200" alt="Albuminfos">
+  <img src="docs/bilder/warteschlange.jpg" width="200" alt="Warteschlange">
+</p>
+
+### Display-Layout für iPad, Desktop und Fernseher
+Auf großen Bildschirmen stehen Cover, Infos und Steuerung links und die Lyrics rechts; die Infos blättern von selbst
+weiter. Umschalten oben rechts oder mit `?layout=stage`. `kioskTV.html` ist eine reine Anzeige für einen Fernseher an
+der Anlage, ohne Bedienung.
+
+<p>
+  <img src="docs/bilder/display-desktop.jpg" width="49%" alt="Display-Layout am Desktop">
+  <img src="docs/bilder/kiosk.jpg" width="49%" alt="kioskTV.html">
+</p>
+
+### Suche und Entdecken
+Die Suche findet Künstler, Alben und Titel in der eigenen Bibliothek und, falls eingeschaltet, bei TIDAL. Solange nichts
+eingegeben ist, zeigt sie „Vor einem Jahr gehört“ (Alben, die um dieses Datum vor einem Jahr liefen), den Einstieg in den
+Stimmungs-Mix und ein Zufallsalbum, das lange nicht oder nie Gehörtes bevorzugt. Bei Webradio holt die App ein Cover
+zum laufenden Titel und zeigt Senderlogos in der Senderliste.
+
+### Stimmungs-Mix
+Stimmung wählen (mehrere möglich), Energie von ruhig bis kraftvoll eingrenzen und unter „Feinabstimmung“ Stile, Länge
+und Entdeckungsgrad festlegen: Favoriten, ausgewogen oder versteckte Perlen, je nach eigenem Verlauf. „Mix erstellen“
+zeigt erst eine Vorschau mit der Begründung je Titel; einzelne Titel lassen sich herausnehmen oder neu mischen. Erst
+„Mix abspielen“ ersetzt die Warteschlange. Grundlage sind Last.fm-Tags je Titel, die der Tag-Dienst sammelt, solange
+nichts spielt; die Musikdateien bleiben dabei unverändert.
+
+<p>
+  <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
+  <img src="docs/bilder/mix-auswahl.jpg" width="200" alt="Stimmungs-Mix: Auswahl">
+  <img src="docs/bilder/mix-vorschau.jpg" width="200" alt="Stimmungs-Mix: Vorschau">
+</p>
+
+### Verlauf, Statistik und Rückblick
+Der Tag-Dienst schreibt mit, was läuft, und kann zu Last.fm scrobbeln sowie den bisherigen Last.fm-Verlauf einlesen.
+Daraus entstehen „Zuletzt gehört“, Ranglisten (Titel, Alben, Künstler), Statistiken nach Tag, Tageszeit und Wochentag
+und ein Jahresrückblick mit Vergleich zum Vorjahr, Top-Genres und neu entdeckten Künstlern. Tippen auf einen Monat zeigt
+die Ranglisten für diesen Monat.
+
+<p>
+  <img src="docs/bilder/verlauf.jpg" width="200" alt="Zuletzt gehört">
+  <img src="docs/bilder/statistik.jpg" width="200" alt="Statistik">
+  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Jahresrückblick">
+</p>
+
+### Tag-Editor und Bibliotheks-Check
+Tags einzelner Titel, ganzer Alben oder aller Titel eines Künstlers bearbeiten, mit Textfunktionen wie Groß-/Kleinschreibung,
+Rückgängig und Cover (Datei wählen, online suchen, eingebettetes Cover als `folder.jpg`). Der Bibliotheks-Check findet
+Alben ohne Cover, fehlende oder uneinheitliche Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche
+Albumnamen oder Jahre und Titel ohne Tracknummer; jeder Eintrag öffnet direkt den passenden Editor. Dort steht auch der
+Fortschritt der Stimmungs-Tags.
+
+<p>
+  <img src="docs/bilder/tag-editor.jpg" width="200" alt="Tag-Editor">
+  <img src="docs/bilder/check.jpg" width="200" alt="Bibliotheks-Check">
+  <img src="docs/bilder/stimmungs-tags.jpg" width="200" alt="Stimmungs-Tags im Bibliotheks-Check">
+</p>
+
+### Weiteres
+- Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
+- TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt.
+- `mx-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`.
+
+## Aufbau
+
 | Datei / Ordner | Inhalt | Ort auf dem Player |
 |---|---|---|
 | `app.html` + `web/` | Oberfläche für Handy, iPad, Desktop (Wiedergabe, Queue, Suche lokal und TIDAL, Lyrics, Infos, Tag-Editor, Display-Layout für große Bildschirme) | `/volumio/http/www3/` |
