@@ -10,7 +10,8 @@ abbrechen (Ctrl-C) und später weitermachen geht jederzeit.
     python3 analyse.py /Volumes/Data/Musik /Volumes/Data/AllFlac
     python3 analyse.py --upload http://<player>:8766 /Volumes/Data/Musik
 
-Voraussetzung: macOS 15+, Python 3.14, pip install essentia-tensorflow mutagen
+Voraussetzung: macOS 15+ mit Python 3.14 (pip install essentia-tensorflow mutagen);
+Intel-Mac mit macOS 14: Python 3.13 und pip install "essentia-tensorflow==2.1b6.dev1389" mutagen
 Die vortrainierten Modelle (rund 100 MB) lädt das Skript beim ersten Lauf selbst herunter.
 Modelle: CC BY-NC-SA 4.0 (nur nicht-kommerziell), https://essentia.upf.edu/models
 """

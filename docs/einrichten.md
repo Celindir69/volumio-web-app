@@ -133,7 +133,13 @@ Last.fm ergänzt weitere Stimmungen und Stile; der Stimmungs-Mix bekommt unter �
 Einmalig (macOS 15 oder neuer; Python 3.14 von python.org oder `brew install python@3.14`):
 ```bash
 python3.14 -m venv ~/mx-essentia && source ~/mx-essentia/bin/activate
-pip install essentia-tensorflow mutagen
+python -m pip install essentia-tensorflow mutagen
+```
+Meldet pip „from versions: none“, gibt es für diesen Mac kein aktuelles Paket. Intel-Mac mit macOS 14: die letzte
+Fassung dafür braucht Python 3.13 (`brew install python@3.13`):
+```bash
+python3.13 -m venv ~/mx-essentia && source ~/mx-essentia/bin/activate
+python -m pip install "essentia-tensorflow==2.1b6.dev1389" mutagen
 ```
 Die vortrainierten Modelle (rund 100 MB, Lizenz CC BY-NC-SA 4.0, nur nicht-kommerziell) gehören nicht zum pip-Paket;
 das Skript lädt sie beim ersten Lauf nach `~/.cache/mx-essentia`.
