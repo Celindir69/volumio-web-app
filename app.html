@@ -320,7 +320,7 @@
 
 <script>
   /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
-  ['streaming', 'core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'moodmix', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
+  ['streaming', 'infotext', 'core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'moodmix', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
     document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
   });
 </script>

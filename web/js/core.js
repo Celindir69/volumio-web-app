@@ -197,17 +197,22 @@ function artUrl(a) {
 }
 
 function ask(payload) {
-  return fetch('/api/v1/pluginEndpoint', {
+  return withTimeout(fetch('/api/v1/pluginEndpoint', {          /* Volumio 4 ohne Abo antwortet teils gar nicht */
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({endpoint:'metavolumio', data:payload})
-  }).then(function(r){ return r.json(); })
+  }), 6000).then(function(r){ return r.json(); })
     .then(function(j){
       if (!j || !j.data || !j.data.value) return null;
       if (j.data.type === 'story')   return {kind:'story',   value:j.data.value};
       if (j.data.type === 'credits' && j.data.value.length)
                                      return {kind:'credits', value:j.data.value};
       return null;
-    }).catch(function(){ return null; });
+    }).catch(function(){ return null; })
+    .then(function(res){                       /* nichts von Volumio (Volumio 4 ohne Abo): Texte selbst holen (infotext.js) */
+      if (res || !/^story/.test(payload.mode) || typeof infoFallback !== 'function') return res;
+      return withTimeout(infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album), 10000)
+        .catch(function(){ return null; });
+    });
 }
 
 function askDiscography(artist) {
