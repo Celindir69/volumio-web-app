@@ -123,6 +123,43 @@ Favoriten, ausgewogen, versteckte Perlen) wählen. „Mix erstellen“ zeigt nur
 die Warteschlange (das Listensymbol daneben hängt den Mix an). Gibt es weniger als 20 genaue Treffer, nimmt der Mix
 Ähnliches dazu (Energie ±1, dann ohne Stil) und sagt das. Derselbe Künstler kommt nie direkt hintereinander.
 
+### Audio-Analyse mit Essentia (optional, auf dem Mac)
+[Essentia](https://essentia.upf.edu) hört jeden Titel selbst an und liefert je Titel Tempo (BPM), Tonart, Stimmung
+(fröhlich, traurig, entspannt, aggressiv, Party), Tanzbarkeit, Gesang/instrumental, Valenz und Erregung sowie
+Discogs-Stile. Für den Player ist das zu viel Rechenarbeit, deshalb läuft `tools/essentia/analyse.py` auf dem Mac und
+lädt eine Ergebnisdatei hoch. Der Tag-Dienst nimmt dann Energie, Tempo und Stimmung dieser Titel aus dem Audio,
+Last.fm ergänzt weitere Stimmungen und Stile; der Stimmungs-Mix bekommt unter „Feinabstimmung“ einen Tempo-Regler.
+
+Einmalig (macOS 15 oder neuer; Python 3.14 von python.org oder `brew install python@3.14`):
+```bash
+python3.14 -m venv ~/mx-essentia && source ~/mx-essentia/bin/activate
+python -m pip install essentia-tensorflow mutagen
+```
+Meldet pip „from versions: none“, gibt es für diesen Mac kein aktuelles Paket. Intel-Mac mit macOS 14: die letzte
+Fassung dafür braucht Python 3.13 (`brew install python@3.13`):
+```bash
+python3.13 -m venv ~/mx-essentia && source ~/mx-essentia/bin/activate
+python -m pip install "essentia-tensorflow==2.1b6.dev1389" mutagen
+```
+Die vortrainierten Modelle (rund 100 MB, Lizenz CC BY-NC-SA 4.0, nur nicht-kommerziell) gehören nicht zum pip-Paket;
+das Skript lädt sie beim ersten Lauf nach `~/.cache/mx-essentia`.
+
+Analysieren (erst ein kurzer Probelauf, dann alles; `caffeinate -i` hält den Mac wach):
+```bash
+source ~/mx-essentia/bin/activate
+python3 analyse.py --limit 20 /Volumes/<Platte>/<Musikordner>
+caffeinate -i python3 analyse.py /Volumes/<Platte>/<Ordner 1> /Volumes/<Platte>/<Ordner 2>
+python3 analyse.py --upload http://<player>:8766
+```
+- Zugeordnet wird über Künstler und Titel (wie bei den Last.fm-Tags), nicht über den Pfad: Ordnerstruktur und Laufwerk
+  auf dem Mac sind egal. Titel, die es auf dem Player nicht gibt, werden dort einfach nicht verwendet.
+- Mehrere Ordner lassen sich angeben, Symlinks werden verfolgt; `--exclude "*/Hörbücher/*"` lässt Pfade aus.
+- Unveränderte Dateien werden beim nächsten Lauf übersprungen; Ctrl-C bricht ab, der nächste Aufruf macht weiter.
+- `--seconds 120` (Standard) hört nur die mittleren zwei Minuten an (Valenz/Erregung davon die mittleren 45 s), `--jobs` legt die Zahl paralleler Prozesse fest.
+- Die Ergebnisdatei `essentia.jsonl` liegt auf dem Player unter `/data/INTERNAL/tags/` (ersetzt bei jedem Hochladen die
+  vorige; alternativ per `scp` dorthin kopieren). Der Bibliotheks-Check zeigt unter „Stimmungs-Tags“, wie viele Titel
+  zugeordnet sind.
+
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der
 Überschrift „Lyrics“ (Bühnenansicht: runde Knöpfe oben rechts) den Text um je 0,5 s. Der Wert gilt für diesen Titel auf

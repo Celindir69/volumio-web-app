@@ -5,6 +5,8 @@ var moodtags = require('./moodtags.js');
 
 var MAX_N = 200;
 var MIN_MATCHES = 20;            /* erst darunter werden die Kriterien gelockert */
+var BPM_MIN = 40, BPM_MAX = 220;
+var BPM_TOL = 8;                 /* ab Stufe 1: so viele BPM daneben zählen noch (halb) */
 
 function list(s) {
   return String(s || '').split(',').map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean);
@@ -15,25 +17,28 @@ function parse(q) {
   var emin = parseInt(q.emin, 10), emax = parseInt(q.emax, 10), n = parseInt(q.n, 10), disc = parseFloat(q.disc);
   emin = emin >= 1 && emin <= 5 ? emin : 1; emax = emax >= 1 && emax <= 5 ? emax : 5;
   if (emin > emax) { var x = emin; emin = emax; emax = x; }
+  var bmin = parseInt(q.bmin, 10), bmax = parseInt(q.bmax, 10);    /* Tempo (Audio-Analyse); 0 = keine Grenze */
+  bmin = bmin >= BPM_MIN && bmin <= BPM_MAX ? bmin : 0; bmax = bmax >= BPM_MIN && bmax <= BPM_MAX ? bmax : 0;
+  if (bmin && bmax && bmin > bmax) { var y = bmin; bmin = bmax; bmax = y; }
   return {moods: list(q.moods), styles: list(q.styles), match: q.match === 'all' ? 'all' : 'any',
-          emin: emin, emax: emax, n: Math.min(Math.max(n || 50, 1), MAX_N), disc: disc >= 0 && disc <= 1 ? disc : 0.5};
+          emin: emin, emax: emax, bmin: bmin, bmax: bmax, n: Math.min(Math.max(n || 50, 1), MAX_N), disc: disc >= 0 && disc <= 1 ? disc : 0.5};
 }
 
 /* alle eingeordneten Titel mit Ergebnis; neu nur, wenn sich Bibliothek oder Tags geändert haben */
 function index(coll) {
-  var lib = coll.loadLib(), stamp = coll.libAt + ':' + coll.fetched + ':' + lib.length;
+  var lib = coll.loadLib(), stamp = coll.libAt + ':' + coll.fetched + ':' + lib.length + ':' + (coll.audio ? (coll.audio.reload(), coll.audio.mtime) : 0);
   if (coll._mixIdx && coll._mixIdx.stamp === stamp) return coll._mixIdx.list;
   var out = [];
   lib.forEach(function(it){
     if (!it.f) return;
-    var r = coll.moodOf(it.ar, it.ti);
+    var r = coll.moodOf(it.ar, it.ti, it.al);
     if (r) out.push({it: it, r: r});
   });
   coll._mixIdx = {stamp: stamp, list: out};
   return out;
 }
 
-/* Stufe 0: streng; 1: Energie ±1 und Titel ohne Energie; 2: zusätzlich Stile egal. -> Punktzahl oder 0 */
+/* Stufe 0: streng; 1: Energie ±1, Tempo ±8 BPM, Titel ohne Energie/Tempo; 2: zusätzlich Stile egal. -> Punktzahl oder 0 */
 function fit(r, c, level) {
   var s = 1;
   if (c.moods.length) {
@@ -45,6 +50,12 @@ function fit(r, c, level) {
   if (r.energy === null) { if (!level && (c.emin > 1 || c.emax < 5)) return 0; s *= 0.7; }
   else if (r.energy < lo || r.energy > hi) return 0;
   else if (r.energy < c.emin || r.energy > c.emax) s *= 0.5;
+  if (c.bmin || c.bmax) {
+    var blo = c.bmin || 0, bhi = c.bmax || 999, tol = level ? BPM_TOL : 0;
+    if (r.bpm === null || r.bpm === undefined) { if (!level) return 0; s *= 0.6; }
+    else if (r.bpm < blo - tol || r.bpm > bhi + tol) return 0;
+    else if (r.bpm < blo || r.bpm > bhi) s *= 0.5;
+  }
   if (c.styles.length && level < 2) {
     var sh = r.style.filter(function(x){ return c.styles.indexOf(x) >= 0; }).length;
     if (c.match === 'all' ? sh < c.styles.length : !sh) return 0;
@@ -62,14 +73,15 @@ function candidates(all, c, level) {
 /* Trefferzahl (streng) und die Stile unter den Treffern ohne Stilfilter (für die Stil-Chips) */
 function count(coll, c) {
   var all = index(coll), styles = {};
-  var noStyle = {moods: c.moods, styles: [], match: 'any', emin: c.emin, emax: c.emax};
-  var n = 0;
+  var noStyle = {moods: c.moods, styles: [], match: 'any', emin: c.emin, emax: c.emax, bmin: c.bmin, bmax: c.bmax};
+  var n = 0, bpm = 0;
   all.forEach(function(x){
+    if (x.r.bpm) bpm++;
     if (!fit(x.r, noStyle, 0)) return;
     x.r.style.forEach(function(s){ styles[s] = (styles[s] || 0) + 1; });
     if (!c.styles.length || fit(x.r, c, 0)) n++;
   });
-  return {count: n, rated: all.length,
+  return {count: n, rated: all.length, bpm: bpm,
           styles: Object.keys(styles).sort(function(a, b){ return styles[b] - styles[a] || (a < b ? -1 : 1); }).slice(0, 24)
             .map(function(s){ return [s, styles[s]]; })};
 }
@@ -124,7 +136,7 @@ function build(coll, pc, c, rnd) {
   }
   return {level: level, matches: cand.length, tracks: ordered.map(function(x){
     return {f: x.it.f, ar: x.it.ar, ti: x.it.ti, al: x.it.al, d: x.it.d, mood: x.r.mood, energy: x.r.energy,
-            style: x.r.style, src: x.r.src, plays: pc[x.it.k] || 0};
+            style: x.r.style, src: x.r.src, bpm: x.r.bpm || null, key: x.r.key || null, plays: pc[x.it.k] || 0};
   })};
 }
 

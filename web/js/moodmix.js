@@ -6,16 +6,19 @@ var mixBody    = document.getElementById('mixBody');
 var MIX_CORE   = ['relaxed', 'dreamy', 'uplifting', 'melancholic', 'dark', 'reflective', 'happy', 'romantic'];
 var MIX_MORE   = ['calm', 'atmospheric', 'emotional', 'epic', 'intense', 'aggressive', 'sensual', 'sad'];
 var MIX_DISC   = [[0, 'Favoriten'], [0.5, 'Ausgewogen'], [1, 'Versteckte Perlen']];
-var mixCrit    = {moods: [], emin: 1, emax: 5, styles: [], match: 'any', n: 50, disc: 0.5};
+var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', n: 50, disc: 0.5};
+var MIX_BPM    = [60, 180, 5];                 /* Tempo-Regler: Ende links/rechts = offen (0) */
 var mixState   = {view: 'pick', fine: false, more: false, styles: null, result: null};
 var mixCountSeq = 0, mixCountTimer = null;
 
 try { var saved = JSON.parse(localStorage.getItem('moodMix') || 'null'); if (saved && saved.moods) mixCrit = saved; } catch (e) { /* ohne Speicher */ }
+if (!mixCrit.bmin) mixCrit.bmin = 0;
+if (!mixCrit.bmax) mixCrit.bmax = 0;
 function mixSave() { try { localStorage.setItem('moodMix', JSON.stringify(mixCrit)); } catch (e) { /* egal */ } }
 
 function mixName(m) { var s = MOOD_NAMES[m] || m; return s.charAt(0).toUpperCase() + s.slice(1); }
 function mixQuery() {
-  return 'moods=' + encodeURIComponent(mixCrit.moods.join(',')) + '&emin=' + mixCrit.emin + '&emax=' + mixCrit.emax +
+  return 'moods=' + encodeURIComponent(mixCrit.moods.join(',')) + '&emin=' + mixCrit.emin + '&emax=' + mixCrit.emax + '&bmin=' + mixCrit.bmin + '&bmax=' + mixCrit.bmax +
     '&styles=' + encodeURIComponent(mixCrit.styles.join(',')) + '&match=' + mixCrit.match + '&n=' + mixCrit.n + '&disc=' + mixCrit.disc;
 }
 function mixClear() { while (mixBody.firstChild) mixBody.removeChild(mixBody.firstChild); }
@@ -69,35 +72,11 @@ function mixPick() {
   if (!more) chips.appendChild(mixChip('Weitere …', false, function(){ mixState.more = true; mixRender(); }, 'mxMore'));
   mixBody.appendChild(chips);
 
-  /* Energie als Bereich 1–5 (zwei Regler übereinander) */
+  /* Energie als Bereich 1–5 */
   mixBody.appendChild(histEl('div', 'mxLabel', 'Energie'));
-  var en = histEl('div', 'mxEnergy');
-  var track = histEl('div', 'mxTrack'), fill = histEl('div', 'mxFill');
-  track.appendChild(fill);
-  var lo = document.createElement('input'), hi = document.createElement('input');
-  [lo, hi].forEach(function(r){ r.type = 'range'; r.min = 1; r.max = 5; r.step = 1; r.className = 'mxRange'; });
-  lo.value = mixCrit.emin; hi.value = mixCrit.emax;
-  function paint() {
-    fill.style.left = ((mixCrit.emin - 1) * 25) + '%';
-    fill.style.right = ((5 - mixCrit.emax) * 25) + '%';
-    val.textContent = mixCrit.emin === 1 && mixCrit.emax === 5 ? 'alle' : mixCrit.emin === mixCrit.emax ? String(mixCrit.emin) : mixCrit.emin + '–' + mixCrit.emax;
-  }
-  function changed(which) {
-    var a = +lo.value, b = +hi.value;
-    if (a > b) { if (which === lo) hi.value = b = a; else lo.value = a = b; }
-    mixCrit.emin = a; mixCrit.emax = b;
-    paint(); mixCount();
-  }
-  lo.addEventListener('input', function(){ changed(lo); });
-  hi.addEventListener('input', function(){ changed(hi); });
-  en.appendChild(track); en.appendChild(lo); en.appendChild(hi);
-  var ends = histEl('div', 'mxEnds');
-  ends.appendChild(histEl('span', '', 'ruhig'));
-  var val = histEl('span', 'mxVal');
-  ends.appendChild(val);
-  ends.appendChild(histEl('span', '', 'kraftvoll'));
-  mixBody.appendChild(en); mixBody.appendChild(ends);
-  paint();
+  mixDual(mixBody, 1, 5, 1, mixCrit.emin, mixCrit.emax, 'ruhig', 'kraftvoll', function(a, b){
+    return a === 1 && b === 5 ? 'alle' : a === b ? String(a) : a + '–' + b;
+  }, function(a, b){ mixCrit.emin = a; mixCrit.emax = b; mixCount(); });
 
   /* Feinabstimmung */
   var fold = histEl('div', 'hFold mxFold' + (mixState.fine ? ' open' : ''));
@@ -119,6 +98,20 @@ function mixPick() {
   mixState.styleBox = styleBox; mixState.matchBox = matchBox;
   mixStyles();
 
+  /* Tempo (BPM) nur, wenn es Audio-Analysen gibt (tools/essentia); bis die Trefferzahl da ist, verborgen */
+  var tempo = histEl('div', 'mxTempo');
+  tempo.style.display = mixState.hasBpm || mixCrit.bmin || mixCrit.bmax ? '' : 'none';
+  mixState.tempo = tempo;
+  tempo.appendChild(histEl('div', 'mxLabel', 'Tempo'));
+  var bl = MIX_BPM[0], bh = MIX_BPM[1];
+  mixDual(tempo, bl, bh, MIX_BPM[2], mixCrit.bmin || bl, mixCrit.bmax || bh, 'langsam', 'schnell', function(a, b){
+    if (a === bl && b === bh) return 'alle';
+    if (a === bl) return 'bis ' + b + ' BPM';
+    if (b === bh) return 'ab ' + a + ' BPM';
+    return a === b ? a + ' BPM' : a + '–' + b + ' BPM';
+  }, function(a, b){ mixCrit.bmin = a === bl ? 0 : a; mixCrit.bmax = b === bh ? 0 : b; mixCount(); });
+  fine.appendChild(tempo);
+
   fine.appendChild(histEl('div', 'mxLabel', 'Länge'));
   fine.appendChild(mixSeg([[25, '25 Titel'], [50, '50 Titel'], [100, '100 Titel']], mixCrit.n, function(v){ mixCrit.n = v; }));
   fine.appendChild(histEl('div', 'mxLabel', 'Entdeckungsgrad'));
@@ -133,6 +126,37 @@ function mixPick() {
   mixState.go = go;
   mixBody.appendChild(go);
   mixCount();
+}
+
+/* Bereich mit zwei Reglern übereinander (Energie, Tempo); fmt(a, b) -> Anzeige, set(a, b) bei jeder Änderung */
+function mixDual(parent, min, max, step, a0, b0, left, right, fmt, set) {
+  var en = histEl('div', 'mxEnergy');
+  var track = histEl('div', 'mxTrack'), fill = histEl('div', 'mxFill');
+  track.appendChild(fill);
+  var lo = document.createElement('input'), hi = document.createElement('input');
+  [lo, hi].forEach(function(r){ r.type = 'range'; r.min = min; r.max = max; r.step = step; r.className = 'mxRange'; });
+  lo.value = a0; hi.value = b0;
+  var ends = histEl('div', 'mxEnds');
+  ends.appendChild(histEl('span', '', left));
+  var val = histEl('span', 'mxVal');
+  ends.appendChild(val);
+  ends.appendChild(histEl('span', '', right));
+  function paint() {
+    var a = +lo.value, b = +hi.value, w = max - min;
+    fill.style.left = ((a - min) / w * 100) + '%';
+    fill.style.right = ((max - b) / w * 100) + '%';
+    val.textContent = fmt(a, b);
+  }
+  function changed(which) {
+    var a = +lo.value, b = +hi.value;
+    if (a > b) { if (which === lo) hi.value = b = a; else lo.value = a = b; }
+    paint(); set(a, b);
+  }
+  lo.addEventListener('input', function(){ changed(lo); });
+  hi.addEventListener('input', function(){ changed(hi); });
+  en.appendChild(track); en.appendChild(lo); en.appendChild(hi);
+  parent.appendChild(en); parent.appendChild(ends);
+  paint();
 }
 
 /* Auswahl aus festen Werten (Länge, Entdeckungsgrad, Stil-Verknüpfung) */
@@ -180,6 +204,8 @@ function mixCount() {
   mixCountTimer = setTimeout(function(){
     tagGetJson('/moodmix?count=1&' + mixQuery()).then(function(r){
       if (seq !== mixCountSeq || !mixState.hits) return;
+      mixState.hasBpm = r.bpm > 0;
+      if (mixState.tempo && mixState.hasBpm) mixState.tempo.style.display = '';
       var styleKey = JSON.stringify(r.styles || []);
       if (styleKey !== mixState.styleKey) { mixState.styleKey = styleKey; mixState.styles = r.styles || []; mixStyles(); }
       var h = mixState.hits;
@@ -190,7 +216,7 @@ function mixCount() {
         return;
       }
       mixState.go.disabled = false;
-      if (!r.count) { h.textContent = 'Keine Titel passen genau. Der Mix nimmt dann Ähnliches (Energie etwas weiter, Stile egal).'; h.className += ' warn'; }
+      if (!r.count) { h.textContent = 'Keine Titel passen genau. Der Mix nimmt dann Ähnliches (' + (mixCrit.bmin || mixCrit.bmax ? 'Energie und Tempo' : 'Energie') + ' etwas weiter, Stile egal).'; h.className += ' warn'; }
       else if (r.count < Math.min(mixCrit.n, 20)) { h.textContent = 'Nur ' + checkNum(r.count) + ' Titel passen genau; der Mix wird mit Ähnlichem aufgefüllt.'; h.className += ' warn'; }
       else if (r.count < mixCrit.n) h.textContent = checkNum(r.count) + ' Titel passen; der Mix wird entsprechend kürzer.';
       else h.textContent = 'Ca. ' + checkNum(r.count) + ' Titel passen.';
@@ -218,6 +244,8 @@ function mixSummary() {
   var parts = mixCrit.moods.map(mixName);
   if (!parts.length) parts.push('Alle Stimmungen');
   parts.push(mixCrit.emin === 1 && mixCrit.emax === 5 ? 'jede Energie' : 'Energie\u00a0' + (mixCrit.emin === mixCrit.emax ? mixCrit.emin : mixCrit.emin + '\u2060–\u2060' + mixCrit.emax));
+  if (mixCrit.bmin || mixCrit.bmax) parts.push(!mixCrit.bmax ? 'ab\u00a0' + mixCrit.bmin + '\u00a0BPM' : !mixCrit.bmin ? 'bis\u00a0' + mixCrit.bmax + '\u00a0BPM' :
+    mixCrit.bmin + '\u2060–\u2060' + mixCrit.bmax + '\u00a0BPM');
   return parts.join(' · ');
 }
 
@@ -235,9 +263,10 @@ function mixPreview() {
   head.appendChild(edit);
   mixBody.appendChild(head);
 
+  var wide = mixCrit.bmin || mixCrit.bmax ? 'Energie und Tempo' : 'Energie';
   if (r.level) mixBody.appendChild(histEl('div', 'mxHits warn', r.level === 1
-    ? 'Nicht genug genaue Treffer: Energie etwas weiter gefasst.'
-    : 'Nicht genug genaue Treffer: Energie weiter gefasst und Stile nicht berücksichtigt.'));
+    ? 'Nicht genug genaue Treffer: ' + wide + ' etwas weiter gefasst.'
+    : 'Nicht genug genaue Treffer: ' + wide + ' weiter gefasst und Stile nicht berücksichtigt.'));
   if (!tracks.length) {
     mixBody.appendChild(histEl('div', 'mxHits', 'Für diese Auswahl gibt es keine Titel. Versuche eine andere Stimmung oder einen weiteren Energie-Bereich.'));
     return;
@@ -267,6 +296,7 @@ function mixPreview() {
     meta.appendChild(histEl('div', 'sTitle', x.ti));
     meta.appendChild(histEl('div', 'sSub', x.ar));
     var why = x.mood.map(mixName).concat(x.style.slice(0, 2));
+    if (x.bpm) why.push(x.bpm + '\u00a0BPM');
     if (x.src === 'artist') why.push('über Künstler');
     meta.appendChild(histEl('div', 'mxWhy', why.join(' · ')));
     row.appendChild(meta);

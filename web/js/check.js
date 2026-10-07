@@ -110,7 +110,7 @@ function checkMoodSection() {
   if (!m || !m.ok) return;
   var st = m.status, sum = m.summary, key = 'moodtags';
   var row = document.createElement('div'); row.className = 'ckCat ckMoodCat' + (checkOpen[key] ? ' open' : '');
-  row.innerHTML = '<div class="ckName">Stimmungs-Tags (Last.fm)</div><div class="ckNum"></div>' + CHECK_CHEVRON;
+  row.innerHTML = '<div class="ckName">Stimmungs-Tags (Last.fm' + (m.audio && m.audio.tracks ? ', Audio' : '') + ')</div><div class="ckNum"></div>' + CHECK_CHEVRON;
   row.querySelector('.ckNum').textContent = !m.enabled ? 'aus' : st.total ? Math.floor(st.done * 100 / st.total) + ' %' : '–';
   var box = document.createElement('div'); box.className = 'ckList ckMood';
   row.addEventListener('click', function(){ checkOpen[key] = !checkOpen[key]; row.classList.toggle('open', checkOpen[key]); });
@@ -123,8 +123,14 @@ function checkMoodSection() {
   if (st.error) line += ' ' + st.error;
   el('div', 'ckMoodLine', line);
   if (st.total) { var bar = el('div', 'ckMoodBar'); var fill = document.createElement('div'); fill.style.width = (st.done * 100 / st.total) + '%'; bar.appendChild(fill); }
+  if (m.audio) {
+    el('div', 'ckMoodLine', m.audio.tracks
+      ? 'Audio-Analyse (Essentia, vom Mac): ' + checkNum(sum.audio || 0) + ' von ' + checkNum(st.total) + ' Titeln zugeordnet, Stand ' +
+        new Date(m.audio.at).toLocaleDateString('de-DE') + '. Energie, Tempo und Stimmung dieser Titel kommen aus dem Audio.'
+      : 'Audio-Analyse (Essentia): noch keine Daten. Sie läuft auf dem Mac, siehe docs/einrichten.md.');
+  }
 
-  var rated = sum.track + sum.artist;
+  var rated = sum.track + sum.artist + (sum.audioOnly || 0);
   if (rated) {
     el('div', 'ckMoodLine', checkNum(rated) + ' Titel eingeordnet (' + checkNum(sum.artist) + ' davon nur über die Künstler-Tags), ' +
       checkNum(sum.none) + ' ohne passende Tags.');
