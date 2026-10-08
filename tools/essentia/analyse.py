@@ -16,6 +16,7 @@ Die vortrainierten Modelle (rund 100 MB) lädt das Skript beim ersten Lauf selbs
 Modelle: CC BY-NC-SA 4.0 (nur nicht-kommerziell), https://essentia.upf.edu/models
 """
 import argparse
+import concurrent.futures as cf
 import fnmatch
 import json
 import multiprocessing as mp
@@ -136,7 +137,9 @@ def read_tags(path):
 W = {}
 
 
-def worker_init(folder, seconds, profile=False):
+def worker_init(folder, seconds, profile=False, max_minutes=0, marks=''):
+    W['max_minutes'] = max_minutes
+    W['marks'] = marks
     os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
     import essentia
     import essentia.standard as es
@@ -173,11 +176,43 @@ def mean_rows(a):
 def analyse(job):
     path, size, mtime = job
     rec = {'v': VERSION, 'p': path, 'sz': size, 'mt': mtime}
+    # Merkzettel je Prozess: stürzt der Prozess bei dieser Datei ab (Essentia/TensorFlow), weiß der Hauptprozess welche
+    mark = os.path.join(W['marks'], str(os.getpid())) if W.get('marks') else ''
+    if mark:
+        with open(mark, 'w', encoding='utf-8') as m:
+            m.write(path)
+    try:
+        return analyse_file(rec, path)
+    finally:
+        if mark:
+            try:
+                os.remove(mark)
+            except OSError:
+                pass
+
+
+def length_of(path):
+    try:
+        import mutagen
+        f = mutagen.File(path)
+        return float(f.info.length) if f is not None and f.info else 0.0
+    except Exception:
+        return 0.0
+
+
+def analyse_file(rec, path):
     ar, ti, al = read_tags(path)
     if not ar or not ti:
         rec['err'] = 'keine Künstler-/Titel-Tags'
         return rec
     rec.update({'ar': ar, 'ti': ti, 'al': al})
+    lim = W.get('max_minutes') or 0
+    if lim:
+        ln = length_of(path)                           # ganze Datei wird geladen: sehr lange Mitschnitte sprengen den Speicher
+        if ln > lim * 60:
+            rec['d'] = round(ln)
+            rec['err'] = 'länger als %d min (--max-minutes)' % lim
+            return rec
     try:
         es = W['es']
         tt, t0 = {}, [time.time()]
@@ -299,6 +334,8 @@ def main():
     ap.add_argument('--exclude', action='append', default=[], help='Muster für auszulassende Pfade, z. B. "*/Hörbücher/*"')
     ap.add_argument('--retry-errors', action='store_true', help='Dateien mit Fehler erneut versuchen')
     ap.add_argument('--profile', action='store_true', help='Zeit je Analyseschritt ausgeben (zum Beschleunigen)')
+    ap.add_argument('--max-minutes', type=int, default=30,
+                    help='längere Dateien auslassen, sie werden ganz geladen (Standard 30, 0 = alle)')
     ap.add_argument('--limit', type=int, default=0, help='höchstens so viele Dateien analysieren (zum Ausprobieren)')
     ap.add_argument('--upload', metavar='URL', help='danach zum Tag-Dienst hochladen, z. B. http://<player>:8766')
     a = ap.parse_args()
@@ -321,28 +358,96 @@ def main():
         print('%d Audiodateien gefunden, %d zu analysieren (%d Prozesse).' % (len(present), len(todo), a.jobs), flush=True)
         if todo:
             t0, n, errs, prof = time.time(), 0, 0, {}
+            marks = a.out + '.laeuft'
+            os.makedirs(marks, exist_ok=True)
+            for x in os.listdir(marks):
+                os.remove(os.path.join(marks, x))
             ctx = mp.get_context('spawn')
+
+            def pool():
+                return cf.ProcessPoolExecutor(a.jobs, mp_context=ctx, initializer=worker_init,
+                                              initargs=(a.models, a.seconds, a.profile, a.max_minutes, marks))
+
+            def handle(f, rec):
+                nonlocal n, errs
+                for k, v in rec.pop('_t', {}).items():
+                    prof[k] = prof.get(k, 0) + v
+                f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+                f.flush()
+                done[rec['p']] = rec
+                n += 1
+                if rec.get('err'):
+                    errs += 1
+                    print('  Fehler: %s: %s' % (rec['p'], rec['err']), flush=True)
+                if n % 25 == 0 or n == len(todo):
+                    el = time.time() - t0
+                    eta = el / n * (len(todo) - n)
+                    print('  %d/%d  (%.1f s je Datei, noch etwa %d min, %d Fehler)'
+                          % (n, len(todo), el / n, eta / 60, errs), flush=True)
+
+            queue = list(reversed(todo))
+            solo = []
+            blind = 0
+            ex = pool()
+            running = {}
             try:
-                with open(a.out, 'a', encoding='utf-8') as f, \
-                        ctx.Pool(a.jobs, initializer=worker_init, initargs=(a.models, a.seconds, a.profile)) as pool:
-                    for rec in pool.imap_unordered(analyse, todo, chunksize=2):
-                        for k, v in rec.pop('_t', {}).items():
-                            prof[k] = prof.get(k, 0) + v
-                        f.write(json.dumps(rec, ensure_ascii=False) + '\n')
-                        f.flush()
-                        done[rec['p']] = rec
-                        n += 1
-                        if rec.get('err'):
-                            errs += 1
-                            print('  Fehler: %s: %s' % (rec['p'], rec['err']), flush=True)
-                        if n % 25 == 0 or n == len(todo):
-                            el = time.time() - t0
-                            eta = el / n * (len(todo) - n)
-                            print('  %d/%d  (%.1f s je Datei, noch etwa %d min, %d Fehler)'
-                                  % (n, len(todo), el / n, eta / 60, errs), flush=True)
+                with open(a.out, 'a', encoding='utf-8') as f:
+                    while queue or running or solo:
+                        if solo:                     # Verdächtige nach einem Absturz einzeln, damit klar ist, wer es war
+                            if not running:
+                                job = solo.pop()
+                                running[ex.submit(analyse, job)] = job
+                        else:
+                            while queue and len(running) < a.jobs * 2:
+                                job = queue.pop()
+                                running[ex.submit(analyse, job)] = job
+                        fin, _ = cf.wait(running, return_when=cf.FIRST_COMPLETED)
+                        broken = False
+                        for fu in fin:
+                            job = running.pop(fu)
+                            try:
+                                handle(f, fu.result())
+                            except cf.process.BrokenProcessPool:
+                                broken = True
+                                queue.append(job)
+                        if broken:
+                            # ein Arbeitsprozess ist abgestürzt (und hat die anderen mitgerissen). Die Dateien auf den
+                            # Merkzetteln sind verdächtig: einzeln wiederholen; stürzt eine allein ab, gilt sie als Fehler.
+                            alone = len(running) == 0 and sum(1 for _ in fin) == 1
+                            crashed = set()
+                            for x in os.listdir(marks):
+                                with open(os.path.join(marks, x), encoding='utf-8') as m:
+                                    crashed.add(m.read())
+                                os.remove(os.path.join(marks, x))
+                            for fu, job in running.items():
+                                queue.append(job)
+                            running = {}
+                            if alone and crashed:
+                                for j in todo:
+                                    if j[0] in crashed:
+                                        handle(f, {'v': VERSION, 'p': j[0], 'sz': j[1], 'mt': j[2],
+                                                   'err': 'Analyse abgestürzt (Datei beschädigt oder zu groß?)'})
+                            else:
+                                solo += [j for j in queue if j[0] in crashed]
+                            queue = [j for j in queue if j[0] not in crashed]
+                            if not crashed:          # unklar welche: nichts verlieren, nur neu anfangen
+                                blind += 1
+                                if blind >= 3:
+                                    sys.exit('Die Arbeitsprozesse stürzen immer wieder ab (Essentia/TensorFlow-Installation prüfen).')
+                                print('  Arbeitsprozess abgestürzt, mache weiter …', flush=True)
+                            else:
+                                blind = 0
+                            ex.shutdown(wait=False, cancel_futures=True)
+                            ex = pool()
             except KeyboardInterrupt:
+                ex.shutdown(wait=False, cancel_futures=True)
                 print('\nAbgebrochen. Beim nächsten Aufruf geht es hier weiter.')
                 sys.exit(1)
+            ex.shutdown()
+            try:
+                os.rmdir(marks)
+            except OSError:
+                pass
             if prof and n:
                 print('Zeit je Datei nach Schritt: ' + ', '.join('%s %.1f s' % (k, v / n) for k, v in prof.items()))
         kept = compact(a.out, done, roots, present)
