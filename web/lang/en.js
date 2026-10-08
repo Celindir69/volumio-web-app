@@ -102,6 +102,7 @@ langRegister('en', 'English', {
   'genre.noAlbums': 'No albums in this genre.',
   'genre.none': 'No genres yet: the albums have no genre tags (library check, "Albums without genre").',
   'genre.offline': 'Tag service not reachable.',
+  'hist.chart.genres': 'GENRES',
   'hist.chart.hour': 'TIME OF DAY',
   'hist.chart.perDay': 'PLAYS PER DAY',
   'hist.chart.perMonth': 'PLAYS PER MONTH',

@@ -211,8 +211,8 @@ function totals(part) {
   return res;
 }
 
-/* Statistik: Summen, Verlauf (Tage/Monate/Jahre), Tageszeit, Wochentag */
-function stats(list, range, now, tz) {
+/* Statistik: Summen, Verlauf (Tage/Monate/Jahre), Tageszeit, Wochentag; mit genreOf (albums.genreIndex) die Top 8 Genres */
+function stats(list, range, now, tz, genreOf) {
   var from = rangeStart(range, now), part = since(list, from);
   var res = totals(part);
   res.unit = range === 'd30' ? 'day' : range === 'm12' ? 'month' : 'year';
@@ -236,6 +236,7 @@ function stats(list, range, now, tz) {
     res.weekdays[(d.getUTCDay() + 6) % 7]++;            /* Montag zuerst */
   });
   res.buckets = bkeys.map(function(k, i){ return {k: k, n: counts[i]}; });
+  res.genres = genreOf ? topGenres(part, genreOf, 8) : [];
   return res;
 }
 

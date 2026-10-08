@@ -64,7 +64,7 @@ nichts spielt; die Musikdateien bleiben dabei unverändert. Optional hört Essen
 
 ### Verlauf, Statistik und Rückblick
 Der Tag-Dienst schreibt mit, was läuft, und kann zu Last.fm scrobbeln sowie den bisherigen Last.fm-Verlauf einlesen.
-Daraus entstehen „Zuletzt gehört“, Ranglisten (Titel, Alben, Künstler), Statistiken nach Tag, Tageszeit und Wochentag
+Daraus entstehen „Zuletzt gehört“, Ranglisten (Titel, Alben, Künstler), Statistiken nach Tag, Tageszeit, Wochentag und Genre
 und ein Jahresrückblick mit Vergleich zum Vorjahr, Top-Genres und neu entdeckten Künstlern. Tippen auf einen Monat zeigt
 die Ranglisten für diesen Monat.
 

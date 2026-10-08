@@ -112,6 +112,11 @@ t('Statistik: Summen, Tage, Tageszeit und Wochentag in Ortszeit', function(){
   var all = plays.stats(list, 'all', NOW, {w: 60, s: 120});
   assert.deepStrictEqual(all.buckets.map(function(b){ return b.k; }), ['2025', '2026']);
   assert.strictEqual(plays.stats(list, 'm12', NOW, {w: 60, s: 120}).buckets.length, 12);
+  assert.deepStrictEqual(s.genres, []);
+  var g = plays.stats(list, 'd30', NOW, {w: 60, s: 120}, function(e){ return e.ar === 'Spliff' ? 'Rock' : e.ar ? 'Pop' : ''; });
+  assert.deepStrictEqual(g.genres.map(function(x){ return x.g; }).sort(), ['Pop', 'Rock']);
+  assert.ok(g.genres[0].n >= g.genres[1].n, 'häufigstes zuerst');
+  assert.strictEqual(g.genres.reduce(function(n, x){ return n + x.n; }, 0), 7);
 });
 t('Ortszeit: Umstellung Ende März und Ende Oktober', function(){
   var tz = {w: 60, s: 120};

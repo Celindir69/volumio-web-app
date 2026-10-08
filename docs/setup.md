@@ -136,7 +136,7 @@ The radio list displays the station logos using the address provided by Volumio,
 
 ### History and Statistics
 
-In the search area at the top right (clock icon): **Recently Played** (by day), **Most Played** (tracks, albums, or artists; 30 days, 12 months, or all time), **Statistics** (plays, listening time, history, time of day, weekday), and **Review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
+In the search area at the top right (clock icon): **Recently Played** (by day), **Most Played** (tracks, albums, or artists; 30 days, 12 months, or all time), **Statistics** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
 
 Tapping plays the track or opens the album or artist.
 
