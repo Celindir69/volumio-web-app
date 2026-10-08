@@ -12,7 +12,7 @@ var histTimer      = null;
 var HIST_DAYS      = langWeekdays('short').map(function(x){ return x.replace(/\.$/, ''); });
 var HIST_MONTHS    = langMonths('short').map(function(x){ return x.replace(/\.$/, ''); });
 var HIST_RANGES    = [['d30', T('hist.range.d30')], ['m12', T('hist.range.m12')], ['all', T('hist.range.all')]];
-var HIST_KINDS     = [['track', T('hist.kind.track')], ['album', T('hist.kind.album')], ['artist', T('hist.kind.artist')]];
+var HIST_KINDS     = [['track', T('hist.kind.track')], ['album', T('hist.kind.album')], ['artist', T('hist.kind.artist')], ['genre', T('hist.kind.genre')]];
 
 function histClear() { while (histBody.firstChild) histBody.removeChild(histBody.firstChild); }
 function histEl(tag, cls, text) {
@@ -175,11 +175,16 @@ function histRecent(seq) {
 
 /* ---------- Meistgespielt ---------- */
 
-/* eine Zeile mit Rang, Bild und Anzahl; kind track|album|artist */
+/* eine Zeile mit Rang, Bild und Anzahl; kind track|album|artist|genre (Bild: meistgespieltes Album des Genres) */
 /* Sampler: der Tag-Dienst nennt den Künstler intern 'Verschiedene'; angezeigt in der gewählten Sprache */
 function histArtistName(ar) { return ar === 'Verschiedene' ? T('hist.various') : ar; }
 
 function histTopRow(kind, it, i) {
+  if (kind === 'genre') {
+    var grow = histRow(it.g, '', it.n + '×', function(){ genreFromAnywhere(it.g); }, histImg(histAlbumArt(it.ar || '', it.al || '', it.u || '')));
+    grow.insertBefore(histEl('div', 'hRank', String(i + 1)), grow.firstChild);
+    return grow;
+  }
   var title = kind === 'artist' ? it.ar : it.ti;
   var sub = kind === 'artist' ? '' : (kind === 'track' && it.al ? it.ar + ' · ' + it.al : histArtistName(it.ar));
   var art = kind === 'artist' ? histArtistArt(it.ar)
@@ -203,7 +208,7 @@ function histTop(seq) {
     histBody.appendChild(histChips(HIST_KINDS, histKind, function(k){ histKind = k; histShow('top'); }));
     histBody.appendChild(histChips(HIST_RANGES, histRange, function(k){ histRange = k; histShow('top'); }));
     var items = (r && r.items) || [];
-    if (!items.length) { histBody.appendChild(browseNote(T('hist.top.empty'))); return; }
+    if (!items.length) { histBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('hist.top.empty'))); return; }
     items.forEach(function(it, i){ histBody.appendChild(histTopRow(histKind, it, i)); });
   }).catch(function(){ histFail(seq); });
 }

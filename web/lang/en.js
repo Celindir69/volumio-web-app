@@ -113,6 +113,7 @@ langRegister('en', 'English', {
   'hist.hours': '{n} h',
   'hist.kind.album': 'Albums',
   'hist.kind.artist': 'Artists',
+  'hist.kind.genre': 'Genres',
   'hist.kind.track': 'Tracks',
   'hist.lastfm.authorize': 'Tap “Allow” on Last.fm, then come back here and tap “Done”.',
   'hist.lastfm.connect': 'Connect to Last.fm',
