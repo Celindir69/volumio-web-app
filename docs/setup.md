@@ -12,6 +12,21 @@ After an update, perform a hard reload in the browser. An existing `web/config.l
 
 Custom settings (Last.fm key, Rotel, enabling/disabling services) go into `web/config.local.js`; use `web/config.local.js.example` as the template.
 
+### Language
+
+The interface is available in German and English. It follows the device (browser) language; if neither matches, it is
+shown in English. To fix the language, set `LANGUAGE: 'de'` or `'en'` in `web/config.local.js`. For a quick test,
+`http://<player>/app.html?lang=en` also works.
+
+Adding a language: copy `web/lang/en.js`, e.g. to `web/lang/fr.js`, adjust code, name and locale in the last line
+(`langRegister('fr', 'Français', {…}, 'fr-FR')`) and translate the texts; `{name}` are placeholders and stay as they are,
+`{one: …, other: …}` are singular and plural. Then add it in `web/config.local.js`: `LANGUAGES: ['de', 'en', 'fr']`.
+Texts missing from the file are shown in English. `mx-deploy` leaves your own language files in `web/lang/` in place.
+Dates, numbers, month and weekday names come from the browser in the selected language.
+
+Not translated: texts that Volumio itself delivers (e.g. menu names when browsing) and error messages from the tag
+service; these stay German.
+
 ## Updating with mx-deploy
 
 Set it up once:
@@ -172,7 +187,7 @@ python3 analyse.py --upload http://<player>:8766
 
 ### Artist and Album Information
 
-The information page queries Volumio first. If nothing is returned (Volumio 4 only provides the information with a subscription, or Volumio does not respond within 6 seconds), the app retrieves the information itself: album information from Last.fm (German, otherwise English; requires `LASTFM_KEY`), and artist information from Last.fm followed by Wikipedia (German, otherwise English; only articles that appear to be music-related).
+The information page queries Volumio first. If nothing is returned (Volumio 4 only provides the information with a subscription, or Volumio does not respond within 6 seconds), the app retrieves the information itself: album information from Last.fm (in the interface language, otherwise English; requires `LASTFM_KEY`), and artist information from Last.fm and Wikipedia, first both in the interface language, then both in English (Wikipedia: only articles that appear to be music-related).
 
 The source is shown below the text. There is no fallback for contributors.
 

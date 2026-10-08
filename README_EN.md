@@ -1,7 +1,9 @@
 # volumio-web-app
 
+[Deutsche Fassung](README.md)
+
 Custom web interface for Volumio 2 (built for a Musical Fidelity MX-Stream, Raspberry Pi CM3), running directly in the browser without a build step.
-It also runs on Volumio 4 (for differences, see docs/einrichten.md#volumio-4). In addition to the files that run on the player, the repository only contains tests (`tests/`) and the setup documentation;
+It also runs on Volumio 4 (for differences, see [Setup](docs/setup.md#volumio-4)). In addition to the files that run on the player, the repository only contains tests (`tests/`) and the setup documentation;
 `mx-deploy` deploys only the runtime files.
 
 <p align="center">
@@ -97,6 +99,8 @@ progress of the mood tags.
 
 ### More
 
+- German and English, following the device language or set explicitly; further languages as a file in `web/lang/`
+  (see [Setup](docs/setup.md#language)).
 - Optional: control a network-connected Rotel amplifier (power, volume, input) via `rotel/rotel-bridge.js`.
 - TIDAL Watchdog: reconnects TIDAL or restarts Volumio if the TIDAL plugin becomes unresponsive.
 - `mx-deploy`: updates the player directly from this repository, with backups and `--zurueck`; on Volumio 4
