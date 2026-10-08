@@ -1,6 +1,6 @@
 /* Ersatz für Volumios Künstler- und Albumtexte (metavolumio), wenn die nichts liefern: Volumio 4 gibt sie nur mit
-   bezahltem Abo heraus. Erst Last.fm (braucht LASTFM_KEY, deutsch, sonst englisch), für Künstler dann Wikipedia
-   (deutsch, sonst englisch, ohne Schlüssel). Klassisches Skript, ES5; im Test mit eigenem fetch. */
+   bezahltem Abo heraus. Erst Last.fm (braucht LASTFM_KEY, in der gewählten Sprache, sonst englisch), für Künstler dann
+   Wikipedia (gewählte Sprache, sonst englisch, ohne Schlüssel). Klassisches Skript, ES5; im Test mit eigenem fetch. */
 
 /* Last.fm-Text säubern: Link "Read more on Last.fm" und HTML weg, Lizenzhinweis bleibt als Quelle unten */
 function infoClean(s) {
@@ -37,8 +37,9 @@ function infoWikipedia(fetchFn, artist, lang) {
   }).catch(function(){ return ''; });
 }
 
-/* -> {kind:'story', value, src} oder null */
-function infoFallback(fetchFn, key, mode, artist, album) {
+/* -> {kind:'story', value, src} oder null; lang: Sprachcode der Oberfläche (Standard 'en') */
+function infoFallback(fetchFn, key, mode, artist, album, lang) {
+  lang = String(lang || 'en').toLowerCase();
   if (!artist || (mode === 'storyAlbum' && !album)) return Promise.resolve(null);
   function first(tries) {
     return tries.reduce(function(p, t){
@@ -46,17 +47,16 @@ function infoFallback(fetchFn, key, mode, artist, album) {
     }, Promise.resolve(null));
   }
   function tr(src, fn) { fn.src = src; return fn; }
+  /* erst beide Quellen in der gewählten Sprache, dann beide auf Englisch (Last.fm ohne lang = Englisch) */
   var tries = [];
-  if (key) {
-    tries.push(tr('Last.fm', function(){ return infoLastfm(fetchFn, key, mode, artist, album, 'de'); }));
-    tries.push(tr('Last.fm', function(){ return infoLastfm(fetchFn, key, mode, artist, album, ''); }));
-  }
-  if (mode === 'storyArtist') {
-    tries.push(tr('Wikipedia', function(){ return infoWikipedia(fetchFn, artist, 'de'); }));
-    tries.push(tr('Wikipedia', function(){ return infoWikipedia(fetchFn, artist, 'en'); }));
-  }
+  (lang === 'en' ? [''] : [lang, '']).forEach(function(l){
+    if (key) tries.push(tr('Last.fm', function(){ return infoLastfm(fetchFn, key, mode, artist, album, l); }));
+    if (mode === 'storyArtist') tries.push(tr('Wikipedia', function(){ return infoWikipedia(fetchFn, artist, l || 'en'); }));
+  });
   return first(tries).then(function(hit){
-    return hit ? {kind: 'story', value: hit.v + '\n\nQuelle: ' + hit.src, src: hit.src} : null;
+    if (!hit) return null;
+    var srcText = typeof T === 'function' ? T('infotext.source', {src: hit.src}) : 'Quelle: ' + hit.src;   /* ohne T(): Test in Node */
+    return {kind: 'story', value: hit.v + '\n\n' + srcText, src: hit.src};
   });
 }
 

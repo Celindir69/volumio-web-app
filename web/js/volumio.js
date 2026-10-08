@@ -4,10 +4,11 @@
    Seiten die app.html selbst übernommen hat, können hier einfach aus der Liste entfernt werden. */
 
 var VOLUMIO_PAGES = [
-  { label: 'Browse',        path: '/browse' },
-  { label: 'Queue',         path: '/queue' },
-  { label: 'Einstellungen', path: '/settings' },
-  { label: 'Plugins',       path: '/plugin-manager' }
+  { label: T('volumio.page.browse'),   path: '/browse' },
+  { label: T('volumio.page.queue'),    path: '/queue' },
+  { label: T('volumio.page.settings'), path: '/settings' },
+  { label: T('volumio.page.plugins'),  path: '/plugin-manager' }
+
 ];
 
 var btnVolumio       = document.getElementById('btnVolumio');

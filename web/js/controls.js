@@ -60,7 +60,7 @@ function paintRotelPower() {
   if (!rotelReachable) cls += ' na';
   else if (rotelOn) cls += ' on';
   btnRotelPower.className = cls;
-  btnRotelPower.title = !rotelReachable ? 'Rotel-Dienst nicht erreichbar' : (rotelOn ? 'Rotel ausschalten' : 'Rotel einschalten');
+  btnRotelPower.title = !rotelReachable ? T('controls.rotel.unreachable') : (rotelOn ? T('controls.rotel.off') : T('controls.rotel.on'));
 }
 
 function sendRotelPower(want) {
@@ -89,7 +89,8 @@ btnRotelPower.addEventListener('click', function(){
   var want = !rotelOn;
   if (want && !rotelLinked) {
     /* Der Dienst erreicht den Verstärker nicht (im Standby meist ohne Netzwerk): Befehl würde verworfen */
-    showToast('Rotel nicht verbunden – bitte am Gerät einschalten');
+    showToast(T('controls.rotel.notLinked'));
+
     return;
   }
   rotelOn = want; paintRotelPower();

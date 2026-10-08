@@ -1,6 +1,8 @@
 /* Einstellungen der App. Eigene Werte (z. B. den Last.fm-Schlüssel) NICHT hier eintragen,
    sondern in web/config.local.js; diese Datei ist nicht im Repository (.gitignore). */
 window.APP_CONFIG = {
+  LANGUAGE: '',       /* Sprache der Oberfläche, z. B. 'de' oder 'en'; leer = wie in Volumio eingestellt (sonst Gerätesprache, sonst Englisch) */
+  LANGUAGES: ['de', 'en'],  /* vorhandene Sprachdateien in web/lang/; eine neue Sprache (z. B. fr.js) hier ergänzen */
   LASTFM_KEY: '',     /* leer = keine ähnlichen Künstler; auch für Künstler-/Albumtexte, wenn Volumio keine liefert */
   LASTFM_SECRET: '',  /* "Shared secret" zum Schlüssel: nur nötig zum Scrobbeln (Verlauf) */
   HISTORY: true,      /* Verlauf: Tag-Dienst schreibt gespielte Titel mit; false = aus (Tag-Dienst neu starten) */

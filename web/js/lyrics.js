@@ -150,7 +150,7 @@ window.addEventListener('resize', lyrShiftPlace);
 function lyrPaintOffset() {
   var v = document.getElementById('lyrSyncVal');
   if (!v) return;
-  v.textContent = lyrOffset ? (lyrOffset > 0 ? '+' : '−') + (Math.abs(lyrOffset) / 1000).toFixed(1).replace('.', ',') + ' s' : 'sync';
+  v.textContent = lyrOffset ? (lyrOffset > 0 ? '+' : '−') + T('lyrics.seconds', {s: (Math.abs(lyrOffset) / 1000).toLocaleString(LANG_LOCALE, {minimumFractionDigits: 1, maximumFractionDigits: 1})}) : T('lyrics.sync');
   v.classList.toggle('set', !!lyrOffset);
 }
 
@@ -181,14 +181,15 @@ function lyrLoadOffset(key) {
 function lyrShift(d) {
   if (!lyricLines.length) return;
   lyrSetOffset(lyrOffset + d, true);
-  showToast('Lyrics ' + (d > 0 ? 'später' : 'früher') + (lyrOffset ? ' (' + document.getElementById('lyrSyncVal').textContent + ')' : ' (wie geliefert)'));
+  showToast(T(d > 0 ? 'lyrics.later' : 'lyrics.earlier', {state: lyrOffset ? document.getElementById('lyrSyncVal').textContent : T('lyrics.asDelivered')}));
 }
 
 Array.prototype.forEach.call(document.querySelectorAll('.lyrShift'), function(b){
   b.addEventListener('click', function(e){ e.stopPropagation(); lyrShift(Number(b.getAttribute('data-d'))); });
 });
 document.getElementById('lyrSyncVal').addEventListener('click', function(){
-  if (lyrOffset) { lyrSetOffset(0, true); showToast('Lyrics wie geliefert'); }
+  if (lyrOffset) { lyrSetOffset(0, true); showToast(T('lyrics.reset')); }
+
 });
 
 function renderSyncedLyrics(lines, key) {

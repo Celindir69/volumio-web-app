@@ -43,7 +43,15 @@ var body = document.getElementById('lyricsText');
 var area = document.getElementById('overlayLyrics').querySelector('.overlayBody');
 
 var socket = io();
-socket.on('connect', function(){ console.log('Socket verbunden'); });
+socket.on('connect', function(){ console.log('Socket verbunden'); socket.emit('getUiSettings'); });
+/* Sprache der Volumio-Oberfläche: Die App übernimmt sie (i18n.js), sofern ?lang= oder LANGUAGE nichts anderes sagen.
+   Volumio liefert Infotexte nur in dieser Sprache; weicht LANG ab, holt ask() die Texte zuerst selbst (infotext.js). */
+var volumioLang = langStored().slice(0, 2);
+socket.on('pushUiSettings', function(s){
+  if (!s || !s.language) return;
+  volumioLang = String(s.language).slice(0, 2).toLowerCase();
+  if (typeof langFromVolumio === 'function') langFromVolumio(s.language);
+});
 socket.on('pushState', function(st){
   if (typeof showVolumio === 'function') showVolumio(st);
   if (typeof st.random === 'boolean') { stRandom = st.random; updateCtrlUI(); }
@@ -196,7 +204,7 @@ function artUrl(a) {
   return (a.indexOf('http') === 0) ? a : (location.origin + a);
 }
 
-function ask(payload) {
+function askVolumio(payload) {
   return withTimeout(fetch('/api/v1/pluginEndpoint', {          /* Volumio 4 ohne Abo antwortet teils gar nicht */
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({endpoint:'metavolumio', data:payload})
@@ -207,12 +215,21 @@ function ask(payload) {
       if (j.data.type === 'credits' && j.data.value.length)
                                      return {kind:'credits', value:j.data.value};
       return null;
-    }).catch(function(){ return null; })
-    .then(function(res){                       /* nichts von Volumio (Volumio 4 ohne Abo): Texte selbst holen (infotext.js) */
-      if (res || !/^story/.test(payload.mode) || typeof infoFallback !== 'function') return res;
-      return withTimeout(infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album), 10000)
-        .catch(function(){ return null; });
-    });
+    }).catch(function(){ return null; });
+}
+
+function askOwn(payload) {                     /* Texte selbst holen (infotext.js), in der Sprache LANG */
+  return withTimeout(infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album, LANG), 10000)
+    .catch(function(){ return null; });
+}
+
+function ask(payload) {
+  var own = /^story/.test(payload.mode) && typeof infoFallback === 'function';
+  if (own && volumioLang && volumioLang !== LANG)      /* Volumio liefert eine andere Sprache: zuerst selbst holen */
+    return askOwn(payload).then(function(res){ return res || askVolumio(payload); });
+  return askVolumio(payload).then(function(res){       /* nichts von Volumio (Volumio 4 ohne Abo): selbst holen */
+    return (res || !own) ? res : askOwn(payload);
+  });
 }
 
 function askDiscography(artist) {

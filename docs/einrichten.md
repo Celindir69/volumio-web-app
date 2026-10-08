@@ -10,6 +10,22 @@ Nach einem Update im Browser hart neu laden. Eine vorhandene `web/config.local.j
 Eigene Einstellungen (Last.fm-Schlüssel, Rotel, Dienste ein/aus) kommen in `web/config.local.js`, Vorlage
 `web/config.local.js.example`.
 
+### Sprache
+Die Oberfläche gibt es auf Deutsch und Englisch. Sie übernimmt die Sprache, die in Volumio unter Einstellungen eingestellt
+ist; so passen auch die Künstler- und Albumtexte von Volumio dazu. Beim allerersten Aufruf kennt die App diese Sprache noch
+nicht, zeigt kurz die Sprache des Geräts (Browser) und lädt einmal neu. Ist die Volumio-Sprache nicht vorhanden, gilt die
+Gerätesprache, sonst Englisch. Fest einstellen: `LANGUAGE: 'de'` oder `'en'` in `web/config.local.js`. Zum Ausprobieren geht
+auch `http://<player>/app.html?lang=en`.
+
+Weitere Sprache: `web/lang/en.js` kopieren, z. B. als `web/lang/fr.js`, in der letzten Zeile Code, Namen und Locale
+anpassen (`langRegister('fr', 'Français', {…}, 'fr-FR')`) und die Texte übersetzen; `{name}` sind Platzhalter und bleiben
+stehen, `{one: …, other: …}` sind Einzahl und Mehrzahl. Dann in `web/config.local.js` eintragen:
+`LANGUAGES: ['de', 'en', 'fr']`. Fehlt in der Datei ein Text, erscheint er englisch. `mx-deploy` lässt eigene
+Sprachdateien in `web/lang/` stehen. Datum, Zahlen, Monats- und Wochentagsnamen kommen vom Browser in der gewählten Sprache.
+
+Nicht übersetzt werden Texte, die Volumio selbst liefert (z. B. Menünamen beim Durchsuchen), und Fehlermeldungen des
+Tag-Dienstes; die bleiben deutsch.
+
 ## Aktualisieren mit mx-deploy
 Einmal einrichten:
 ```bash
@@ -175,9 +191,11 @@ python3 analyse.py --upload http://<player>:8766
 
 ### Künstler- und Albumtexte
 Die Info-Seite fragt zuerst Volumio. Kommt dort nichts (Volumio 4 gibt die Texte nur mit Abo heraus, oder Volumio antwortet
-nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (deutsch, sonst englisch; braucht `LASTFM_KEY`),
-Künstler bei Last.fm und danach bei Wikipedia (deutsch, sonst englisch; nur Artikel, die nach Musik aussehen). Die Quelle
+nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (in der Sprache der Oberfläche, sonst englisch; braucht `LASTFM_KEY`),
+Künstler bei Last.fm und Wikipedia, erst beide in der Sprache der Oberfläche, dann beide englisch (bei Wikipedia nur Artikel, die nach Musik aussehen). Die Quelle
 steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
+Ist die App über `LANGUAGE` oder `?lang=` auf eine andere Sprache gestellt als Volumio, holt sie die Texte zuerst selbst und fragt Volumio
+nur, wenn dabei nichts herauskommt (Volumio liefert seine Texte in der eigenen Sprache).
 
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der

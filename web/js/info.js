@@ -75,7 +75,7 @@ function renderInfo(dir) {
   if (it.lazy && !it.data) {
     var loading = document.createElement('div');
     loading.className = 'plHint';
-    loading.textContent = 'Suche ähnliche Künstler…';
+    loading.textContent = T('info.similar.searching');
     infoContent.appendChild(loading);
     loadSimilarArtists(it.artist).then(function(matches){
       var streams = {};                                    /* je Dienst: null = wird noch gesucht */
@@ -110,7 +110,7 @@ if (!it.data || it.data.kind === 'story') {
 
   var p = document.createElement('div');
   p.style.cssText = 'font-size:calc(4 * var(--vw));line-height:1.65;white-space:pre-wrap;padding-bottom:2vh;';
-  p.textContent = it.data ? it.data.value : 'Kein Inhalt gefunden.';
+  p.textContent = it.data ? it.data.value : T('info.noContent');
   infoContent.appendChild(p);
   return;
 }
@@ -137,7 +137,7 @@ if (!it.data || it.data.kind === 'story') {
     if (!it.data.value.length && !found.length && !pending.length) {
       var none = document.createElement('div');
       none.className = 'plHint';
-      none.textContent = 'Keine ähnlichen Künstler gefunden';
+      none.textContent = T('info.similar.none');
       infoContent.appendChild(none);
       return;
     }
@@ -168,7 +168,8 @@ if (!it.data || it.data.kind === 'story') {
     if (pending.length) {
       var wait = document.createElement('div');
       wait.className = 'plHint';
-      wait.textContent = 'Suche bei ' + pending.map(function(id){ return streamById(id).name; }).join(' und ') + '…';
+      wait.textContent = T('info.similar.searchingAt', {services: pending.map(function(id){ return streamById(id).name; }).join(T('info.listAnd'))});
+
       infoContent.appendChild(wait);
     }
     return;

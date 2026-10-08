@@ -8,10 +8,11 @@ var histKind       = 'track';
 var histRange      = 'd30';
 var histSeq        = 0;          /* verwirft Antworten veralteter Anfragen */
 var histTimer      = null;
-var HIST_DAYS      = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-var HIST_MONTHS    = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-var HIST_RANGES    = [['d30', '30 Tage'], ['m12', '12 Monate'], ['all', 'Gesamt']];
-var HIST_KINDS     = [['track', 'Titel'], ['album', 'Alben'], ['artist', 'Künstler']];
+/* kurze Namen in der Sprache, ohne Abkürzungspunkt ("Mo." -> "Mo") */
+var HIST_DAYS      = langWeekdays('short').map(function(x){ return x.replace(/\.$/, ''); });
+var HIST_MONTHS    = langMonths('short').map(function(x){ return x.replace(/\.$/, ''); });
+var HIST_RANGES    = [['d30', T('hist.range.d30')], ['m12', T('hist.range.m12')], ['all', T('hist.range.all')]];
+var HIST_KINDS     = [['track', T('hist.kind.track')], ['album', T('hist.kind.album')], ['artist', T('hist.kind.artist')]];
 
 function histClear() { while (histBody.firstChild) histBody.removeChild(histBody.firstChild); }
 function histEl(tag, cls, text) {
@@ -25,9 +26,14 @@ function histDay(t) {
   var d = new Date(t * 1000), today = new Date();
   today.setHours(0, 0, 0, 0);
   var diff = Math.round((today.getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 86400000);
-  if (diff === 0) return 'Heute';
-  if (diff === 1) return 'Gestern';
-  return HIST_DAYS[(d.getDay() + 6) % 7] + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear();
+  if (diff === 0) return T('hist.today');
+  if (diff === 1) return T('hist.yesterday');
+  return T('hist.dayDate', {day: HIST_DAYS[(d.getDay() + 6) % 7], date: langDate(d)});
+}
+/* wie histDay, aber "heute"/"gestern" klein (mitten im Satz) */
+function histDayLower(t) {
+  var s = histDay(t);
+  return s === T('hist.today') || s === T('hist.yesterday') ? s.toLowerCase() : s;
 }
 function histTz() {
   var y = new Date().getFullYear();
@@ -46,7 +52,7 @@ function histShow(tab) {
   document.querySelectorAll('#histTabBar .qTab').forEach(function(t){ t.className = 'qTab' + (t.dataset.tab === tab ? ' on' : ''); });
   histBody.scrollTop = 0;
   histClear();
-  histBody.appendChild(browseNote('Laden…'));
+  histBody.appendChild(browseNote(T('hist.loading')));
   var seq = ++histSeq;
   if (tab === 'recent') histRecent(seq);
   else if (tab === 'top') histTop(seq);
@@ -57,7 +63,7 @@ function histShow(tab) {
 function histFail(seq) {
   if (seq !== histSeq) return;
   histClear();
-  histBody.appendChild(browseNote('Tag-Dienst nicht erreichbar (Port ' + ((window.APP_CONFIG && window.APP_CONFIG.TAGS_PORT) || 8766) + ')'));
+  histBody.appendChild(browseNote(T('hist.offlinePort', {port: (window.APP_CONFIG && window.APP_CONFIG.TAGS_PORT) || 8766})));
 }
 
 /* Auswahl-Knöpfe (Zeitraum, Art) */
@@ -117,8 +123,8 @@ function histPlay(e) {
   if (e.u) return histPlayUri(e.u, e.s && e.s !== 'lastfm' ? e.s : 'mpd', e);
   tagGetJson('/plays/resolve?artist=' + encodeURIComponent(e.ar) + '&title=' + encodeURIComponent(e.ti)).then(function(r){
     if (r && r.file) histPlayUri('music-library/' + r.file, 'mpd', e);
-    else showToast('„' + e.ti + '“ ist nicht in der Bibliothek');
-  }).catch(function(){ showToast('Tag-Dienst nicht erreichbar'); });
+    else showToast(T('hist.notInLibrary', {title: e.ti}));
+  }).catch(function(){ showToast(T('hist.offline')); });
 }
 
 function histRow(title, sub, right, onClick, img) {
@@ -145,8 +151,8 @@ function histRecent(seq) {
       var items = (r && r.items) || [];
       if (!before && !items.length) {
         histBody.appendChild(browseNote(r && r.recording === false
-          ? 'Der Verlauf ist ausgeschaltet (HISTORY: false in config.local.js).'
-          : 'Noch nichts gespielt. Ein Titel zählt, sobald er zur Hälfte oder 4 Minuten lief.'));
+          ? T('hist.recent.off')
+          : T('hist.recent.empty')));
         return;
       }
       items.forEach(function(e){
@@ -158,8 +164,8 @@ function histRecent(seq) {
         before = e.t;
       });
       if (items.length >= 100) {
-        var b = histEl('div', 'ckMore', 'Ältere anzeigen');
-        b.addEventListener('click', function(){ b.textContent = 'Laden…'; more(b); });
+        var b = histEl('div', 'ckMore', T('hist.recent.older'));
+        b.addEventListener('click', function(){ b.textContent = T('hist.loading'); more(b); });
         histBody.appendChild(b);
       }
     }).catch(function(){ histFail(seq); });
@@ -170,9 +176,12 @@ function histRecent(seq) {
 /* ---------- Meistgespielt ---------- */
 
 /* eine Zeile mit Rang, Bild und Anzahl; kind track|album|artist */
+/* Sampler: der Tag-Dienst nennt den Künstler intern 'Verschiedene'; angezeigt in der gewählten Sprache */
+function histArtistName(ar) { return ar === 'Verschiedene' ? T('hist.various') : ar; }
+
 function histTopRow(kind, it, i) {
   var title = kind === 'artist' ? it.ar : it.ti;
-  var sub = kind === 'artist' ? '' : (kind === 'track' && it.al ? it.ar + ' · ' + it.al : it.ar);
+  var sub = kind === 'artist' ? '' : (kind === 'track' && it.al ? it.ar + ' · ' + it.al : histArtistName(it.ar));
   var art = kind === 'artist' ? histArtistArt(it.ar)
           : kind === 'album' ? histAlbumArt(it.ar, it.ti, it.u || '')
           : histTrackArt(it);
@@ -194,14 +203,14 @@ function histTop(seq) {
     histBody.appendChild(histChips(HIST_KINDS, histKind, function(k){ histKind = k; histShow('top'); }));
     histBody.appendChild(histChips(HIST_RANGES, histRange, function(k){ histRange = k; histShow('top'); }));
     var items = (r && r.items) || [];
-    if (!items.length) { histBody.appendChild(browseNote('In diesem Zeitraum nichts gespielt.')); return; }
+    if (!items.length) { histBody.appendChild(browseNote(T('hist.top.empty'))); return; }
     items.forEach(function(it, i){ histBody.appendChild(histTopRow(histKind, it, i)); });
   }).catch(function(){ histFail(seq); });
 }
 
 /* ---------- Statistik ---------- */
 
-function histNum(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function histNum(n) { return langNum(n); }
 
 /* Balken: Tippen (oder Mauszeiger) zeigt den Wert in der Überschrift; details[i] ist die ausführliche Beschriftung */
 /* opts.onSel(i oder -1): Tippen wählt einen Balken aus (Rückblick: Monat), opts.sel ist vorgewählt */
@@ -251,8 +260,8 @@ function histStats(seq) {
     if (s) {
       var hours = Math.round(s.seconds / 3600);
       var grid = histEl('div', 'hNums');
-      [[histNum(s.plays), 'Wiedergaben'], [histNum(hours) + ' h', s.estimated ? 'Hörzeit ca.' : 'Hörzeit'],
-       [histNum(s.tracks), 'Titel'], [histNum(s.artists), 'Künstler'], [histNum(s.albums), 'Alben']].forEach(function(n){
+      [[histNum(s.plays), T('hist.stat.plays')], [T('hist.hours', {n: hours}), s.estimated ? T('hist.stat.timeApprox') : T('hist.stat.time')],
+       [histNum(s.tracks), T('hist.kind.track')], [histNum(s.artists), T('hist.kind.artist')], [histNum(s.albums), T('hist.kind.album')]].forEach(function(n){
         var c = histEl('div', 'hNum');
         c.appendChild(histEl('div', 'hBig', n[0]));
         c.appendChild(histEl('div', 'hSmall', n[1]));
@@ -269,18 +278,17 @@ function histStats(seq) {
           var p = b.k.split('-');
           if (s.unit === 'day') {
             var d = new Date(+p[0], +p[1] - 1, +p[2]);
-            return HIST_DAYS[(d.getDay() + 6) % 7] + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.';
+            return T('hist.dayDate', {day: HIST_DAYS[(d.getDay() + 6) % 7], date: langDate(d, {day: 'numeric', month: 'numeric'})});
           }
           return s.unit === 'month' ? HIST_MONTHS[+p[1] - 1] + ' ' + p[0] : p[0];
         });
-        histBody.appendChild(histBars(s.unit === 'day' ? 'WIEDERGABEN PRO TAG' : s.unit === 'month' ? 'WIEDERGABEN PRO MONAT' : 'WIEDERGABEN PRO JAHR',
+        histBody.appendChild(histBars(s.unit === 'day' ? T('hist.chart.perDay') : s.unit === 'month' ? T('hist.chart.perMonth') : T('hist.chart.perYear'),
           s.buckets.map(function(b){ return b.n; }), labels, every, details));
-        histBody.appendChild(histBars('TAGESZEIT', s.hours, s.hours.map(function(v, i){ return String(i); }), 6,
-          s.hours.map(function(v, i){ return i + '–' + (i + 1) + ' Uhr'; })));
-        histBody.appendChild(histBars('WOCHENTAG', s.weekdays, HIST_DAYS, 1,
-          ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']));
+        histBody.appendChild(histBars(T('hist.chart.hour'), s.hours, s.hours.map(function(v, i){ return String(i); }), 6,
+          s.hours.map(function(v, i){ return T('hist.hourRange', {from: i, to: i + 1}); })));
+        histBody.appendChild(histBars(T('hist.chart.weekday'), s.weekdays, HIST_DAYS, 1, langWeekdays('long')));
       }
-      if (s.first) histBody.appendChild(browseNote('Verlauf seit ' + histDay(s.first).replace(/^(Heute|Gestern)$/, function(x){ return x.toLowerCase(); })));
+      if (s.first) histBody.appendChild(browseNote(T('hist.since', {day: histDayLower(s.first)})));
     }
     histBody.appendChild(histLastfm(rs[1] && rs[1].lastfm, seq));
   }).catch(function(){ histFail(seq); });
@@ -291,13 +299,13 @@ function histStats(seq) {
 var histYearSel = 0;            /* 0: neuestes Jahr */
 var histYearOpen = {};
 var histYearMonth = -1;         /* gewählter Monat (0-11) für die Ranglisten, -1: ganzes Jahr */          /* aufgeklappte Rubriken im Rückblick */
-var HIST_MONTHS_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+var HIST_MONTHS_FULL = langMonths('long');
 
 /* Veränderung zum Vorjahr in Prozent, '' ohne Vorjahr */
 function histDelta(now, before) {
   if (!before) return '';
   var p = Math.round((now - before) / before * 100);
-  return (p > 0 ? '+' : p < 0 ? '−' : '±') + Math.abs(p) + ' %';
+  return (p > 0 ? '+' : p < 0 ? '−' : '±') + T('hist.percent', {n: Math.abs(p)});
 }
 
 function histYear(seq) {
@@ -306,45 +314,45 @@ function histYear(seq) {
     var keep = histBody.scrollTop;                       /* Monat gewählt: an der Stelle bleiben */
     histClear();
     var y = r && r.review, years = (r && r.years) || [];
-    if (!y || !years.length) { histBody.appendChild(browseNote('Noch kein Verlauf. Der Rückblick füllt sich mit jeder Wiedergabe.')); return; }
+    if (!y || !years.length) { histBody.appendChild(browseNote(T('hist.year.empty'))); return; }
     if (years.length > 1) histBody.appendChild(histChips(years.map(function(v){ return [v, String(v)]; }), y.year, function(v){ histYearSel = v; histYearMonth = -1; histShow('year'); }));
-    if (!y.plays) { histBody.appendChild(browseNote(y.year + ' wurde nichts gespielt.')); return; }
+    if (!y.plays) { histBody.appendChild(browseNote(T('hist.year.nothing', {year: y.year}))); return; }
     var hp = Math.round(y.prev.seconds / 3600), hours = Math.round(y.seconds / 3600);
     var grid = histEl('div', 'hNums');
-    [[histNum(y.plays), 'Wiedergaben', histDelta(y.plays, y.prev.plays)],
-     [histNum(hours) + ' h', y.estimated ? 'Hörzeit ca.' : 'Hörzeit', histDelta(hours, hp)],
-     [histNum(y.tracks), 'Titel', histDelta(y.tracks, y.prev.tracks)],
-     [histNum(y.artists), 'Künstler', histDelta(y.artists, y.prev.artists)],
-     [histNum(y.albums), 'Alben', histDelta(y.albums, y.prev.albums)]].forEach(function(n){
+    [[histNum(y.plays), T('hist.stat.plays'), histDelta(y.plays, y.prev.plays)],
+     [T('hist.hours', {n: hours}), y.estimated ? T('hist.stat.timeApprox') : T('hist.stat.time'), histDelta(hours, hp)],
+     [histNum(y.tracks), T('hist.kind.track'), histDelta(y.tracks, y.prev.tracks)],
+     [histNum(y.artists), T('hist.kind.artist'), histDelta(y.artists, y.prev.artists)],
+     [histNum(y.albums), T('hist.kind.album'), histDelta(y.albums, y.prev.albums)]].forEach(function(n){
       var c = histEl('div', 'hNum');
       c.appendChild(histEl('div', 'hBig', n[0]));
       c.appendChild(histEl('div', 'hSmall', n[1]));
-      if (n[2]) c.appendChild(histEl('div', 'hDelta', n[2] + ' zu ' + (y.year - 1)));
+      if (n[2]) c.appendChild(histEl('div', 'hDelta', T('hist.year.delta', {delta: n[2], year: y.year - 1})));
       grid.appendChild(c);
     });
     histBody.appendChild(grid);
     if (y.partial && y.prev.plays) {
       var td = new Date();
-      histBody.appendChild(browseNote('Vergleich mit ' + (y.year - 1) + ' bis zum ' + td.getDate() + '. ' + HIST_MONTHS_FULL[td.getMonth()]));
+      histBody.appendChild(browseNote(T('hist.year.compare', {year: y.year - 1, date: langDate(td, {day: 'numeric', month: 'long'})})));
     }
     var best = y.months.indexOf(Math.max.apply(null, y.months));
     var full = HIST_MONTHS_FULL;
-    histBody.appendChild(histBars('WIEDERGABEN PRO MONAT', y.months, HIST_MONTHS.map(function(m){ return m.charAt(0); }), 1,
+    histBody.appendChild(histBars(T('hist.chart.perMonth'), y.months, langMonths('narrow'), 1,
       full.map(function(m){ return m + ' ' + y.year; }), {sel: histYearMonth, onSel: function(i){
         histYearMonth = i;
         histYear(++histSeq);
       }}));
-    histBody.appendChild(browseNote('Stärkster Monat: ' + full[best] + ' mit ' + histNum(y.months[best]) + ' Wiedergaben'));
+    histBody.appendChild(browseNote(T('hist.year.best', {month: full[best], n: y.months[best]})));
     var inMonth = y.month >= 0 && y.month < 12, suffix = inMonth ? ' · ' + full[y.month].toUpperCase() : '';
     if (inMonth) {
       var scope = histEl('div', 'hScope');
-      scope.appendChild(histEl('span', '', 'Ranglisten für ' + full[y.month] + ' ' + y.year));
-      var whole = histEl('button', 'hChip', 'Ganzes Jahr');
+      scope.appendChild(histEl('span', '', T('hist.year.chartsFor', {month: full[y.month], year: y.year})));
+      var whole = histEl('button', 'hChip', T('hist.year.whole'));
       whole.addEventListener('click', function(){ histYearMonth = -1; histYear(++histSeq); });
       scope.appendChild(whole);
       histBody.appendChild(scope);
     } else {
-      histBody.appendChild(browseNote('Tipp auf einen Monat zeigt die Ranglisten für diesen Monat.'));
+      histBody.appendChild(browseNote(T('hist.year.tapMonth')));
     }
     /* Rubriken zum Aufklappen (anfangs zu); der Zustand bleibt beim Jahreswechsel */
     function section(key, head, fill) {
@@ -364,11 +372,11 @@ function histYear(seq) {
         items.forEach(function(it, i){ body.appendChild(histTopRow(kind, it, i)); });
       });
     }
-    list('tracks', 'MEISTGESPIELTE TITEL' + suffix, 'track', y.tracks_top);
-    list('albums', 'TOP-ALBEN' + suffix, 'album', y.albums_top);
-    list('artists', 'TOP-KÜNSTLER' + suffix, 'artist', y.artists_top);
-    section('genres', 'TOP-GENRES' + suffix, function(body){
-      if (!y.genres_top.length) { body.appendChild(browseNote('Noch keine Genres: Die Albenliste wird beim ersten Mal aus der Bibliothek gelesen, oder die Alben haben kein Genre-Tag.')); return; }
+    list('tracks', T('hist.year.topTracks') + suffix, 'track', y.tracks_top);
+    list('albums', T('hist.year.topAlbums') + suffix, 'album', y.albums_top);
+    list('artists', T('hist.year.topArtists') + suffix, 'artist', y.artists_top);
+    section('genres', T('hist.year.topGenres') + suffix, function(body){
+      if (!y.genres_top.length) { body.appendChild(browseNote(T('hist.year.noGenres'))); return; }
       y.genres_top.forEach(function(g, i){
         var row = histRow(g.g, '', histNum(g.n) + '×', function(){});
         row.classList.add('hNoImg');
@@ -376,8 +384,8 @@ function histYear(seq) {
         body.appendChild(row);
       });
     });
-    if (y.hasBefore) list('new', 'NEU ENTDECKT' + suffix, 'artist', y.newArtists, inMonth ? 'Keine neuen Künstler in diesem Monat.' : 'Keine neuen Künstler in diesem Jahr.');
-    if (inMonth && !y.tracks_top.length) histBody.appendChild(browseNote('In diesem Monat nichts gespielt.'));
+    if (y.hasBefore) list('new', T('hist.year.newArtists') + suffix, 'artist', y.newArtists, inMonth ? T('hist.year.noNewMonth') : T('hist.year.noNewYear'));
+    if (inMonth && !y.tracks_top.length) histBody.appendChild(browseNote(T('hist.year.nothingMonth')));
     histBody.scrollTop = keep;
   }).catch(function(){ histFail(seq); });
 }
@@ -392,9 +400,9 @@ function histLastfmBtn(text, fn) {
 
 function histLastfmAction(action) {
   return tagPost('/lastfm', {action: action}).then(function(r){
-    if (r && !r.ok) showToast(r.error || 'Last.fm: Fehler');
+    if (r && !r.ok) showToast(r.error || T('hist.lastfm.error'));
     return r;
-  }).catch(function(){ showToast('Tag-Dienst nicht erreichbar'); });
+  }).catch(function(){ showToast(T('hist.offline')); });
 }
 
 function histLastfm(st, seq) {
@@ -402,43 +410,43 @@ function histLastfm(st, seq) {
   box.appendChild(browseHeading('LAST.FM'));
   var info = histEl('div', 'ckInfo'), btns = histEl('div', 'hBtns');
   box.appendChild(info); box.appendChild(btns);
-  if (!st) { info.textContent = 'Tag-Dienst nicht erreichbar.'; return box; }
+  if (!st) { info.textContent = T('hist.offlineDot'); return box; }
   if (!st.configured) {
     info.textContent = st.hasKey
-      ? 'Zum Scrobbeln fehlt LASTFM_SECRET in config.local.js (das „Shared secret“ deines Last.fm-API-Kontos).'
-      : 'Zum Scrobbeln LASTFM_KEY und LASTFM_SECRET in config.local.js eintragen.';
+      ? T('hist.lastfm.noSecret')
+      : T('hist.lastfm.noKey');
     return box;
   }
   if (!st.connected) {
-    info.textContent = st.user ? 'Die Verbindung zu Last.fm ist abgelaufen. Bitte neu verbinden.' : 'Nicht verbunden. Nach dem Verbinden werden neue Wiedergaben gescrobbelt und dein bisheriger Last.fm-Verlauf eingelesen.';
-    btns.appendChild(histLastfmBtn('Mit Last.fm verbinden', function(b){
+    info.textContent = st.user ? T('hist.lastfm.expired') : T('hist.lastfm.notConnected');
+    btns.appendChild(histLastfmBtn(T('hist.lastfm.connect'), function(b){
       var win = window.open('about:blank', '_blank');          /* gleich öffnen, sonst blockiert der Browser das Fenster */
       histLastfmAction('connect').then(function(r){
         b.disabled = false;
         if (!r || !r.ok) { if (win) win.close(); return; }
         if (win) win.location.href = r.url; else location.href = r.url;
-        info.textContent = 'Bei Last.fm „Zulassen“ tippen, dann hierher zurückkommen und „Fertig“ tippen.';
+        info.textContent = T('hist.lastfm.authorize');
         while (btns.firstChild) btns.removeChild(btns.firstChild);
-        btns.appendChild(histLastfmBtn('Fertig', function(b2){
+        btns.appendChild(histLastfmBtn(T('hist.lastfm.done'), function(b2){
           histLastfmAction('finish').then(function(r2){ b2.disabled = false; if (r2 && r2.ok) histShow('stats'); });
         }));
       });
     }));
     return box;
   }
-  var lines = ['Verbunden als ' + st.user + '. Neue Wiedergaben werden gescrobbelt.'];
-  if (st.queue) lines.push(st.queue + ' Wiedergabe' + (st.queue > 1 ? 'n warten' : ' wartet') + ' auf das Senden' + (st.sendError ? ' (' + st.sendError + ')' : '') + '.');
-  if (st.importing) lines.push('Lese Last.fm-Verlauf… Seite ' + st.importing.page + ' von ' + (st.importing.pages || '?') + ', ' + histNum(st.importing.added) + ' neu.');
-  else if (st.importError) lines.push('Einlesen fehlgeschlagen: ' + st.importError);
-  else if (st.lastImport) lines.push('Zuletzt abgeglichen ' + histDay(st.lastImport.at).replace(/^(Heute|Gestern)$/, function(x){ return x.toLowerCase(); }) + ': ' + histNum(st.lastImport.added) + ' neu.');
+  var lines = [T('hist.lastfm.connected', {user: st.user})];
+  if (st.queue) lines.push(T('hist.lastfm.queue', {n: st.queue, error: st.sendError ? ' (' + st.sendError + ')' : ''}));
+  if (st.importing) lines.push(T('hist.lastfm.importing', {page: st.importing.page, pages: st.importing.pages || '?', added: histNum(st.importing.added)}));
+  else if (st.importError) lines.push(T('hist.lastfm.importFailed', {error: st.importError}));
+  else if (st.lastImport) lines.push(T('hist.lastfm.lastImport', {day: histDayLower(st.lastImport.at), added: histNum(st.lastImport.added)}));
   info.textContent = lines.join(' ');
-  if (!st.importing) btns.appendChild(histLastfmBtn(st.lastImport ? 'Mit Last.fm abgleichen' : 'Last.fm-Verlauf einlesen', function(){
+  if (!st.importing) btns.appendChild(histLastfmBtn(st.lastImport ? T('hist.lastfm.sync') : T('hist.lastfm.import'), function(){
     histLastfmAction('import').then(function(){ histShow('stats'); });
   }));
-  if (st.queue && !st.importing) btns.appendChild(histLastfmBtn('Jetzt senden', function(){
+  if (st.queue && !st.importing) btns.appendChild(histLastfmBtn(T('hist.lastfm.sendNow'), function(){
     histLastfmAction('send').then(function(){ setTimeout(function(){ histShow('stats'); }, 1500); });
   }));
-  btns.appendChild(histLastfmBtn('Trennen', function(){ histLastfmAction('disconnect').then(function(){ histShow('stats'); }); }));
+  btns.appendChild(histLastfmBtn(T('hist.lastfm.disconnect'), function(){ histLastfmAction('disconnect').then(function(){ histShow('stats'); }); }));
   if (st.importing) histTimer = setTimeout(function(){ if (seq === histSeq && overlayHistory.classList.contains('on')) histShow('stats'); }, 3000);
   return box;
 }

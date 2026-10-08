@@ -107,9 +107,9 @@ if (radio) {
   Promise.all([ask({mode:'storyArtist', artist:artist}), askDiscography(artist)])
     .then(function(res){
       showInfo([
-        {title:artist,            label:'Künstler', data:res[0], always:true},
-        {title:'In der Sammlung', label:'In Sammlung', data:res[1]},
-        {title:'Ähnliche Künstler', label:'Ähnlich', lazy:true, artist:artist}
+        {title:artist,            label:T('info.tab.artist'), data:res[0], always:true},
+        {title:T('info.collection'), label:T('info.tab.collection'), data:res[1]},
+        {title:T('info.similar'), label:T('info.tab.similar'), lazy:true, artist:artist}
       ]);
     });
   return;
@@ -122,11 +122,11 @@ Promise.all([
   askDiscography(artist)
 ]).then(function(res){
   showInfo([                      /* title: Überschrift im Overlay; label: kurzer Reitername (lange Namen würden die Leiste sprengen) */
-    {title:album,             label:'Album',       data:res[0], always:true},
-    {title:artist,            label:'Künstler',    data:res[1], always:true},
-    {title:'Mitwirkende',     label:'Mitwirkende', data:res[2]},
-    {title:'In der Sammlung', label:'In Sammlung', data:res[3]},
-    {title:'Ähnliche Künstler', label:'Ähnlich',   lazy:true, artist:artist}
+    {title:album,             label:T('info.tab.album'),       data:res[0], always:true},
+    {title:artist,            label:T('info.tab.artist'),    data:res[1], always:true},
+    {title:T('info.credits'), label:T('info.tab.credits'), data:res[2]},
+    {title:T('info.collection'), label:T('info.tab.collection'), data:res[3]},
+    {title:T('info.similar'), label:T('info.tab.similar'),   lazy:true, artist:artist}
   ]);
 });
 
