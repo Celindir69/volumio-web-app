@@ -463,8 +463,8 @@ function doPlays(query, cb) {
 var albums = require('./albums.js');
 var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
-var ALBUMS_VERSION = 4;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album */
-var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album], …] für die Stimmungs-Tags */
+var ALBUMS_VERSION = 5;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre */
+var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album, Genre des Albums], …] */
 
 function albumsEnsure(cb) {
   cb = cb || function(){};
@@ -481,7 +481,11 @@ function albumsEnsure(cb) {
       if (!e2 && songs.length) {
         albumIdx = {v: ALBUMS_VERSION, db: stamp || null, at: Date.now(), list: albums.fromSongs(songs)};
         try { fs.writeFileSync(ALBUMS_FILE, JSON.stringify(albumIdx)); } catch (x) { /* nächstes Mal */ }
-        var tl = songs.filter(function(s){ return s.artist && s.title; }).map(function(s){ return [s.artist, s.title, s.file, parseInt(s.time, 10) || 0, s.album]; });
+        var ge = {};                                     /* Genre des Albums (häufigstes im Ordner) für jeden Titel */
+        albumIdx.list.forEach(function(a){ if (a.ge) ge[a.dir] = a.ge; });
+        var tl = songs.filter(function(s){ return s.artist && s.title; }).map(function(s){
+          return [s.artist, s.title, s.file, parseInt(s.time, 10) || 0, s.album, ge[albums.albumDir(s.file)] || ''];
+        });
         try { fs.writeFileSync(TRACKS_FILE + '.neu', JSON.stringify(tl)); fs.renameSync(TRACKS_FILE + '.neu', TRACKS_FILE); } catch (x) { /* nächstes Mal */ }
       }
     });
@@ -538,11 +542,12 @@ function doEssentiaUpload(req, res) {
   req.pipe(out);
 }
 
-/* GET /moodmix?moods=a,b&emin=&emax=&styles=&match=any|all&n=&disc=0..1 -> {ok, level, matches, tracks}
-   mit count=1 nur {ok, count, rated, styles} (Trefferanzeige und Stil-Chips) */
+/* GET /moodmix?moods=a,b&emin=&emax=&styles=&match=any|all&genres=&n=&disc=0..1 -> {ok, level, matches, tracks}
+   mit count=1 nur {ok, count, rated, styles, genres} (Trefferanzeige, Stil- und Genre-Chips) */
 var moodmix = require('./moodmix.js');
 var mixPlays = null;
 function doMoodmix(query, cb) {
+  albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
   var c = moodmix.parse(query);
   if (query.count) { var r = moodmix.count(moodCollector, c); r.ok = true; return cb(200, r); }
   var pl = playStore.load();

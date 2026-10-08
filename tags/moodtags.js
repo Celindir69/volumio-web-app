@@ -125,7 +125,7 @@ Collector.prototype.loadLib = function() {
       var k = trackKey(p[0], p[1]);
       if (seen[k]) return;
       seen[k] = true;
-      list.push({ar: p[0], ti: p[1], k: k, f: p[2] || '', d: p[3] || 0, al: p[4] || ''});
+      list.push({ar: p[0], ti: p[1], k: k, f: p[2] || '', d: p[3] || 0, al: p[4] || '', ge: p[5] || ''});
     });
   } catch (e) { return this.lib || []; }
   this.lib = list; this.libAt = st.mtime.getTime(); this.pos = 0; this.summaryCache = null;

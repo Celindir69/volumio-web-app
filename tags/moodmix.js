@@ -1,4 +1,5 @@
-/* Stimmungs-Mix: Titel der Bibliothek nach Stimmung, Energie und Stil auswählen (Grundlage: moodtags.Collector).
+/* Stimmungs-Mix: Titel der Bibliothek nach Stimmung, Energie, Stil und Genre auswählen (Grundlage: moodtags.Collector).
+   Das Genre (Genre-Tag des Albums, library-tracks.json) wird nie gelockert.
    Gewichtet nach dem Verlauf (Favoriten … versteckte Perlen); derselbe Künstler nie direkt hintereinander.
    Reichen die Treffer nicht, werden die Kriterien schrittweise gelockert. Node 8, nur ES5. */
 var moodtags = require('./moodtags.js');
@@ -20,7 +21,7 @@ function parse(q) {
   var bmin = parseInt(q.bmin, 10), bmax = parseInt(q.bmax, 10);    /* Tempo (Audio-Analyse); 0 = keine Grenze */
   bmin = bmin >= BPM_MIN && bmin <= BPM_MAX ? bmin : 0; bmax = bmax >= BPM_MIN && bmax <= BPM_MAX ? bmax : 0;
   if (bmin && bmax && bmin > bmax) { var y = bmin; bmin = bmax; bmax = y; }
-  return {moods: list(q.moods), styles: list(q.styles), match: q.match === 'all' ? 'all' : 'any',
+  return {moods: list(q.moods), styles: list(q.styles), genres: list(q.genres), match: q.match === 'all' ? 'all' : 'any',
           emin: emin, emax: emax, bmin: bmin, bmax: bmax, n: Math.min(Math.max(n || 50, 1), MAX_N), disc: disc >= 0 && disc <= 1 ? disc : 0.5};
 }
 
@@ -64,26 +65,35 @@ function fit(r, c, level) {
   return s * (r.src === 'artist' ? 0.6 : 1);
 }
 
+/* Genre-Filter (Groß-/Kleinschreibung egal); ohne gewählte Genres passt alles */
+function genreOk(it, c) {
+  return !c.genres || !c.genres.length || c.genres.indexOf(String(it.ge || '').toLowerCase()) >= 0;
+}
+
 function candidates(all, c, level) {
   var out = [];
-  all.forEach(function(x){ var s = fit(x.r, c, level); if (s) out.push({it: x.it, r: x.r, s: s}); });
+  all.forEach(function(x){ var s = genreOk(x.it, c) && fit(x.r, c, level); if (s) out.push({it: x.it, r: x.r, s: s}); });
   return out;
 }
 
-/* Trefferzahl (streng) und die Stile unter den Treffern ohne Stilfilter (für die Stil-Chips) */
+/* Trefferzahl (streng); für die Chips die Stile unter den Treffern ohne Stilfilter (im gewählten Genre)
+   und die Genres unter den Treffern ohne Stil- und Genrefilter */
 function count(coll, c) {
-  var all = index(coll), styles = {};
+  var all = index(coll), styles = {}, genres = {};
   var noStyle = {moods: c.moods, styles: [], match: 'any', emin: c.emin, emax: c.emax, bmin: c.bmin, bmax: c.bmax};
   var n = 0, bpm = 0;
   all.forEach(function(x){
     if (x.r.bpm) bpm++;
     if (!fit(x.r, noStyle, 0)) return;
+    if (x.it.ge) genres[x.it.ge] = (genres[x.it.ge] || 0) + 1;
+    if (!genreOk(x.it, c)) return;
     x.r.style.forEach(function(s){ styles[s] = (styles[s] || 0) + 1; });
     if (!c.styles.length || fit(x.r, c, 0)) n++;
   });
-  return {count: n, rated: all.length, bpm: bpm,
-          styles: Object.keys(styles).sort(function(a, b){ return styles[b] - styles[a] || (a < b ? -1 : 1); }).slice(0, 24)
-            .map(function(s){ return [s, styles[s]]; })};
+  function top(o, k) {
+    return Object.keys(o).sort(function(a, b){ return o[b] - o[a] || (a < b ? -1 : 1); }).slice(0, k).map(function(s){ return [s, o[s]]; });
+  }
+  return {count: n, rated: all.length, bpm: bpm, styles: top(styles, 24), genres: top(genres, 40)};
 }
 
 /* Verlauf -> Wiedergaben je Titel */
@@ -135,7 +145,7 @@ function build(coll, pc, c, rnd) {
     ordered.push(x);
   }
   return {level: level, matches: cand.length, tracks: ordered.map(function(x){
-    return {f: x.it.f, ar: x.it.ar, ti: x.it.ti, al: x.it.al, d: x.it.d, mood: x.r.mood, energy: x.r.energy,
+    return {f: x.it.f, ar: x.it.ar, ti: x.it.ti, al: x.it.al, ge: x.it.ge || '', d: x.it.d, mood: x.r.mood, energy: x.r.energy,
             style: x.r.style, src: x.r.src, bpm: x.r.bpm || null, key: x.r.key || null, plays: pc[x.it.k] || 0};
   })};
 }

@@ -14,7 +14,7 @@ var DATA = {
   F: {mood: ['dark'], energy: 5, style: ['metal'], src: 'artist'}
 };
 var lib = [];
-Object.keys(DATA).forEach(function(a){ for (var i = 1; i <= 6; i++) lib.push({ar: a, ti: a + ' Titel ' + i, k: a.toLowerCase() + '|' + a.toLowerCase() + 'titel' + i, f: 'USB/' + a + '/' + i + '.flac', d: 200, al: 'Album ' + a}); });
+Object.keys(DATA).forEach(function(a){ for (var i = 1; i <= 6; i++) lib.push({ar: a, ti: a + ' Titel ' + i, k: a.toLowerCase() + '|' + a.toLowerCase() + 'titel' + i, f: 'USB/' + a + '/' + i + '.flac', d: 200, al: 'Album ' + a, ge: a === 'A' || a === 'B' ? 'Electronic' : a === 'E' ? 'Jazz' : ''}); });
 var coll = {libAt: 1, fetched: 1, loadLib: function(){ return lib; }, moodOf: function(ar){
   var d = DATA[ar]; return {mood: d.mood, energy: d.energy, style: d.style, src: d.src || 'track'};
 }};
@@ -23,8 +23,8 @@ function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
 
 t('Kriterien lesen: Grenzen und Standardwerte', function(){
   var c = mm.parse({moods: 'Relaxed, dreamy', emin: '4', emax: '2', n: '999', disc: '7', match: 'x'});
-  assert.deepStrictEqual(c, {moods: ['relaxed', 'dreamy'], styles: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, n: 200, disc: 0.5});
-  assert.deepStrictEqual(mm.parse({}), {moods: [], styles: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, n: 50, disc: 0.5});
+  assert.deepStrictEqual(c, {moods: ['relaxed', 'dreamy'], styles: [], genres: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, n: 200, disc: 0.5});
+  assert.deepStrictEqual(mm.parse({}), {moods: [], styles: [], genres: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, n: 50, disc: 0.5});
 });
 
 t('Trefferzahl und Stile unter den Treffern', function(){
@@ -35,6 +35,18 @@ t('Trefferzahl und Stile unter den Treffern', function(){
   assert.strictEqual(mm.count(coll, mm.parse({moods: 'relaxed', emin: 2, emax: 3, styles: 'electronic'})).count, 6);
   assert.strictEqual(mm.count(coll, mm.parse({moods: 'relaxed', emin: 2, emax: 3, styles: 'electronic,ambient', match: 'all'})).count, 0);
   assert.strictEqual(mm.count(coll, mm.parse({moods: 'relaxed'})).count, 18);   /* ganze Energie: E zählt mit */
+});
+
+t('Genre: Chips unter den Treffern, Filter streng (auch beim Lockern)', function(){
+  var r = mm.count(coll, mm.parse({moods: 'relaxed'}));
+  assert.deepStrictEqual(r.genres, [['Electronic', 12], ['Jazz', 6]]);
+  var g = mm.count(coll, mm.parse({moods: 'relaxed', genres: 'jazz'}));
+  assert.strictEqual(g.count, 6);
+  assert.deepStrictEqual(g.styles, [['jazz', 6]]);                       /* Stil-Chips nur im gewählten Genre */
+  assert.deepStrictEqual(g.genres, r.genres);                            /* Genre-Chips ohne Genrefilter */
+  var m = mm.build(coll, {}, mm.parse({moods: 'relaxed', genres: 'Jazz', n: 30}), rnd);
+  assert.ok(m.tracks.length === 6 && m.tracks.every(function(x){ return x.ge === 'Jazz'; }));
+  assert.strictEqual(mm.build(coll, {}, mm.parse({moods: 'happy', genres: 'jazz'}), rnd).tracks.length, 0);
 });
 
 t('Mix: nur passende Titel, gewünschte Länge, nie zweimal derselbe Künstler hintereinander', function(){
