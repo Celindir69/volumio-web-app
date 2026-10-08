@@ -44,10 +44,14 @@ var area = document.getElementById('overlayLyrics').querySelector('.overlayBody'
 
 var socket = io();
 socket.on('connect', function(){ console.log('Socket verbunden'); socket.emit('getUiSettings'); });
-/* Sprache der Volumio-Oberfläche: Volumio speichert Infotexte in dieser Sprache. Weicht sie von LANG ab,
-   holt ask() die Texte zuerst selbst (infotext.js). Leer = unbekannt, dann zuerst Volumio. */
-var volumioLang = '';
-socket.on('pushUiSettings', function(s){ if (s && s.language) volumioLang = String(s.language).slice(0, 2).toLowerCase(); });
+/* Sprache der Volumio-Oberfläche: Die App übernimmt sie (i18n.js), sofern ?lang= oder LANGUAGE nichts anderes sagen.
+   Volumio liefert Infotexte nur in dieser Sprache; weicht LANG ab, holt ask() die Texte zuerst selbst (infotext.js). */
+var volumioLang = langStored().slice(0, 2);
+socket.on('pushUiSettings', function(s){
+  if (!s || !s.language) return;
+  volumioLang = String(s.language).slice(0, 2).toLowerCase();
+  if (typeof langFromVolumio === 'function') langFromVolumio(s.language);
+});
 socket.on('pushState', function(st){
   if (typeof showVolumio === 'function') showVolumio(st);
   if (typeof st.random === 'boolean') { stRandom = st.random; updateCtrlUI(); }

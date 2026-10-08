@@ -16,8 +16,10 @@ Fest einstellen: `THEME: 'light'` oder `'dark'` in `web/config.local.js`; zum Au
 Die Bühnenansicht für große Bildschirme bleibt immer dunkel.
 
 ### Sprache
-Die Oberfläche gibt es auf Deutsch und Englisch. Sie richtet sich nach der Sprache des Geräts (Browser); passt keine,
-erscheint sie englisch. Fest einstellen: `LANGUAGE: 'de'` oder `'en'` in `web/config.local.js`. Zum Ausprobieren geht
+Die Oberfläche gibt es auf Deutsch und Englisch. Sie übernimmt die Sprache, die in Volumio unter Einstellungen eingestellt
+ist; so passen auch die Künstler- und Albumtexte von Volumio dazu. Beim allerersten Aufruf kennt die App diese Sprache noch
+nicht, zeigt kurz die Sprache des Geräts (Browser) und lädt einmal neu. Ist die Volumio-Sprache nicht vorhanden, gilt die
+Gerätesprache, sonst Englisch. Fest einstellen: `LANGUAGE: 'de'` oder `'en'` in `web/config.local.js`. Zum Ausprobieren geht
 auch `http://<player>/app.html?lang=en`.
 
 Weitere Sprache: `web/lang/en.js` kopieren, z. B. als `web/lang/fr.js`, in der letzten Zeile Code, Namen und Locale
@@ -197,7 +199,7 @@ Die Info-Seite fragt zuerst Volumio. Kommt dort nichts (Volumio 4 gibt die Texte
 nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (in der Sprache der Oberfläche, sonst englisch; braucht `LASTFM_KEY`),
 Künstler bei Last.fm und Wikipedia, erst beide in der Sprache der Oberfläche, dann beide englisch (bei Wikipedia nur Artikel, die nach Musik aussehen). Die Quelle
 steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
-Ist die App auf eine andere Sprache gestellt als die Volumio-Oberfläche, holt sie die Texte zuerst selbst und fragt Volumio
+Ist die App über `LANGUAGE` oder `?lang=` auf eine andere Sprache gestellt als Volumio, holt sie die Texte zuerst selbst und fragt Volumio
 nur, wenn dabei nichts herauskommt (Volumio liefert seine Texte in der eigenen Sprache).
 
 ### Lyrics-Versatz
