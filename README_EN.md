@@ -99,6 +99,7 @@ progress of the mood tags.
 
 ### More
 
+- Light and dark, following the device setting or set explicitly.
 - German and English, following the Volumio language setting or set explicitly; further languages as a file in `web/lang/`
   (see [Setup](docs/setup.md#language)).
 - Optional: control a network-connected Rotel amplifier (power, volume, input) via `rotel/rotel-bridge.js`.

@@ -10,6 +10,11 @@ Nach einem Update im Browser hart neu laden. Eine vorhandene `web/config.local.j
 Eigene Einstellungen (Last.fm-Schlüssel, Rotel, Dienste ein/aus) kommen in `web/config.local.js`, Vorlage
 `web/config.local.js.example`.
 
+### Hell und dunkel
+Die Oberfläche folgt der Einstellung des Geräts (hell oder dunkel) und wechselt mit, wenn das Gerät umschaltet.
+Fest einstellen: `THEME: 'light'` oder `'dark'` in `web/config.local.js`; zum Ausprobieren `?theme=light` in der Adresse.
+Das gilt auch für die Bühnenansicht auf großen Bildschirmen; nur `kioskTV.html` bleibt immer dunkel.
+
 ### Sprache
 Die Oberfläche gibt es auf Deutsch und Englisch. Sie übernimmt die Sprache, die in Volumio unter Einstellungen eingestellt
 ist; so passen auch die Künstler- und Albumtexte von Volumio dazu. Beim allerersten Aufruf kennt die App diese Sprache noch

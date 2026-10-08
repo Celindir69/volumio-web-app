@@ -1,8 +1,37 @@
   *, *:before, *:after { box-sizing:border-box; }
 
+/* Farben: dunkel ist der Standard; html.light (web/js/theme.js) setzt die hellen Werte. --fg-rgb wird mit
+   eigener Deckkraft benutzt (rgba(var(--fg-rgb), .2)). Gilt auch für die Bühnenansicht; kioskTV.html hat eigene, immer dunkle Farben. */
+:root {
+  --fg:#fff; --fg-rgb:255,255,255;          /* Schrift, Symbole, Linien */
+  --ink:#111;                               /* Schrift/Symbole auf --fg- oder Akzent-Flächen */
+  --shade-rgb:0,0,0;                        /* abdunkelnde Flächen (runde Knöpfe oben, Kästchen) */
+  --page:#111; --ph:#222;                   /* Seitengrund, Platzhalter für Bilder */
+  --sheet:rgba(15,15,15,.6);                /* Overlays */
+  --bg-filter:blur(30px) brightness(.6);    /* Cover im Hintergrund */
+  --scrim:linear-gradient(to bottom, rgba(0,0,0,.2), rgba(0,0,0,.75));
+  --glow:0 2px 8px rgba(0,0,0,.95); --glow-soft:0 1px 4px rgba(0,0,0,.8);   /* Schatten hinter Text */
+  --gold:#e6c36a; --warn:#f3c969; --err:#ff8a8a;
+  --accent:var(--accent-d); --bg-tint:var(--tint-d);    /* aus dem Cover (color.js); ohne Cover ungültig = Rückfallwert */
+  color-scheme:dark;
+}
+html.light {
+  --fg:#1c1c1e; --fg-rgb:28,28,30;
+  --ink:#fff;
+  --shade-rgb:255,255,255;
+  --page:#f2f2f0; --ph:#e2e2e0;
+  --sheet:rgba(250,250,248,.74);
+  --bg-filter:blur(30px) brightness(1.1) saturate(1.15);
+  --scrim:linear-gradient(to bottom, rgba(255,255,255,.42), rgba(255,255,255,.80));
+  --glow:none; --glow-soft:none;                       /* Schein hinter Text nur im dunklen Modus */
+  --gold:#946b00; --warn:#946000; --err:#c62828;
+  --accent:var(--accent-l); --bg-tint:var(--tint-l);
+  color-scheme:light;
+}
+
 html, body { margin:0; padding:0; width:100%;
   height:calc(100% + env(safe-area-inset-bottom, 0px));
-  overflow:hidden; background:#111; color:#fff;
+  overflow:hidden; background:var(--page); color:var(--fg);
   font-family:'Century Gothic','Avant Garde',sans-serif;
   -webkit-user-select:none; user-select:none;
   -webkit-font-smoothing:antialiased; }
@@ -16,11 +45,11 @@ html, body { margin:0; padding:0; width:100%;
 
   #bg { position:fixed; top:0; left:0; right:0; bottom:-50px; z-index:0;
     background-size:cover; background-position:center;
-    filter:blur(30px) brightness(.6); transform:scale(1.15); }
+    filter:var(--bg-filter); transform:scale(1.15); }
   #bgTint { position:fixed; top:0; left:0; right:0; bottom:-50px; z-index:1; pointer-events:none;
     background-color:var(--bg-tint, transparent); transition:background-color .8s; }
   #scrim { position:fixed; top:0; left:0; right:0; bottom:-50px; z-index:1;
-    background:linear-gradient(to bottom, rgba(0,0,0,.2), rgba(0,0,0,.75)); }
+    background:var(--scrim); }
 
 
 /* Maßeinheit der Oberfläche: wie 1vw, aber nach oben begrenzt, damit auf iPad und Desktop nichts

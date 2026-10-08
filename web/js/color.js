@@ -1,7 +1,7 @@
 /* Cover-Farbstimmung: eine Akzentfarbe und eine Hintergrundtönung aus dem Cover des laufenden Titels.
    pickMood() ist eine reine Funktion (Pixel -> Farben) und mit tests/color.test.js prüfbar;
    updateMood() lädt das Cover klein in eine Zeichenfläche und setzt die CSS-Variablen
-   --accent und --bg-tint. Nur Cover vom eigenen Player (same origin bzw. /albumart) werden gelesen:
+   --accent-d/-l und --tint-d/-l (dunkles bzw. helles Design; base.css wählt daraus --accent und --bg-tint). Nur Cover vom eigenen Player (same origin bzw. /albumart) werden gelesen:
    fremde Server (z. B. Tidal, TuneIn) senden keine CORS-Kopfzeile, dort bleibt es bei der Standardoptik.
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
 
@@ -53,18 +53,22 @@ function pickMood(px) {
   var avgS = ts / tw, avgL = tl / tw;
   var s = cmClamp(avgS, 0.45, 0.85);
   var accentL = cmClamp(avgL * 0.5 + 0.34, 0.58, 0.72);     /* hell genug für dunklen Hintergrund */
+  var lightL  = cmClamp(avgL * 0.4 + 0.18, 0.32, 0.42);     /* dunkel genug für hellen Hintergrund (Light-Mode) */
   var tintS = cmClamp(avgS * 0.9, 0.30, 0.65);
   return {
     hue: hue,
     accent: 'hsl(' + hue + ', ' + Math.round(s * 100) + '%, ' + Math.round(accentL * 100) + '%)',
-    tint: 'hsla(' + hue + ', ' + Math.round(tintS * 100) + '%, 34%, 0.42)'
+    tint: 'hsla(' + hue + ', ' + Math.round(tintS * 100) + '%, 34%, 0.42)',
+    accentLight: 'hsl(' + hue + ', ' + Math.round(s * 100) + '%, ' + Math.round(lightL * 100) + '%)',
+    tintLight: 'hsla(' + hue + ', ' + Math.round(tintS * 100) + '%, 82%, 0.38)'
   };
 }
 
+/* beide Farbsätze setzen; welcher gilt, entscheidet das CSS (--accent, --bg-tint in base.css, hell/dunkel) */
 function applyMood(m) {
   var root = document.documentElement.style;
-  if (m) { root.setProperty('--accent', m.accent); root.setProperty('--bg-tint', m.tint); }
-  else { root.removeProperty('--accent'); root.removeProperty('--bg-tint'); }
+  var props = {'--accent-d': 'accent', '--tint-d': 'tint', '--accent-l': 'accentLight', '--tint-l': 'tintLight'};
+  Object.keys(props).forEach(function(k){ if (m) root.setProperty(k, m[props[k]]); else root.removeProperty(k); });
 }
 
 var moodCache = {};      /* Cover-Adresse -> {…} oder null */

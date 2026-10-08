@@ -88,6 +88,7 @@ Fortschritt der Stimmungs-Tags.
 </p>
 
 ### Weiteres
+- Hell und dunkel, nach der Einstellung des Geräts oder fest eingestellt.
 - Deutsch und Englisch, wie in Volumio eingestellt oder fest eingestellt; weitere Sprachen als Datei in `web/lang/`
   (siehe [Einrichten](docs/einrichten.md#sprache)).
 - Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
