@@ -56,6 +56,10 @@ Then on the player:
 
 Targets: `app.html`, `web/`, and `tools/` go to `/volumio/http/www3/`, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/INTERNAL/`; the script also updates itself. `tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/INTERNAL/mx-deploy/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
 
+Which folder Volumio serves depends on the interface selected in Volumio (e.g. classic `www`, otherwise `www3`). That is
+why `app.html`, `web/`, and `tools/` are also deployed to every other existing `/volumio/http/www*/` folder; the script
+does not create new folders. `web/config.local.js` is per folder: if you use a different interface, copy it there as well.
+
 On Volumio 4, use the same script under the name `volumio4-deploy`; see #volumio-4.
 
 ## Tag Service (for the Tag Editor)
@@ -271,7 +275,7 @@ The interface also runs under Volumio 4 (tested on a test instance). Differences
   sudo volumio4-deploy             # deploy; other commands work as with mx-deploy (<branch>, -n, -y, --zurueck)
   ```
 
-  At the end, it must say "Eingespielt nach /volumio/http/www4". If it says "zurück mit: sudo mx-deploy", an old mx-deploy version is still installed under that name: run the two lines above again. Use `MX_WWW=<folder>` to select a different folder.
+  At the end, it must say "Eingespielt nach /volumio/http/www4" (possibly followed by other existing `www*` folders). If it says "zurück mit: sudo mx-deploy", an old mx-deploy version is still installed under that name: run the two lines above again. Use `MX_WWW=<folder>` to select a different folder (then only that one).
 
 - **Tag Service:** The service file above starts Node via `/usr/bin/env node` and therefore works on both versions. An older service file using `/usr/local/bin/node` fails under Volumio 4 with `status=203/EXEC`; in that case:
 

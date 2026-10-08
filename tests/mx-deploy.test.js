@@ -8,6 +8,7 @@ function pack(name) { cp.execSync('tar czf ' + name + ' --transform "s|^app|volu
 fs.mkdirSync(app);
 cp.execSync('git ls-files | tar cf - -T - | tar xf - -C ' + app, {cwd: repo});     /* das Repo selbst als Archivinhalt */
 fs.mkdirSync(path.join(R, 'volumio/http/www3/web'), {recursive: true});
+fs.mkdirSync(path.join(R, 'volumio/http/www'), {recursive: true});              /* klassische Oberfläche (wie auf dem mxstream) */
 fs.writeFileSync(path.join(R, 'volumio/http/www3/web/config.local.js'), 'lokal');
 var v1 = pack('v1.tar.gz');
 var out = sh('MX_SOURCE=' + v1 + ' bash tools/mx-deploy.sh -y');
@@ -16,6 +17,9 @@ t('erster Lauf spielt alles ein', function(){
   assert.ok(fs.existsSync(path.join(R, 'volumio/http/www3/web/js/core.js')));
   assert.ok(fs.existsSync(path.join(R, 'data/INTERNAL/tags/tag-service.js')));
   assert.ok(fs.existsSync(path.join(R, 'volumio/http/www/kioskTV.html')));
+  assert.ok(/Eingespielt nach \/volumio\/http\/www3, www\./.test(out), out);
+  assert.ok(fs.existsSync(path.join(R, 'volumio/http/www/web/js/core.js')));          /* auch in den anderen vorhandenen Ordner */
+  assert.ok(!fs.existsSync(path.join(R, 'volumio/http/www4')));                      /* neue Ordner legt es nicht an */
   assert.ok(fs.statSync(path.join(R, 'usr/local/bin/mx-deploy')).mode & 0o100);
   assert.strictEqual(fs.readFileSync(path.join(R, 'volumio/http/www3/web/config.local.js'), 'utf8'), 'lokal');
   assert.ok(!fs.existsSync(path.join(R, 'volumio/http/www3/README.md')));
@@ -34,6 +38,12 @@ t('Rückfrage mit j spielt ein und startet den Tag-Dienst neu', function(){
   var o = sh('MX_SOURCE=' + v2 + ' bash tools/mx-deploy.sh', 'j\n');
   assert.ok(/tag-service neu starten/.test(o) && !/rotel-bridge/.test(o));
   assert.ok(/\/\/ X/.test(fs.readFileSync(path.join(R, 'data/INTERNAL/tags/tag-service.js'), 'utf8')));
+});
+t('Oberflächen-Dateien mit Ordner in der Anzeige', function(){
+  fs.appendFileSync(path.join(app, 'app.html'), '\n<!-- X -->\n');
+  var o = sh('MX_SOURCE=' + pack('v3.tar.gz') + ' bash tools/mx-deploy.sh -n');
+  assert.ok(/geändert: app.html \(www3\)/.test(o) && /geändert: app.html \(www\)/.test(o), o);
+  fs.writeFileSync(path.join(app, 'app.html'), fs.readFileSync(path.join(app, 'app.html'), 'utf8').replace('\n<!-- X -->\n', ''));
 });
 t('--zurueck stellt den vorigen Stand her', function(){
   sh('bash tools/mx-deploy.sh --zurueck');

@@ -51,6 +51,11 @@ Ziele: `app.html`, `web/`, `tools/` nach `/volumio/http/www3/`, `kioskTV.html` n
 werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen sichert es die betroffenen Dateien nach
 `/data/INTERNAL/mx-deploy/` (die letzten 5). Gelöscht wird nichts; eigene Dateien wie `web/config.local.js` bleiben.
 
+Welchen Ordner Volumio ausliefert, hängt von der in Volumio gewählten Oberfläche ab (z. B. klassisch `www`, sonst `www3`).
+Deshalb kommen `app.html`, `web/` und `tools/` zusätzlich in jeden anderen vorhandenen Ordner `/volumio/http/www*/`;
+neue Ordner legt das Skript nicht an. `web/config.local.js` liegt je Ordner: Wer eine andere Oberfläche nutzt, kopiert
+sie dorthin mit.
+
 Auf Volumio 4 dasselbe Skript unter dem Namen `volumio4-deploy`, siehe [Volumio 4](#volumio-4).
 
 ## Tag-Dienst (für den Tag-Editor)
@@ -260,9 +265,9 @@ Die Oberfläche läuft auch unter Volumio 4 (auf einer Testinstanz erprobt). Unt
   sudo volumio4-deploy -n          # erst ansehen: „geändert“ hieße, eine Datei von Volumio würde ersetzt
   sudo volumio4-deploy             # einspielen; Aufrufe sonst wie bei mx-deploy (<branch>, -n, -y, --zurueck)
   ```
-  Am Ende muss „Eingespielt nach /volumio/http/www4“ stehen. Meldet es „zurück mit: sudo mx-deploy“, ist unter dem Namen
+  Am Ende muss „Eingespielt nach /volumio/http/www4“ stehen (danach ggf. weitere vorhandene `www*`-Ordner). Meldet es „zurück mit: sudo mx-deploy“, ist unter dem Namen
   noch ein altes mx-deploy eingerichtet: die beiden Zeilen oben noch einmal ausführen. Einen anderen Ordner wählt
-  `MX_WWW=<ordner>`.
+  `MX_WWW=<ordner>` (dann nur diesen).
 - **Tag-Dienst:** Die Dienstdatei oben startet Node über `/usr/bin/env node` und läuft damit auf beiden Versionen. Eine
   ältere Dienstdatei mit `/usr/local/bin/node` scheitert unter Volumio 4 mit `status=203/EXEC`; dann:
   `sudo sed -i 's|^ExecStart=/usr/local/bin/node|ExecStart=/usr/bin/env node|' /etc/systemd/system/tag-service.service && sudo systemctl daemon-reload && sudo systemctl restart tag-service`.
