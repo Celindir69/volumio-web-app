@@ -8,7 +8,9 @@ It also runs on Volumio 4 (for differences, see docs/einrichten.md#volumio-4). I
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
 </p>
 
-All images in this file show a fictional example library (artists, cover art, and texts are made up).
+All images in this file show a fictional example library in german language setting (artists, cover art, and texts are made up). - They do not always show the latest state of development so some faetures have been moved or added since the creation of the Screenshots.
+
+Developed using AI (Claude code https://claude.ai)
 
 ## Features
 
