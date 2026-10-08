@@ -90,7 +90,10 @@ function mixPick() {
 
   /* Feinabstimmung */
   var fold = histEl('div', 'hFold mxFold' + (mixState.fine ? ' open' : ''));
-  fold.appendChild(histEl('span', '', T('mix.fine')));
+  var fineLabel = histEl('span', '', '');
+  fold.appendChild(fineLabel);
+  mixState.fineLabel = fineLabel;
+  mixFineLabel();
   var fine = histEl('div', 'mxFine');
   fine.style.display = mixState.fine ? '' : 'none';
   fold.addEventListener('click', function(){
@@ -226,9 +229,18 @@ function mixGenres() {
   if (shown.length < list.length) box.appendChild(mixChip(T('mix.more'), false, function(){ mixState.genresMore = true; mixGenres(); }, 'mxMore mxSmall'));
 }
 
+/* Feinabstimmung zugeklappt, aber abweichend von den Vorgaben: „(aktiv)“ hinter der Überschrift */
+function mixFineActive() {
+  return mixCrit.styles.length > 0 || !!mixCrit.bmin || !!mixCrit.bmax || mixCrit.n !== 50 || mixCrit.disc !== 0.5;
+}
+function mixFineLabel() {
+  if (mixState.fineLabel) mixState.fineLabel.textContent = T('mix.fine') + (mixFineActive() ? ' ' + T('mix.fine.active') : '');
+}
+
 /* Trefferzahl live (kurz verzögert, damit der Regler nicht für jeden Schritt fragt) */
 function mixCount() {
   mixSave();
+  mixFineLabel();
   clearTimeout(mixCountTimer);
   var seq = ++mixCountSeq;
   mixCountTimer = setTimeout(function(){
@@ -278,7 +290,17 @@ function mixSummary() {
   parts.push(mixCrit.emin === 1 && mixCrit.emax === 5 ? T('mix.sum.anyEnergy') : T('mix.sum.energy', {e: mixCrit.emin === mixCrit.emax ? mixCrit.emin : mixCrit.emin + '\u2060–\u2060' + mixCrit.emax}));
   if (mixCrit.bmin || mixCrit.bmax) parts.push(!mixCrit.bmax ? T('mix.sum.bpmMin', {a: mixCrit.bmin}) : !mixCrit.bmin ? T('mix.sum.bpmMax', {b: mixCrit.bmax}) :
     T('mix.sum.bpmRange', {a: mixCrit.bmin, b: mixCrit.bmax}));
+  var gs = mixCrit.genres;                     /* ohne Auswahl: die Genres im Ergebnis */
+  if (!gs.length && mixState.result) mixState.result.tracks.forEach(function(x){ var g = String(x.ge || '').toLowerCase(); if (g && gs.indexOf(g) < 0) gs = gs.concat([g]); });
+  if (gs.length) parts.push(gs.length === 1 ? mixGenreName(gs[0]) : T('mix.sum.genres', {n: gs.length}));
   return parts.join(' · ');
+}
+
+/* gewählte Genres stehen klein geschrieben in mixCrit; angezeigt wird die Schreibweise der Bibliothek */
+function mixGenreName(g) {
+  var all = (mixState.genres || []).concat((mixState.result && mixState.result.tracks || []).map(function(x){ return [x.ge || '']; }));
+  for (var i = 0; i < all.length; i++) if (String(all[i][0]).toLowerCase() === g) return all[i][0];
+  return g.charAt(0).toUpperCase() + g.slice(1);
 }
 
 function mixPreview() {
@@ -286,6 +308,7 @@ function mixPreview() {
   var head = histEl('div', 'mxHead');
   var info = histEl('div', 'mxSum');
   info.appendChild(histEl('div', 'mxSumT', mixSummary()));
+  if (mixCrit.genres.length > 1) info.appendChild(histEl('div', 'mxSumS', mixCrit.genres.map(mixGenreName).join(' · ')));
   if (mixCrit.styles.length) info.appendChild(histEl('div', 'mxSumS', mixCrit.styles.join(mixCrit.match === 'all' ? ' + ' : ' · ')));
   var total = tracks.reduce(function(s, x){ return s + (x.d || 0); }, 0);
   info.appendChild(histEl('div', 'mxSumN', T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : '')));
@@ -327,7 +350,7 @@ function mixPreview() {
     var meta = histEl('div', 'sMeta');
     meta.appendChild(histEl('div', 'sTitle', x.ti));
     meta.appendChild(histEl('div', 'sSub', x.ar));
-    var why = x.mood.map(mixName).concat(x.style.slice(0, 2));
+    var why = x.mood.map(mixName).concat(x.ge ? [x.ge] : [], x.style.slice(0, 2));
     if (x.bpm) why.push(x.bpm + '\u00a0BPM');
     if (x.src === 'artist') why.push(T('mix.why.artist'));
     meta.appendChild(histEl('div', 'mxWhy', why.join(' · ')));
