@@ -11,6 +11,10 @@
 # Eigene Dateien wie web/config.local.js stehen nicht im Repo und bleiben unberührt; gelöscht wird nichts.
 # Einrichten:  curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/mx-deploy >/dev/null && sudo chmod +x /usr/local/bin/mx-deploy
 #
+# Die Oberfläche kommt nach www3/ (bzw. www4/, siehe unten) und zusätzlich in jeden anderen vorhandenen Ordner
+# /volumio/http/www*/: Welchen Volumio ausliefert, hängt von der in Volumio gewählten Oberfläche ab. Neue Ordner
+# legt das Skript nicht an.
+#
 # Volumio 4 liefert die Oberfläche aus /volumio/http/www4/ statt www3/. Dasselbe Skript, unter dem Namen
 # volumio4-deploy eingerichtet, spielt dorthin ein (eigene Sicherungen unter /data/INTERNAL/volumio4-deploy):
 #   curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null && sudo chmod +x /usr/local/bin/volumio4-deploy
@@ -24,20 +28,27 @@ case "$PROG" in
   *)                PROG=mx-deploy; WWW=www3 ;;
 esac
 WWW=${MX_WWW:-$WWW}                                 # Ordner der Oberfläche unter /volumio/http/
+WWWS=$WWW                                           # dazu alle anderen vorhandenen www*-Ordner (nicht bei MX_WWW)
+if [ -z "$MX_WWW" ]; then
+  for d in "$ROOT"/volumio/http/www*/; do
+    [ -d "$d" ] || continue
+    w=$(basename "$d"); [ "$w" = "$WWW" ] || WWWS="$WWWS $w"
+  done
+fi
 STATE=$ROOT/data/INTERNAL/$PROG
 KEEP=5
 
-# Ziel je Datei im Repo (leer = nicht auf den Player)
+# Ziele je Datei im Repo, eins je Zeile (leer = nicht auf den Player)
 target() {
   case "$1" in
-    app.html|web/*)          echo "$ROOT/volumio/http/$WWW/$1" ;;
     kioskTV.html)            echo "$ROOT/volumio/http/www/$1" ;;
     tags/*)                  echo "$ROOT/data/INTERNAL/$1" ;;
     rotel/rotel-bridge.js)   echo "$ROOT/data/INTERNAL/$1" ;;
     tools/mx-deploy.sh)      echo "$ROOT/usr/local/bin/$PROG" ;;
-    tools/*)                 echo "$ROOT/volumio/http/$WWW/$1" ;;
+    app.html|web/*|tools/*)  for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;
   esac
 }
+TAB=$'\t'                                           # Einträge der Listen: Repo-Pfad TAB Ziel
 
 die() { echo "$PROG: $*" >&2; exit 1; }
 [ -n "$ROOT" ] || [ "$(id -u)" = 0 ] || die "bitte mit sudo aufrufen"
@@ -98,16 +109,24 @@ CHANGED=""; NEW=""; n=0
 cd "$TMP/src"
 while IFS= read -r f; do
   f=${f#./}
-  t=$(target "$f"); [ -n "$t" ] || continue
-  if [ ! -e "$t" ]; then NEW="$NEW$f"$'\n'; n=$((n+1))
-  elif ! cmp -s "$f" "$t"; then CHANGED="$CHANGED$f"$'\n'; n=$((n+1))
-  fi
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    if [ ! -e "$t" ]; then NEW="$NEW$f$TAB$t"$'\n'; n=$((n+1))
+    elif ! cmp -s "$f" "$t"; then CHANGED="$CHANGED$f$TAB$t"$'\n'; n=$((n+1))
+    fi
+  done <<< "$(target "$f")"
 done < <(find . -type f ! -name '*.pyc' | sort)
+# Anzeige: Repo-Pfad, bei mehreren Oberflächen-Ordnern mit dem Ordner dahinter
+show() { while IFS="$TAB" read -r f t; do
+  [ -n "$f" ] || continue
+  r=${t#$ROOT/volumio/http/}
+  if [ "$r" != "$t" ] && [ "$WWWS" != "$WWW" ] && [ "$f" != kioskTV.html ]; then echo "$f (${r%%/*})"; else echo "$f"; fi
+done; }
 
 if [ $n = 0 ]; then echo "Alles aktuell ($BRANCH), nichts zu tun."; exit 0; fi
 echo "Branch $BRANCH: $n Datei(en)"
-[ -n "$CHANGED" ] && printf '%s' "$CHANGED" | sed 's/^/  geändert: /'
-[ -n "$NEW" ]     && printf '%s' "$NEW"     | sed 's/^/  neu:      /'
+[ -n "$CHANGED" ] && printf '%s' "$CHANGED" | show | sed 's/^/  geändert: /'
+[ -n "$NEW" ]     && printf '%s' "$NEW"     | show | sed 's/^/  neu:      /'
 [ $DRY = 1 ] && exit 0
 if [ $YES = 0 ]; then
   read -r -p "Einspielen? [j/N] " a
@@ -121,18 +140,16 @@ ALL="$CHANGED$NEW"
 : > "$base.neu"
 printf '%s' "$ALL" > "$base.pfade"
 list="$TMP/sicherung.txt"; : > "$list"
-while IFS= read -r f; do
+while IFS="$TAB" read -r f t; do
   [ -n "$f" ] || continue
-  t=$(target "$f")
   if [ -e "$t" ]; then echo "${t#${ROOT:-/}}" | sed 's|^/||' >> "$list"; else echo "$t" >> "$base.neu"; fi
 done <<< "$ALL"
 if [ -s "$list" ]; then tar czf "$base.tar.gz" -C "${ROOT:-/}" -T "$list"; else tar czf "$base.tar.gz" -T /dev/null; fi
 ls -1 "$STATE"/backup-*.tar.gz | sort | head -n -$KEEP | while IFS= read -r old; do rm -f "$old" "${old%.tar.gz}.neu" "${old%.tar.gz}.pfade"; done
 
 # ---------- Einspielen ----------
-while IFS= read -r f; do
+while IFS="$TAB" read -r f t; do
   [ -n "$f" ] || continue
-  t=$(target "$f")
   mkdir -p "$(dirname "$t")"
   case "$t" in
     */"$PROG")   cp "$f" "$t.neu" && chmod +x "$t.neu" && mv "$t.neu" "$t" ;;   # läuft gerade: neue Datei statt überschreiben
@@ -140,6 +157,6 @@ while IFS= read -r f; do
     *)           cp "$f" "$t" ;;                                               # vorhandene Datei: Besitzer und Rechte bleiben
   esac
 done <<< "$ALL"
-echo "Eingespielt nach /volumio/http/$WWW. Sicherung: $(basename "$base") (zurück mit: sudo $PROG --zurueck)"
+echo "Eingespielt nach /volumio/http/$(echo $WWWS | sed 's/ /, /g'). Sicherung: $(basename "$base") (zurück mit: sudo $PROG --zurueck)"
 restart_services "$ALL"
 echo "Im Browser hart neu laden."
