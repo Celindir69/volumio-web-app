@@ -98,7 +98,7 @@ Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS
 
 `tags.py` runs with Python 2.7 and 3 and includes mutagen itself; if there is no `python` command, the service uses `python3`.
 
-Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/INTERNAL/tags/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. The service is accessible on the local network without authentication.
+Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/INTERNAL/tags/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. The service is accessible on the local network without authentication.
 
 ### Search for Cover Art Online
 

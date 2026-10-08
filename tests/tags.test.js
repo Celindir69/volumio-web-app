@@ -50,6 +50,10 @@ t('Neu einlesen: gemeinsamer Elternordner ab 3 Ebenen, sonst einzelne Ordner', f
   assert.deepStrictEqual(svc.scanDirs(['USB/M/K1/A/1.flac', 'USB/M/K2/A/1.flac']), ['USB/M/K1/A', 'USB/M/K2/A']);
   assert.deepStrictEqual(svc.scanDirs(['USB/M/X/a.flac', 'INTERNAL/b.flac']), ['USB/M/X', 'INTERNAL']);
 });
+t('Neu einlesen: viele Ordner (Genre über viele Alben) ergeben einen Scan', function(){
+  assert.deepStrictEqual(svc.scanDirs(['USB/A/1/a.flac', 'USB/B/1/a.flac', 'USB/C/1/a.flac', 'USB/D/1/a.flac']), ['USB']);
+  assert.deepStrictEqual(svc.scanDirs(['USB/A/1/a.flac', 'USB/B/1/a.flac', 'NAS/C/1/a.flac', 'NAS/D/1/a.flac']), ['']);
+});
 
 /* tags.py mit einer selbst gebauten DSF-Datei */
 var py = ['python3', 'python'].filter(function(c){ return cp.spawnSync(c, ['--version']).status === 0; })[0];

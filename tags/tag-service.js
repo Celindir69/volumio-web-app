@@ -125,7 +125,10 @@ function readLog() {
 
 /* Jedes "mpc update" lässt Volumio seine ganze Albumliste neu aufbauen (rund 1 min Last). Darum möglichst nur
    einen Ordner einlesen: den gemeinsamen Elternordner, solange er mindestens 3 Ebenen tief liegt
-   (z. B. USB/MX-Media/AllFlac), sonst die einzelnen Ordner. */
+   (z. B. USB/MX-Media/AllFlac), sonst die einzelnen Ordner. Sind das mehr als SCAN_MAX_DIRS (Genre über viele
+   Alben geändert), doch den gemeinsamen Elternordner, notfalls die ganze Bibliothek (''): ein Scan statt vieler. */
+var SCAN_MAX_DIRS = 3;
+var SCAN_QUIET = 15000;          /* so lange nach der letzten Änderung warten, dann alle gesammelten Ordner auf einmal */
 function scanDirs(relFiles) {
   var dirs = {};
   relFiles.forEach(function(r){ dirs[path.dirname(r)] = true; });
@@ -137,15 +140,37 @@ function scanDirs(relFiles) {
     while (k < common.length && k < p.length && common[k] === p[k]) k++;
     common = common.slice(0, k);
   });
-  return common.length >= 3 ? [common.join('/')] : list;
+  return common.length >= 3 || list.length > SCAN_MAX_DIRS ? [common.join('/')] : list;
 }
 
+/* Rescans sammeln: Änderungen kurz hintereinander (Bulk-Editor, Bibliotheks-Check, Rückgängig) ergeben einen Scan,
+   SCAN_QUIET nach der letzten; nie, solange MPD noch einliest. Die Antwort wartet nicht auf den Scan,
+   cb(ok) meldet, ob der letzte "mpc update" geklappt hat. */
+var scanPending = [], scanTimer = null, scanRunning = false, scanOk = true;
 function mpdUpdate(relFiles, cb) {
-  var list = scanDirs(relFiles), ok = true;
-  (function step() {
-    if (!list.length) return cb(ok);
-    cp.execFile(MPC, ['update', list.shift()], {timeout: 15000}, function(e){ if (e) ok = false; step(); });
-  })();
+  scanPending = scanPending.concat(relFiles);
+  clearTimeout(scanTimer);
+  scanTimer = setTimeout(scanRun, SCAN_QUIET);
+  cb(scanOk);
+}
+function scanRun() {
+  scanTimer = null;
+  if (scanRunning || !scanPending.length) return;
+  scanRunning = true;
+  libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'status', function(err, st){
+    if (!err && st.updating_db) { scanRunning = false; scanTimer = setTimeout(scanRun, SCAN_QUIET); return; }
+    var list = scanDirs(scanPending);
+    scanPending = [];
+    (function step() {
+      if (!list.length) {
+        scanRunning = false;
+        if (scanPending.length && !scanTimer) scanTimer = setTimeout(scanRun, SCAN_QUIET);
+        return;
+      }
+      var d = list.shift();
+      cp.execFile(MPC, d ? ['update', d] : ['update'], {timeout: 15000}, function(e){ scanOk = !e; step(); });
+    })();
+  });
 }
 
 /* ---------- Aufträge ---------- */

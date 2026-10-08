@@ -89,7 +89,9 @@ Weitere Variablen: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_LO
 
 Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`. Alte Werte für „Rückgängig“ stehen in
 `/data/INTERNAL/tags/changes.jsonl`. Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
-Spiegelung die Änderungen am Player. Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
+Spiegelung die Änderungen am Player. Nach Änderungen liest MPD die betroffenen Ordner neu ein, gesammelt 15 Sekunden
+nach der letzten Änderung und nie, solange MPD noch einliest; bei mehr als drei Ordnern ein Scan des gemeinsamen
+Elternordners. Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
 
 ### Cover online suchen
 Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Schlüssel aus `web/config.local.js`) und im
