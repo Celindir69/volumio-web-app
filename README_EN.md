@@ -5,7 +5,7 @@ It also runs on Volumio 4 (for differences, see docs/einrichten.md#volumio-4). I
 `mx-deploy` deploys only the runtime files.
 
 <p align="center">
-  <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
+  <img src="docs/bilder/display-ipad.jpg" width="820" alt="display-layout on iPad: cover, albuminfo and synced Lyrics">
 </p>
 
 All images in this file show a fictional example library in german language setting (artists, cover art, and texts are made up). - They do not always show the latest state of development so some faetures have been moved or added since the creation of the Screenshots.
@@ -24,10 +24,10 @@ releases by that artist are available in the collection. If Volumio does not pro
 (Volumio 4 only provides it with a subscription), the app retrieves it from Last.fm or Wikipedia.
 
 <p>
-  <img src="docs/bilder/wiedergabe.jpg" width="200" alt="Wiedergabe">
-  <img src="docs/bilder/lyrics.jpg" width="200" alt="Synchrone Lyrics">
-  <img src="docs/bilder/info.jpg" width="200" alt="Albuminfos">
-  <img src="docs/bilder/warteschlange.jpg" width="200" alt="Warteschlange">
+  <img src="docs/bilder/wiedergabe.jpg" width="200" alt="Playback">
+  <img src="docs/bilder/lyrics.jpg" width="200" alt="synced lyrics">
+  <img src="docs/bilder/info.jpg" width="200" alt="Album infos">
+  <img src="docs/bilder/warteschlange.jpg" width="200" alt="Playing queue">
 </p>
 
 
@@ -38,7 +38,7 @@ automatically cycles through the available pages. Switch using the control at th
 `kioskTV.html` is a display-only interface for a TV connected to the audio system, without controls.
 
 <p>
-  <img src="docs/bilder/display-desktop.jpg" width="49%" alt="Display-Layout am Desktop">
+  <img src="docs/bilder/display-desktop.jpg" width="49%" alt="Display-Layout on Desktop">
   <img src="docs/bilder/kiosk.jpg" width="49%" alt="kioskTV.html">
 </p>
 
@@ -63,9 +63,9 @@ remain unchanged. Optionally, Essentia on the Mac can analyze each track directl
 energy and mood are derived from the audio, and a tempo control (BPM) is added.
 
 <p>
-  <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
-  <img src="docs/bilder/mix-auswahl.jpg" width="200" alt="Stimmungs-Mix: Auswahl">
-  <img src="docs/bilder/mix-vorschau.jpg" width="200" alt="Stimmungs-Mix: Vorschau">
+  <img src="docs/bilder/entdecken.jpg" width="200" alt="discover in search">
+  <img src="docs/bilder/mix-auswahl.jpg" width="200" alt="Mood-Mix: Selection">
+  <img src="docs/bilder/mix-vorschau.jpg" width="200" alt="Mood-Mix: Preview">
 </p>
 
 ### History, Statistics, and Review
@@ -76,9 +76,9 @@ weekday, and an annual review with a comparison to the previous year, top genres
 Tapping a month displays the rankings for that month.
 
 <p>
-  <img src="docs/bilder/verlauf.jpg" width="200" alt="Zuletzt gehört">
-  <img src="docs/bilder/statistik.jpg" width="200" alt="Statistik">
-  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Jahresrückblick">
+  <img src="docs/bilder/verlauf.jpg" width="200" alt="Recently Played">
+  <img src="docs/bilder/statistik.jpg" width="200" alt="Statistics">
+  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Review">
 </p>
 
 ### Tag Editor and Library Check
@@ -91,8 +91,8 @@ progress of the mood tags.
 
 <p>
   <img src="docs/bilder/tag-editor.jpg" width="200" alt="Tag-Editor">
-  <img src="docs/bilder/check.jpg" width="200" alt="Bibliotheks-Check">
-  <img src="docs/bilder/stimmungs-tags.jpg" width="200" alt="Stimmungs-Tags im Bibliotheks-Check">
+  <img src="docs/bilder/check.jpg" width="200" alt="Library-Check">
+  <img src="docs/bilder/stimmungs-tags.jpg" width="200" alt="Mood-Tags in Library-Check">
 </p>
 
 ### More
