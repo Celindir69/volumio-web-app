@@ -209,6 +209,7 @@ langRegister('en', 'English', {
   'lyrics.asDelivered': 'original',
   'lyrics.earlier': 'Lyrics earlier ({state})',
   'lyrics.later': 'Lyrics later ({state})',
+  'lyrics.none': 'No lyrics found',
   'lyrics.reset': 'Lyrics timing reset',
   'lyrics.seconds': '{s} s',
   'lyrics.sync': 'sync',

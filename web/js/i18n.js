@@ -60,13 +60,14 @@ function langWeekdays(width) {
   return out;
 }
 
-/* statische Texte im HTML: data-i18n (Inhalt), data-i18n-title, data-i18n-placeholder, data-i18n-aria (aria-label) */
+/* statische Texte im HTML: data-i18n (Inhalt), data-i18n-title, data-i18n-placeholder, data-i18n-aria (aria-label),
+   data-i18n-empty (data-empty, Platzhalter per CSS content:attr(data-empty)) */
 function langApply(root) {
   root = root || document;
-  [['data-i18n', 'textContent'], ['data-i18n-title', 'title'], ['data-i18n-placeholder', 'placeholder'], ['data-i18n-aria', 'aria-label']].forEach(function(a){
+  [['data-i18n', 'textContent'], ['data-i18n-title', 'title'], ['data-i18n-placeholder', 'placeholder'], ['data-i18n-aria', 'aria-label'], ['data-i18n-empty', 'data-empty']].forEach(function(a){
     Array.prototype.forEach.call(root.querySelectorAll('[' + a[0] + ']'), function(el){
       var v = T(el.getAttribute(a[0]));
-      if (a[1] === 'aria-label') el.setAttribute(a[1], v); else el[a[1]] = v;
+      if (/-/.test(a[1])) el.setAttribute(a[1], v); else el[a[1]] = v;
     });
   });
 }

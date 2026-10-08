@@ -197,6 +197,8 @@ Die Info-Seite fragt zuerst Volumio. Kommt dort nichts (Volumio 4 gibt die Texte
 nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (in der Sprache der Oberfläche, sonst englisch; braucht `LASTFM_KEY`),
 Künstler bei Last.fm und Wikipedia, erst beide in der Sprache der Oberfläche, dann beide englisch (bei Wikipedia nur Artikel, die nach Musik aussehen). Die Quelle
 steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
+Ist die App auf eine andere Sprache gestellt als die Volumio-Oberfläche, holt sie die Texte zuerst selbst und fragt Volumio
+nur, wenn dabei nichts herauskommt (Volumio liefert seine Texte in der eigenen Sprache).
 
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der
