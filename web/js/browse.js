@@ -5,7 +5,7 @@ var overlayBrowse = document.getElementById('overlayBrowse');
 var browseTitle   = document.getElementById('browseTitle');
 var browseBack    = document.getElementById('browseBack');
 var browseBody    = document.getElementById('browseBody');
-var browseStack   = [];       /* Verlauf: {kind:'artist'|'album'|'genre'|'playlist', artist, album, uri, genre} */
+var browseStack   = [];       /* Verlauf: {kind:'artist'|'album'|'genre'|'playlist', artist, album, uri, genre, sub} */
 var browseOrigin  = null;     /* Overlay, aus dem die Ansicht geöffnet wurde (Suche, Info): der Zurück-Pfeil führt dorthin */
 var browseSeq     = 0;        /* verwirft Antworten veralteter Anfragen */
 
@@ -108,7 +108,7 @@ function browseRender() {
   var e = browseStack[browseStack.length - 1];
   var seq = ++browseSeq;
   browseBack.style.display = (browseStack.length > 1 || browseOrigin) ? '' : 'none';
-  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre : e.album;
+  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.album;
   browseBody.scrollTop = 0;
   while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
   browseBody.appendChild(browseNote(T('browse.loading')));

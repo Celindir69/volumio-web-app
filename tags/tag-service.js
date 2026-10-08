@@ -435,6 +435,7 @@ function doPlays(query, cb) {
    Die Liste kommt aus MPD (wie beim Bibliotheks-Check), liegt in albums.json und wird neu gelesen,
    wenn MPDs Datenbank sich geändert hat (Prüfung höchstens alle 10 Minuten). */
 var albums = require('./albums.js');
+var genres = require('./genres.js');
 var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
 var ALBUMS_VERSION = 5;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre */
@@ -482,19 +483,37 @@ var moodCollector = new moodtags.Collector({
 });
 
 /* ---------- Genres der Bibliothek (Genre-Tag, je Album das häufigste) ---------- */
-/* GET /genrelist[?q=] -> {ok, genres:[{g, n, dir, al, ar}]}; GET /genrealbums?g= -> {ok, albums:[{dir, al, ar}]};
-   GET /albumgenre?q=[[uri, album, künstler], …] -> {ok, genres:[…]} (leer = unbekannt). building: Albenliste entsteht noch */
+/* GET /genrelist[?q=] -> {ok, genres:[{g, n, dir, al, ar}], subs:[{g, s, n, dir, al, ar}] (nur mit q)};
+   GET /genrealbums?g= -> {ok, albums:[{dir, al, ar, st:[Unterstile]}], subs:[{g, s, n, dir, al, ar}]};
+   GET /albumgenre?q=[[uri, album, künstler], …] -> {ok, genres:[…]} (leer = unbekannt). building: Albenliste entsteht noch.
+   Unterstile kommen aus der Audio-Analyse (tools/essentia), je Album innerhalb seines Genres */
 function albumGenreFn() {
   var gi = albumIdx && albumIdx.list;
   if (gi && (!albumGenre || albumGenre.list !== gi)) albumGenre = {list: gi, fn: albums.genreIndex(gi)};
   return gi ? albumGenre.fn : null;
 }
+var genreSubs = null;
+function genreSubsIdx(list) {
+  var tl = libTracksLoad() || [], st = audioStore.status();
+  if (!genreSubs || genreSubs.list !== list || genreSubs.tl !== tl || genreSubs.at !== st.at) {
+    genreSubs = {list: list, tl: tl, at: st.at, idx: st.tracks ? genres.subsIndex(list, tl, function(ar, ti, al){ return audioStore.get(ar, ti, al); }, albums.albumDir) : {}};
+  }
+  return genreSubs.idx;
+}
 function doGenreLib(route, query, cb) {
   albumsEnsure(function(list){
     if (!list) return cb(200, {ok: false, building: true});
-    if (route === '/genrelist') return cb(200, {ok: true, genres: albums.genreList(list, query.q)});
-    if (route === '/genrealbums') return cb(200, {ok: true, albums: albums.genreAlbums(list, query.g)});
-    var q = [];
+    if (route === '/genrelist') {
+      var q = String(query.q || '').trim();
+      return cb(200, {ok: true, genres: albums.genreList(list, q), subs: q ? genres.subList(list, genreSubsIdx(list), '', q) : []});
+    }
+    if (route === '/genrealbums') {
+      var idx = genreSubsIdx(list);
+      var al = albums.genreAlbums(list, query.g);
+      al.forEach(function(a){ if (idx[a.dir]) a.st = idx[a.dir]; });
+      return cb(200, {ok: true, albums: al, subs: genres.subList(list, idx, query.g)});
+    }
+    q = [];
     try { q = JSON.parse(String(query.q || '[]')); } catch (e) { return cb(400, {ok: false, error: 'q ungültig'}); }
     if (!Array.isArray(q) || q.length > 500) return cb(400, {ok: false, error: 'q ungültig'});
     var fn = albumGenreFn();

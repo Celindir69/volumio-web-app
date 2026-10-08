@@ -42,7 +42,7 @@ der Anlage, ohne Bedienung.
 </p>
 
 ### Suche und Entdecken
-Die Suche findet Künstler, Alben, Titel und Genres (je Genre alle Alben) in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
+Die Suche findet Künstler, Alben, Titel und Genres (je Genre die Stilrichtungen aus der Audio-Analyse und alle Alben) in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
 eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
 eingegeben ist, zeigt sie passend zum Reiter „Vor einem Jahr gehört“ (Künstler, Alben oder Titel, die um dieses Datum vor
 einem Jahr liefen) und einen Zufallskünstler, ein Zufallsalbum oder einen Zufallstitel, bevorzugt lange nicht oder nie Gehörtes. Bei Webradio holt die App ein Cover
@@ -64,7 +64,7 @@ nichts spielt; die Musikdateien bleiben dabei unverändert. Optional hört Essen
 
 ### Verlauf, Statistik und Rückblick
 Der Tag-Dienst schreibt mit, was läuft, und kann zu Last.fm scrobbeln sowie den bisherigen Last.fm-Verlauf einlesen.
-Daraus entstehen „Zuletzt gehört“, Ranglisten (Titel, Alben, Künstler), Statistiken nach Tag, Tageszeit, Wochentag und Genre
+Daraus entstehen „Zuletzt gehört“, Ranglisten (Titel, Alben, Künstler, Genres), Statistiken nach Tag, Tageszeit, Wochentag und Genre
 und ein Jahresrückblick mit Vergleich zum Vorjahr, Top-Genres und neu entdeckten Künstlern. Tippen auf einen Monat zeigt
 die Ranglisten für diesen Monat.
 

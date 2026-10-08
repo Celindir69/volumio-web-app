@@ -46,7 +46,7 @@ automatically cycles through the available pages. Switch using the control at th
 
 ### Search and Discover
 
-Search finds artists, albums, tracks, and genres (all albums per genre) in the local library and on the streaming services configured in Volumio
+Search finds artists, albums, tracks, and genres (per genre the styles from the audio analysis and all albums) in the local library and on the streaming services configured in Volumio
 (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), each in separate sections with checkboxes for showing or hiding them. As long as
 nothing has been entered, the selected tab shows "Played a Year Ago" (artists, albums, or tracks played around this date
 one year ago) as well as a random artist, random album, or random track, with preference given to music that has not been
@@ -73,7 +73,7 @@ energy and mood are derived from the audio, and a tempo control (BPM) is added.
 ### History, Statistics, and Review
 
 The Tag Service records what is played and can scrobble to Last.fm as well as import the existing Last.fm listening history.
-This data is used to provide "Recently Played", rankings (tracks, albums, artists), statistics by day, time of day,
+This data is used to provide "Recently Played", rankings (tracks, albums, artists, genres), statistics by day, time of day,
 weekday, and genre, and an annual review with a comparison to the previous year, top genres, and newly discovered artists.
 Tapping a month displays the rankings for that month.
 

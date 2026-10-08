@@ -16,7 +16,7 @@ function genreSearch() {
     while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
     var list = (r && r.genres) || [];
     if (!r || !r.ok) { searchResults.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.none'))); return; }
-    if (!list.length) { searchResults.appendChild(browseNote(q ? T('search.noResults') : T('genre.none'))); return; }
+    if (!list.length && !(r.subs || []).length) { searchResults.appendChild(browseNote(q ? T('search.noResults') : T('genre.none'))); return; }
     if (!q) {
       var grid = histEl('div', 'gGrid');
       list.forEach(function(g){ grid.appendChild(genreTile(g)); });
@@ -31,6 +31,16 @@ function genreSearch() {
       meta.appendChild(histEl('div', 'sSub', T('disc.albums', {n: g.n})));
       row.appendChild(meta);
       row.addEventListener('click', function(){ openBrowse({kind: 'genre', genre: g.g}); });
+      searchResults.appendChild(row);
+    });
+    (r.subs || []).forEach(function(x){                  /* Unterstile (Audio-Analyse) mit ihrem Genre */
+      var row = histEl('div', 'sRow');
+      row.appendChild(histImg(histAlbumArt(x.ar, x.al, x.dir)));
+      var meta = histEl('div', 'sMeta');
+      meta.appendChild(histEl('div', 'sTitle', x.s));
+      meta.appendChild(histEl('div', 'sSub', x.g + ' · ' + T('disc.albums', {n: x.n})));
+      row.appendChild(meta);
+      row.addEventListener('click', function(){ openBrowse({kind: 'genre', genre: x.g, sub: x.s}); });
       searchResults.appendChild(row);
     });
     searchResults.appendChild(browseNote(T('search.tapOpen')));
@@ -50,12 +60,15 @@ function genreTile(g) {
   return tile;
 }
 
-/* Genre-Seite: alle Alben des Genres, nach Künstler sortiert (browseStack-Eintrag {kind:'genre', genre}) */
+/* Genre-Seite (browseStack-Eintrag {kind:'genre', genre, sub, all}): gibt es Unterstile, zuerst deren Kacheln mit „Alle“
+   davor, sonst (und nach der Wahl) die Alben, nach Künstler sortiert; sub: nur Alben mit diesem Unterstil */
 function browseGenre(e, seq) {
   tagGetJson('/genrealbums?g=' + encodeURIComponent(e.genre)).then(function(r){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    var list = (r && r.albums) || [];
+    var list = (r && r.albums) || [], subs = (r && r.subs) || [];
+    if (list.length && subs.length && !e.sub && !e.all) return genreSubTiles(e, list, subs);
+    if (e.sub) list = list.filter(function(a){ return (a.st || []).indexOf(e.sub) >= 0; });
     if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.noAlbums'))); return; }
     browseBody.appendChild(browseHeading(T('disc.albums', {n: list.length})));
     list.forEach(function(a){
@@ -79,6 +92,22 @@ function browseGenre(e, seq) {
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     browseBody.appendChild(browseNote(T('genre.offline')));
   });
+}
+
+function genreSubTiles(e, list, subs) {
+  var grid = histEl('div', 'gGrid');
+  function tile(title, n, art, next) {
+    var t = histEl('div', 'dTile');
+    t.appendChild(histImg(art));
+    t.appendChild(histEl('div', 'dTi', title));
+    t.appendChild(histEl('div', 'dAr', T('disc.albums', {n: n})));
+    t.addEventListener('click', function(){ browseStack.push(next); browseRender(); });
+    grid.appendChild(t);
+  }
+  tile(T('genre.all'), list.length, histAlbumArt(list[0].ar, list[0].al, list[0].dir), {kind: 'genre', genre: e.genre, all: true});
+  subs.forEach(function(x){ tile(x.s, x.n, histAlbumArt(x.ar, x.al, x.dir), {kind: 'genre', genre: e.genre, sub: x.s}); });
+  browseBody.appendChild(grid);
+  browseBody.appendChild(browseNote(T('genre.subsHint')));
 }
 
 function genreOpen(g) {
