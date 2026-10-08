@@ -111,7 +111,7 @@ function browseRender() {
   browseTitle.textContent = e.kind === 'artist' ? e.artist : (e.kind === 'playlist' ? e.name : e.album);
   browseBody.scrollTop = 0;
   while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-  browseBody.appendChild(browseNote('Laden…'));
+  browseBody.appendChild(browseNote(T('browse.loading')));
   if (e.kind === 'artist') browseArtist(e, seq);
   else if (e.kind === 'playlist') browsePlaylist(e, seq);
   else browseAlbum(e, seq);
@@ -200,7 +200,7 @@ function browseArtist(e, seq) {
     });
     var pageTracks = all.filter(function(it){ return it.uri && it.title && !/^folder/.test(it.type || '') && it.type === 'song'; });   /* z. B. Top-Titel bei TIDAL/Qobuz */
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    if (!albums.length && !pageTracks.length && isStream) { browseBody.appendChild(browseNote('Keine Alben gefunden')); return; }
+    if (!albums.length && !pageTracks.length && isStream) { browseBody.appendChild(browseNote(T('browse.noAlbums'))); return; }
 
     var photo = document.createElement('img');      /* Künstlerfoto vom Tag-Dienst (Deezer); ohne Foto fällt es weg */
     photo.id = 'browseArtistPhoto';
@@ -214,7 +214,7 @@ function browseArtist(e, seq) {
       head.id = 'browseArtistHead';
       head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
       var lbl = document.createElement('div');
-      lbl.className = 'bAlbum'; lbl.textContent = 'Alle abspielen';
+      lbl.className = 'bAlbum'; lbl.textContent = T('browse.playAll');
       head.appendChild(lbl);
       head.appendChild(tagArtistButton(e.artist));    /* Tags aller lokalen Titel des Künstlers bearbeiten */
       head.addEventListener('click', function(){
@@ -223,10 +223,10 @@ function browseArtist(e, seq) {
       browseBody.appendChild(head);
     }
 
-    var albumHead = browseHeading('Alben');
+    var albumHead = browseHeading(T('browse.albums'));
     albumHead.style.display = 'none';
     browseBody.appendChild(albumHead);
-    if (!albums.length && !isStream) browseBody.appendChild(browseNote('Keine Alben in der Sammlung gefunden'));
+    if (!albums.length && !isStream) browseBody.appendChild(browseNote(T('browse.noAlbumsLocal')));
 
     albums.forEach(function(al){
       var row = document.createElement('div');
@@ -254,7 +254,7 @@ function browseArtist(e, seq) {
     function addTitles(list, showAlbum) {
       if (!list.length || seq !== browseSeq) return;
       albumHead.style.display = '';                   /* "Alben" erst anzeigen, wenn darunter "Titel" folgt */
-      browseBody.appendChild(browseHeading('Titel'));
+      browseBody.appendChild(browseHeading(T('browse.tracks')));
       list.forEach(function(t){ browseBody.appendChild(browseTrackRow(t, e, showAlbum)); });
     }
     if (isStream) addTitles(pageTracks, true);
@@ -262,7 +262,7 @@ function browseArtist(e, seq) {
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    browseBody.appendChild(browseNote('Fehler beim Laden'));
+    browseBody.appendChild(browseNote(T('browse.loadError')));
   });
 }
 
@@ -285,7 +285,7 @@ function browseAlbum(e, seq) {
     var info = (j && j.navigation && j.navigation.info) || {};
     var tracks = browseItems(j).filter(function(it){ return it.uri && !/^folder/.test(it.type || ''); });
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    if (!tracks.length) { browseBody.appendChild(browseNote('Keine Titel gefunden')); return; }
+    if (!tracks.length) { browseBody.appendChild(browseNote(T('browse.noTracks'))); return; }
 
     var art = info.albumart || e.albumart || tracks[0].albumart || (e.album === curAlbum ? lastArt : '');
     var head = document.createElement('div');
@@ -302,7 +302,7 @@ function browseAlbum(e, seq) {
     meta.appendChild(ti); meta.appendChild(sub);
     var play = document.createElement('div');
     play.id = 'browsePlayAll';
-    play.title = 'Ganzes Album abspielen';
+    play.title = T('browse.playAlbum');
     play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>';
     play.addEventListener('click', function(){
       browsePlay({uri:e.uri, service:info.service || e.service || 'mpd', type:'folder', title:e.album, artist:e.artist});
@@ -340,11 +340,11 @@ function browseAlbum(e, seq) {
       });
       browseBody.appendChild(row);
     });
-    browseBody.appendChild(browseNote('Tippen: Album ab diesem Titel'));
+    browseBody.appendChild(browseNote(T('browse.hintAlbum')));
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    browseBody.appendChild(browseNote('Fehler beim Laden'));
+    browseBody.appendChild(browseNote(T('browse.loadError')));
   });
 }
 
@@ -374,7 +374,7 @@ function browsePlaylist(e, seq) {
     if (seq !== browseSeq) return;
     var tracks = browseItems(j).filter(function(it){ return it.uri && !/^folder/.test(it.type || ''); });
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    if (!tracks.length) { browseBody.appendChild(browseNote('Playlist ist leer')); return; }
+    if (!tracks.length) { browseBody.appendChild(browseNote(T('browse.playlistEmpty'))); return; }
 
     var tile = document.createElement('div');        /* Kachel aus den Künstlerfotos, wie in der Playlistenliste */
     plTileDraw(tile, plTileArtists(tracks));
@@ -385,8 +385,8 @@ function browsePlaylist(e, seq) {
     head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
     var lbl = document.createElement('div');
     lbl.className = 'sMeta';
-    var t1 = document.createElement('div'); t1.className = 'sTitle bAlbum'; t1.textContent = 'Playlist abspielen';
-    var t2 = document.createElement('div'); t2.className = 'sSub'; t2.textContent = tracks.length + ' Titel';
+    var t1 = document.createElement('div'); t1.className = 'sTitle bAlbum'; t1.textContent = T('browse.playPlaylist');
+    var t2 = document.createElement('div'); t2.className = 'sSub'; t2.textContent = T('browse.trackCount', {n: tracks.length});
     lbl.appendChild(t1); lbl.appendChild(t2);
     head.appendChild(lbl);
     head.addEventListener('click', function(){ playlistPlay(e, tracks, 0); });
@@ -415,11 +415,11 @@ function browsePlaylist(e, seq) {
       row.addEventListener('click', function(){ playlistPlay(e, tracks, i); });
       browseBody.appendChild(row);
     });
-    browseBody.appendChild(browseNote('Tippen: Playlist ab diesem Titel'));
+    browseBody.appendChild(browseNote(T('browse.hintPlaylist')));
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
-    browseBody.appendChild(browseNote('Fehler beim Laden'));
+    browseBody.appendChild(browseNote(T('browse.loadError')));
   });
 }
 

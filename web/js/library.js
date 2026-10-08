@@ -5,7 +5,7 @@ function renderPlList(items, container, clickFn, tiles) {   /* tiles: Playlisten
   while (container.firstChild) container.removeChild(container.firstChild);
   if (!items.length) {
     var empty = document.createElement('div');
-    empty.className = 'plHint'; empty.textContent = 'Keine Einträge gefunden';
+    empty.className = 'plHint'; empty.textContent = T('pl.empty');
     container.appendChild(empty);
     return;
   }
@@ -109,7 +109,7 @@ function plTileLater(icon, uri) {
 function loadPlaylists() {
   while (playlistResults.firstChild) playlistResults.removeChild(playlistResults.firstChild);
   var hint = document.createElement('div');
-  hint.className = 'plHint'; hint.textContent = 'Laden…';
+  hint.className = 'plHint'; hint.textContent = T('pl.loading');
   playlistResults.appendChild(hint);
 
   fetch('/api/v1/browse?uri=playlists')
@@ -123,7 +123,7 @@ function loadPlaylists() {
     }).catch(function(){
       while (playlistResults.firstChild) playlistResults.removeChild(playlistResults.firstChild);
       var err = document.createElement('div');
-      err.className = 'plHint'; err.textContent = 'Fehler beim Laden';
+      err.className = 'plHint'; err.textContent = T('pl.loadError');
       playlistResults.appendChild(err);
     });
 }
@@ -146,7 +146,7 @@ function radioLogos(items, container) {
 function loadMyRadio() {
   while (radioPanel.firstChild) radioPanel.removeChild(radioPanel.firstChild);
   var hint = document.createElement('div');
-  hint.className = 'plHint'; hint.textContent = 'Laden…';
+  hint.className = 'plHint'; hint.textContent = T('pl.loading');
   radioPanel.appendChild(hint);
 
   fetch('/api/v1/browse?uri=' + encodeURIComponent('radio/favourites'))
@@ -168,14 +168,14 @@ function loadMyRadio() {
     }).catch(function(){
       while (radioPanel.firstChild) radioPanel.removeChild(radioPanel.firstChild);
       var err = document.createElement('div');
-      err.className = 'plHint'; err.textContent = 'Fehler beim Laden';
+      err.className = 'plHint'; err.textContent = T('pl.loadError');
       radioPanel.appendChild(err);
     });
 }
 
 /* Reiter 0 Stimmungs-Mix (moodmix.js, nur mit Tag-Dienst sichtbar), 1 Playlisten, 2 Radio;
    der zuletzt gewählte gilt beim nächsten Öffnen wieder */
-var PL_TABS = [['Stimmungs-Mix', 'mixBody'], ['Playlisten', 'playlistResults'], ['Radio', 'radioPanel']];
+var PL_TABS = [[T('pl.tab.mix'), 'mixBody'], [T('pl.tab.playlists'), 'playlistResults'], [T('pl.tab.radio'), 'radioPanel']];
 try { plTabActive = +(localStorage.getItem('plTab') || 0) || 0; } catch (e) { plTabActive = 0; }
 function plShowTab(n) {
   if (!(n >= 0 && n < PL_TABS.length)) n = 0;
@@ -235,8 +235,8 @@ function searchMessage(text) {
 function doSearch(q) {
   searchQuery = q;
   var seq = ++searchSeq;
-  searchMessage('Suche…');
-  var slow = setTimeout(function(){ if (seq === searchSeq) searchMessage(streamsOn().length ? 'Suche läuft… (Warte auf ' + streamNames() + ')' : 'Suche läuft…'); }, SEARCH_SLOW_MS);
+  searchMessage(T('search.searching'));
+  var slow = setTimeout(function(){ if (seq === searchSeq) searchMessage(streamsOn().length ? T('search.slowWaiting', {services: streamNames()}) : T('search.slow')); }, SEARCH_SLOW_MS);
   withTimeout(fetch('/api/v1/search?query=' + encodeURIComponent(q)).then(function(r){ return r.json(); }), SEARCH_TIMEOUT_MS)
     .then(function(j){
       clearTimeout(slow);
@@ -247,7 +247,7 @@ function doSearch(q) {
     }).catch(function(){
       clearTimeout(slow);
       if (seq !== searchSeq) return;
-      searchMessage('Keine Antwort von Volumio' + (streamsOn().length ? ' (' + streamNames() + '?)' : '') + '. Bitte erneut versuchen.');
+      searchMessage(streamsOn().length ? T('search.noAnswerStreams', {services: streamNames()}) : T('search.noAnswer'));
     });
 }
 
@@ -301,15 +301,15 @@ function renderSearchResults() {
     var hint = document.createElement('div');
     hint.className = 'sHint';
     var none = !searchShowLocal && !streamsOn().some(function(s){ return s.show; });
-    hint.textContent = none ? 'Lokal oder ' + streamsOn().map(function(s){ return s.name; }).join(' oder ') + ' ankreuzen'
-                     : (searchQuery ? 'Keine Ergebnisse' : 'Mind. 2 Zeichen eingeben und Los tippen');
+    hint.textContent = none ? T('search.pickSource', {services: streamsOn().map(function(s){ return s.name; }).join(T('search.or'))})
+                     : (searchQuery ? T('search.noResults') : T('search.minChars'));
     searchResults.appendChild(hint);
     return;
   }
 
   if (list.length) {
     var lh = document.createElement('div');
-    lh.className = 'infoSection'; lh.textContent = 'Lokal';
+    lh.className = 'infoSection'; lh.textContent = T('search.local');
     searchResults.appendChild(lh);
   }
   list.forEach(function(it){ searchResults.appendChild(searchRow(it, false)); });
@@ -321,7 +321,7 @@ function renderSearchResults() {
   });
 
   var hint = document.createElement('div');
-  hint.className = 'sHint'; hint.textContent = searchCat === 'songs' ? 'Tippen zum Abspielen' : 'Tippen zum Öffnen';
+  hint.className = 'sHint'; hint.textContent = searchCat === 'songs' ? T('search.tapPlay') : T('search.tapOpen');
   searchResults.appendChild(hint);
 }
 

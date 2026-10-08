@@ -210,7 +210,7 @@ function ask(payload) {
     }).catch(function(){ return null; })
     .then(function(res){                       /* nichts von Volumio (Volumio 4 ohne Abo): Texte selbst holen (infotext.js) */
       if (res || !/^story/.test(payload.mode) || typeof infoFallback !== 'function') return res;
-      return withTimeout(infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album), 10000)
+      return withTimeout(infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album, LANG), 10000)
         .catch(function(){ return null; });
     });
 }

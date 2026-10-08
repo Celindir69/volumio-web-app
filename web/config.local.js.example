@@ -3,6 +3,10 @@ window.APP_CONFIG.LASTFM_KEY = 'DEIN_LASTFM_SCHLUESSEL';
 /* Scrobbeln (Verlauf): "Shared secret" von https://www.last.fm/api/accounts:
 window.APP_CONFIG.LASTFM_SECRET = 'DEIN_SHARED_SECRET';
 */
+/* Sprache fest einstellen (sonst nach der Gerätesprache); eigene Sprachdatei web/lang/fr.js zusätzlich anmelden:
+window.APP_CONFIG.LANGUAGE = 'en';
+window.APP_CONFIG.LANGUAGES = ['de', 'en', 'fr'];
+*/
 /* Rotel-Verstärker (rotel/rotel-bridge.js liest die Adresse aus dieser Datei; danach den Dienst neu starten):
 window.APP_CONFIG.ROTEL = true;
 window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';

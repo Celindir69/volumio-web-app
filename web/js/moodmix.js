@@ -4,7 +4,7 @@
 var mixBody    = document.getElementById('mixBody');
 var MIX_CORE   = ['relaxed', 'dreamy', 'uplifting', 'melancholic', 'dark', 'reflective', 'happy', 'romantic'];
 var MIX_MORE   = ['calm', 'atmospheric', 'emotional', 'epic', 'intense', 'aggressive', 'sensual', 'sad'];
-var MIX_DISC   = [[0, 'Favoriten'], [0.5, 'Ausgewogen'], [1, 'Versteckte Perlen']];
+var MIX_DISC   = [[0, T('mix.disc.favorites')], [0.5, T('mix.disc.balanced')], [1, T('mix.disc.hidden')]];
 var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', n: 50, disc: 0.5};
 var MIX_BPM    = [60, 180, 5];                 /* Tempo-Regler: Ende links/rechts = offen (0) */
 var mixState   = {view: 'pick', fine: false, more: false, styles: null, result: null};
@@ -23,7 +23,7 @@ function mixQuery() {
 function mixClear() { while (mixBody.firstChild) mixBody.removeChild(mixBody.firstChild); }
 function mixDuration(sec) {
   var m = Math.round(sec / 60);
-  return m < 60 ? m + ' Min.' : Math.floor(m / 60) + ' Std. ' + (m % 60) + ' Min.';
+  return m < 60 ? T('mix.duration.min', {m: m}) : T('mix.duration.hm', {h: Math.floor(m / 60), m: m % 60});
 }
 function mixEnergyDots(e) {
   if (!e) return '';
@@ -55,7 +55,7 @@ function mixChip(label, on, onClick, cls) {
 }
 
 function mixPick() {
-  mixBody.appendChild(histEl('div', 'mxAsk', 'Was möchtest du hören?'));
+  mixBody.appendChild(histEl('div', 'mxAsk', T('mix.ask')));
   var chips = histEl('div', 'mxChips');
   function toggle(m) {
     var i = mixCrit.moods.indexOf(m);
@@ -67,18 +67,18 @@ function mixPick() {
   MIX_CORE.concat(more ? MIX_MORE : []).forEach(function(m){
     chips.appendChild(mixChip((mixCrit.moods.indexOf(m) >= 0 ? '✓ ' : '') + mixName(m), mixCrit.moods.indexOf(m) >= 0, function(){ toggle(m); }));
   });
-  if (!more) chips.appendChild(mixChip('Weitere …', false, function(){ mixState.more = true; mixRender(); }, 'mxMore'));
+  if (!more) chips.appendChild(mixChip(T('mix.more'), false, function(){ mixState.more = true; mixRender(); }, 'mxMore'));
   mixBody.appendChild(chips);
 
   /* Energie als Bereich 1–5 */
-  mixBody.appendChild(histEl('div', 'mxLabel', 'Energie'));
-  mixDual(mixBody, 1, 5, 1, mixCrit.emin, mixCrit.emax, 'ruhig', 'kraftvoll', function(a, b){
-    return a === 1 && b === 5 ? 'alle' : a === b ? String(a) : a + '–' + b;
+  mixBody.appendChild(histEl('div', 'mxLabel', T('mix.energy')));
+  mixDual(mixBody, 1, 5, 1, mixCrit.emin, mixCrit.emax, T('mix.energy.low'), T('mix.energy.high'), function(a, b){
+    return a === 1 && b === 5 ? T('mix.all') : a === b ? String(a) : a + '–' + b;
   }, function(a, b){ mixCrit.emin = a; mixCrit.emax = b; mixCount(); });
 
   /* Feinabstimmung */
   var fold = histEl('div', 'hFold mxFold' + (mixState.fine ? ' open' : ''));
-  fold.appendChild(histEl('span', '', 'Feinabstimmung'));
+  fold.appendChild(histEl('span', '', T('mix.fine')));
   var fine = histEl('div', 'mxFine');
   fine.style.display = mixState.fine ? '' : 'none';
   fold.addEventListener('click', function(){
@@ -88,7 +88,7 @@ function mixPick() {
   });
   mixBody.appendChild(fold); mixBody.appendChild(fine);
 
-  fine.appendChild(histEl('div', 'mxLabel', 'Stil'));
+  fine.appendChild(histEl('div', 'mxLabel', T('mix.style')));
   var styleBox = histEl('div', 'mxChips mxStyles');
   fine.appendChild(styleBox);
   var matchBox = histEl('div', 'mxSeg');
@@ -100,26 +100,26 @@ function mixPick() {
   var tempo = histEl('div', 'mxTempo');
   tempo.style.display = mixState.hasBpm || mixCrit.bmin || mixCrit.bmax ? '' : 'none';
   mixState.tempo = tempo;
-  tempo.appendChild(histEl('div', 'mxLabel', 'Tempo'));
+  tempo.appendChild(histEl('div', 'mxLabel', T('mix.tempo')));
   var bl = MIX_BPM[0], bh = MIX_BPM[1];
-  mixDual(tempo, bl, bh, MIX_BPM[2], mixCrit.bmin || bl, mixCrit.bmax || bh, 'langsam', 'schnell', function(a, b){
-    if (a === bl && b === bh) return 'alle';
-    if (a === bl) return 'bis ' + b + ' BPM';
-    if (b === bh) return 'ab ' + a + ' BPM';
-    return a === b ? a + ' BPM' : a + '–' + b + ' BPM';
+  mixDual(tempo, bl, bh, MIX_BPM[2], mixCrit.bmin || bl, mixCrit.bmax || bh, T('mix.tempo.slow'), T('mix.tempo.fast'), function(a, b){
+    if (a === bl && b === bh) return T('mix.all');
+    if (a === bl) return T('mix.bpm.max', {b: b});
+    if (b === bh) return T('mix.bpm.min', {a: a});
+    return a === b ? T('mix.bpm', {a: a}) : T('mix.bpm.range', {a: a, b: b});
   }, function(a, b){ mixCrit.bmin = a === bl ? 0 : a; mixCrit.bmax = b === bh ? 0 : b; mixCount(); });
   fine.appendChild(tempo);
 
-  fine.appendChild(histEl('div', 'mxLabel', 'Länge'));
-  fine.appendChild(mixSeg([[25, '25 Titel'], [50, '50 Titel'], [100, '100 Titel']], mixCrit.n, function(v){ mixCrit.n = v; }));
-  fine.appendChild(histEl('div', 'mxLabel', 'Entdeckungsgrad'));
+  fine.appendChild(histEl('div', 'mxLabel', T('mix.length')));
+  fine.appendChild(mixSeg([[25, T('mix.tracks', {n: 25})], [50, T('mix.tracks', {n: 50})], [100, T('mix.tracks', {n: 100})]], mixCrit.n, function(v){ mixCrit.n = v; }));
+  fine.appendChild(histEl('div', 'mxLabel', T('mix.discovery')));
   fine.appendChild(mixSeg(MIX_DISC, mixCrit.disc, function(v){ mixCrit.disc = v; }));
-  fine.appendChild(histEl('div', 'mxHint', 'Nach deinem Verlauf: oft Gehörtes, eine Mischung oder lange nicht Gehörtes.'));
+  fine.appendChild(histEl('div', 'mxHint', T('mix.discovery.hint')));
 
   var hits = histEl('div', 'mxHits', ' ');
   mixState.hits = hits;
   mixBody.appendChild(hits);
-  var go = histEl('button', 'mxGo', 'Mix erstellen');
+  var go = histEl('button', 'mxGo', T('mix.build'));
   go.addEventListener('click', mixBuild);
   mixState.go = go;
   mixBody.appendChild(go);
@@ -180,7 +180,7 @@ function mixStyles() {
   while (mb.firstChild) mb.removeChild(mb.firstChild);
   var list = mixState.styles || [];
   mixCrit.styles.forEach(function(s){ if (!list.some(function(x){ return x[0] === s; })) list = list.concat([[s, 0]]); });
-  if (!list.length) { box.appendChild(histEl('div', 'mxHint', 'Keine Stile bei dieser Auswahl.')); return; }
+  if (!list.length) { box.appendChild(histEl('div', 'mxHint', T('mix.noStyles'))); return; }
   list.slice(0, 16).forEach(function(x){
     var on = mixCrit.styles.indexOf(x[0]) >= 0;
     box.appendChild(mixChip((on ? '✓ ' : '') + x[0], on, function(){
@@ -190,7 +190,7 @@ function mixStyles() {
     }, 'mxSmall'));
   });
   if (mixCrit.styles.length > 1) {
-    mb.appendChild(mixSeg([['any', 'Mindestens einer'], ['all', 'Alle gewählten']], mixCrit.match, function(v){ mixCrit.match = v; }));
+    mb.appendChild(mixSeg([['any', T('mix.match.any')], ['all', T('mix.match.all')]], mixCrit.match, function(v){ mixCrit.match = v; }));
   }
 }
 
@@ -209,21 +209,21 @@ function mixCount() {
       var h = mixState.hits;
       h.className = 'mxHits';
       if (!r.rated) {
-        h.textContent = 'Noch keine Stimmungs-Tags. Der Tag-Dienst sammelt sie bei Last.fm, solange nichts spielt; den Fortschritt zeigt der Bibliotheks-Check.';
+        h.textContent = T('mix.hits.unrated');
         mixState.go.disabled = true;
         return;
       }
       mixState.go.disabled = false;
-      if (!r.count) { h.textContent = 'Keine Titel passen genau. Der Mix nimmt dann Ähnliches (' + (mixCrit.bmin || mixCrit.bmax ? 'Energie und Tempo' : 'Energie') + ' etwas weiter, Stile egal).'; h.className += ' warn'; }
-      else if (r.count < Math.min(mixCrit.n, 20)) { h.textContent = 'Nur ' + checkNum(r.count) + ' Titel passen genau; der Mix wird mit Ähnlichem aufgefüllt.'; h.className += ' warn'; }
-      else if (r.count < mixCrit.n) h.textContent = checkNum(r.count) + ' Titel passen; der Mix wird entsprechend kürzer.';
-      else h.textContent = 'Ca. ' + checkNum(r.count) + ' Titel passen.';
-    }).catch(function(){ if (seq === mixCountSeq && mixState.hits) mixState.hits.textContent = 'Tag-Dienst nicht erreichbar.'; });
+      if (!r.count) { h.textContent = mixCrit.bmin || mixCrit.bmax ? T('mix.hits.noneTempo') : T('mix.hits.none'); h.className += ' warn'; }
+      else if (r.count < Math.min(mixCrit.n, 20)) { h.textContent = T('mix.hits.few', {n: r.count}); h.className += ' warn'; }
+      else if (r.count < mixCrit.n) h.textContent = T('mix.hits.short', {n: r.count});
+      else h.textContent = T('mix.hits.ok', {n: r.count});
+    }).catch(function(){ if (seq === mixCountSeq && mixState.hits) mixState.hits.textContent = T('mix.offline'); });
   }, 200);
 }
 
 function mixBuild() {
-  if (mixState.go) { mixState.go.disabled = true; mixState.go.textContent = 'Wird erstellt …'; }
+  if (mixState.go) { mixState.go.disabled = true; mixState.go.textContent = T('mix.building'); }
   tagGetJson('/moodmix?' + mixQuery()).then(function(r){
     if (!r || !r.ok) throw new Error('kein Ergebnis');
     mixState.result = r;
@@ -231,8 +231,8 @@ function mixBuild() {
     mixRender();
     mixBody.scrollTop = 0;
   }).catch(function(){
-    if (mixState.go) { mixState.go.disabled = false; mixState.go.textContent = 'Mix erstellen'; }
-    if (mixState.hits) mixState.hits.textContent = 'Der Mix konnte nicht erstellt werden (Tag-Dienst nicht erreichbar).';
+    if (mixState.go) { mixState.go.disabled = false; mixState.go.textContent = T('mix.build'); }
+    if (mixState.hits) mixState.hits.textContent = T('mix.buildFailed');
   });
 }
 
@@ -240,10 +240,10 @@ function mixBuild() {
 
 function mixSummary() {
   var parts = mixCrit.moods.map(mixName);
-  if (!parts.length) parts.push('Alle Stimmungen');
-  parts.push(mixCrit.emin === 1 && mixCrit.emax === 5 ? 'jede Energie' : 'Energie\u00a0' + (mixCrit.emin === mixCrit.emax ? mixCrit.emin : mixCrit.emin + '\u2060–\u2060' + mixCrit.emax));
-  if (mixCrit.bmin || mixCrit.bmax) parts.push(!mixCrit.bmax ? 'ab\u00a0' + mixCrit.bmin + '\u00a0BPM' : !mixCrit.bmin ? 'bis\u00a0' + mixCrit.bmax + '\u00a0BPM' :
-    mixCrit.bmin + '\u2060–\u2060' + mixCrit.bmax + '\u00a0BPM');
+  if (!parts.length) parts.push(T('mix.sum.allMoods'));
+  parts.push(mixCrit.emin === 1 && mixCrit.emax === 5 ? T('mix.sum.anyEnergy') : T('mix.sum.energy', {e: mixCrit.emin === mixCrit.emax ? mixCrit.emin : mixCrit.emin + '\u2060–\u2060' + mixCrit.emax}));
+  if (mixCrit.bmin || mixCrit.bmax) parts.push(!mixCrit.bmax ? T('mix.sum.bpmMin', {a: mixCrit.bmin}) : !mixCrit.bmin ? T('mix.sum.bpmMax', {b: mixCrit.bmax}) :
+    T('mix.sum.bpmRange', {a: mixCrit.bmin, b: mixCrit.bmax}));
   return parts.join(' · ');
 }
 
@@ -254,31 +254,31 @@ function mixPreview() {
   info.appendChild(histEl('div', 'mxSumT', mixSummary()));
   if (mixCrit.styles.length) info.appendChild(histEl('div', 'mxSumS', mixCrit.styles.join(mixCrit.match === 'all' ? ' + ' : ' · ')));
   var total = tracks.reduce(function(s, x){ return s + (x.d || 0); }, 0);
-  info.appendChild(histEl('div', 'mxSumN', tracks.length + ' Titel' + (total ? ' · ' + mixDuration(total) : '')));
+  info.appendChild(histEl('div', 'mxSumN', T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : '')));
   head.appendChild(info);
-  var edit = histEl('div', 'mxEdit', 'Ändern');
+  var edit = histEl('div', 'mxEdit', T('mix.edit'));
   edit.addEventListener('click', function(){ mixState.view = 'pick'; mixRender(); });
   head.appendChild(edit);
   mixBody.appendChild(head);
 
-  var wide = mixCrit.bmin || mixCrit.bmax ? 'Energie und Tempo' : 'Energie';
+  var wide = mixCrit.bmin || mixCrit.bmax;              /* Energie und Tempo gelockert, sonst nur Energie */
   if (r.level) mixBody.appendChild(histEl('div', 'mxHits warn', r.level === 1
-    ? 'Nicht genug genaue Treffer: ' + wide + ' etwas weiter gefasst.'
-    : 'Nicht genug genaue Treffer: ' + wide + ' weiter gefasst und Stile nicht berücksichtigt.'));
+    ? (wide ? T('mix.level1.tempo') : T('mix.level1'))
+    : (wide ? T('mix.level2.tempo') : T('mix.level2'))));
   if (!tracks.length) {
-    mixBody.appendChild(histEl('div', 'mxHits', 'Für diese Auswahl gibt es keine Titel. Versuche eine andere Stimmung oder einen weiteren Energie-Bereich.'));
+    mixBody.appendChild(histEl('div', 'mxHits', T('mix.empty')));
     return;
   }
 
   var bar = histEl('div', 'mxBar');
-  var play = histEl('button', 'mxGo mxPlay', '▶  Mix abspielen');
+  var play = histEl('button', 'mxGo mxPlay', '▶  ' + T('mix.play'));
   play.addEventListener('click', function(){ mixPlay(tracks, true); });
   var reroll = histEl('button', 'mxIcon', '');
-  reroll.title = 'Neu mischen';
+  reroll.title = T('mix.reroll');
   reroll.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
   reroll.addEventListener('click', function(){ reroll.classList.add('spin'); mixBuild(); });
   var add = histEl('button', 'mxIcon', '');
-  add.title = 'An die Warteschlange anhängen';
+  add.title = T('mix.addToQueue');
   add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14 10H3v2h11v-2zm0-4H3v2h11V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM3 16h7v-2H3v2z"/></svg>';
   add.addEventListener('click', function(){ mixPlay(tracks, false); });
   bar.appendChild(play); bar.appendChild(reroll); bar.appendChild(add);
@@ -295,12 +295,12 @@ function mixPreview() {
     meta.appendChild(histEl('div', 'sSub', x.ar));
     var why = x.mood.map(mixName).concat(x.style.slice(0, 2));
     if (x.bpm) why.push(x.bpm + '\u00a0BPM');
-    if (x.src === 'artist') why.push('über Künstler');
+    if (x.src === 'artist') why.push(T('mix.why.artist'));
     meta.appendChild(histEl('div', 'mxWhy', why.join(' · ')));
     row.appendChild(meta);
     row.appendChild(histEl('div', 'mxDots', mixEnergyDots(x.energy)));
     var del = histEl('div', 'mxDel');
-    del.title = 'Aus dem Mix nehmen';
+    del.title = T('mix.remove');
     del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>';
     del.addEventListener('click', function(e){
       e.stopPropagation();

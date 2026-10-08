@@ -51,7 +51,14 @@ function textTitle(s) {
 
 function textLower(s)  { return String(s || '').toLowerCase(); }
 function textUpper(s)  { return String(s || '').toUpperCase(); }
-function textSpaces(s) { return String(s || '').replace(/\s+/g, ' ').trim(); }
+/* Text zum Sprachschlüssel (i18n.js); im Test unter Node gibt es kein T(), dann der deutsche Text */
+function textT(key, de, vars) {
+  if (typeof T === 'function') return T(key, vars);
+  return !vars ? de : de.replace(/\{(\w+)\}/g, function(all, k){ return vars[k] === undefined ? all : vars[k]; });
+}
+
+function textSpaces(s) {
+ return String(s || '').replace(/\s+/g, ' ').trim(); }
 
 /* einfacher Text, alle Vorkommen; Groß-/Kleinschreibung wird beachtet */
 function textReplace(s, find, repl) {
@@ -73,12 +80,12 @@ function textPattern(pattern) {
   for (var i = 0; i < parts.length; i++) {
     if (i % 2 === 0) { lazy += textEscRe(parts[i]); greedy += textEscRe(parts[i]); continue; }
     var key = parts[i].toLowerCase();
-    if (!TEXT_PLACEHOLDERS.hasOwnProperty(key)) return {error: 'unbekannter Platzhalter %' + parts[i] + '%'};
-    if (i > 1 && parts[i - 1] === '') return {error: 'zwischen zwei Platzhaltern muss ein Trennzeichen stehen'};
+    if (!TEXT_PLACEHOLDERS.hasOwnProperty(key)) return {error: textT('textfn.err.unknown', 'unbekannter Platzhalter {name}', {name: '%' + parts[i] + '%'})};
+    if (i > 1 && parts[i - 1] === '') return {error: textT('textfn.err.separator', 'zwischen zwei Platzhaltern muss ein Trennzeichen stehen')};
     names.push(TEXT_PLACEHOLDERS[key]);
     lazy += '(.+?)'; greedy += '(.+)';
   }
-  if (!names.some(function(n){ return n; })) return {error: 'Muster braucht mindestens einen Platzhalter wie %TITLE%'};
+  if (!names.some(function(n){ return n; })) return {error: textT('textfn.err.none', 'Muster braucht mindestens einen Platzhalter wie %TITLE%')};
   return {names: names, lazy: new RegExp('^\\s*' + lazy + '\\s*$'), greedy: new RegExp('^\\s*' + greedy + '\\s*$')};
 }
 
@@ -98,11 +105,11 @@ function textSplit(value, pat) {
 
 /* Liste für Menüs: [Kennung, Beschriftung, Funktion] */
 var TEXT_FUNCS = [
-  ['words', 'Wortanfänge groß', textWords],
-  ['title', 'Title Case (englisch)', textTitle],
-  ['lower', 'alles klein', textLower],
-  ['upper', 'ALLES GROSS', textUpper],
-  ['spaces', 'Leerzeichen bereinigen', textSpaces]
+  ['words', textT('textfn.func.words', 'Wortanfänge groß'), textWords],
+  ['title', textT('textfn.func.title', 'Title Case (englisch)'), textTitle],
+  ['lower', textT('textfn.func.lower', 'alles klein'), textLower],
+  ['upper', textT('textfn.func.upper', 'ALLES GROSS'), textUpper],
+  ['spaces', textT('textfn.func.spaces', 'Leerzeichen bereinigen'), textSpaces]
 ];
 function textFunc(id) {
   for (var i = 0; i < TEXT_FUNCS.length; i++) if (TEXT_FUNCS[i][0] === id) return TEXT_FUNCS[i][2];

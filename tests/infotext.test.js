@@ -14,7 +14,7 @@ t('Last.fm-Text säubern: Link und Lizenzhinweis weg, kurze Stummel zählen nich
 
 t('Künstler: Last.fm deutsch zuerst', function(){
   var urls = [];
-  return it.infoFallback(function(u){ urls.push(u); return res({artist: {bio: {content: LONG}}}); }, 'KEY', 'storyArtist', 'Massive Attack')
+  return it.infoFallback(function(u){ urls.push(u); return res({artist: {bio: {content: LONG}}}); }, 'KEY', 'storyArtist', 'Massive Attack', undefined, 'de')
     .then(function(r){
       assert.strictEqual(r.src, 'Last.fm');
       assert.ok(/Quelle: Last\.fm$/.test(r.value));
@@ -26,7 +26,7 @@ t('Künstler: Last.fm deutsch zuerst', function(){
 t('Album: Last.fm englisch, wenn es keinen deutschen Text gibt', function(){
   var urls = [];
   return it.infoFallback(function(u){ urls.push(u); return res(/lang=de/.test(u) ? {album: {}} : {album: {wiki: {summary: LONG}}}); },
-    'KEY', 'storyAlbum', 'Massive Attack', 'Mezzanine').then(function(r){
+    'KEY', 'storyAlbum', 'Massive Attack', 'Mezzanine', 'de').then(function(r){
       assert.strictEqual(urls.length, 2);
       assert.ok(/album=Mezzanine/.test(urls[1]) && !/lang=/.test(urls[1]));
       assert.ok(r.value.indexOf(LONG) === 0);
@@ -39,11 +39,38 @@ t('Künstler ohne Last.fm-Schlüssel: Wikipedia, Begriffsklärung und Fremdes ü
     urls.push(u);
     if (/de\.wikipedia/.test(u)) return res({type: 'disambiguation', extract: 'Air steht für …'});
     return res({type: 'standard', description: 'French music duo', extract: 'Air is a French music duo from Versailles, formed in 1995.'});
-  }, '', 'storyArtist', 'Air').then(function(r){
+  }, '', 'storyArtist', 'Air', undefined, 'de').then(function(r){
     assert.strictEqual(r.src, 'Wikipedia');
     assert.ok(/en\.wikipedia\.org\/api\/rest_v1\/page\/summary\/Air$/.test(urls[1]));
     return it.infoFallback(function(){ return res({type: 'standard', description: 'Gas', extract: 'Luft ist das Gasgemisch der Erdatmosphäre.'}); }, '', 'storyArtist', 'Luft');
   }).then(function(r){ assert.strictEqual(r, null); });
+});
+
+t('Sprache en: je Quelle nur eine Abfrage, ohne lang und nur en.wikipedia', function(){
+  var urls = [];
+  return it.infoFallback(function(u){ urls.push(u); return res({}); }, 'KEY', 'storyArtist', 'Nobody', undefined, 'en')
+    .then(function(r){
+      assert.strictEqual(r, null);
+      assert.strictEqual(urls.length, 2);
+      assert.ok(/audioscrobbler/.test(urls[0]) && !/lang=/.test(urls[0]));
+      assert.ok(/^https:\/\/en\.wikipedia\.org\//.test(urls[1]));
+      urls = [];
+      return it.infoFallback(function(u){ urls.push(u); return res({}); }, 'KEY', 'storyArtist', 'Nobody');   /* ohne lang = en */
+    }).then(function(){ assert.strictEqual(urls.length, 2); });
+});
+
+t('Sprache fr: erst Last.fm und Wikipedia französisch, dann beide englisch', function(){
+  var urls = [];
+  return it.infoFallback(function(u){
+    urls.push(u);
+    if (/en\.wikipedia/.test(u)) return res({type: 'standard', description: 'French music duo', extract: 'Air is a French music duo from Versailles, formed in 1995.'});
+    return res({});
+  }, 'KEY', 'storyArtist', 'Air', undefined, 'fr').then(function(r){
+    assert.strictEqual(urls.length, 4);
+    assert.ok(/audioscrobbler.*lang=fr/.test(urls[0]) && /^https:\/\/fr\.wikipedia\.org\//.test(urls[1]));
+    assert.ok(/audioscrobbler/.test(urls[2]) && !/lang=/.test(urls[2]) && /^https:\/\/en\.wikipedia\.org\//.test(urls[3]));
+    assert.strictEqual(r.src, 'Wikipedia');
+  });
 });
 
 t('Album ohne Schlüssel und Netzfehler: nichts', function(){

@@ -61,7 +61,7 @@ function loadQueue() {
 
       var trash = document.createElement('div');          /* Papierkorb für Maus und Trackpad (nur dort sichtbar, siehe CSS) */
       trash.className = 'qTrash';
-      trash.title = 'Aus Warteschlange entfernen';
+      trash.title = T('queue.remove');
       trash.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
       trash.addEventListener('click', function(e){
         e.stopPropagation();
@@ -206,8 +206,8 @@ function loadQueue() {
       var hint = document.createElement('div');
       hint.className = 'qHint';
       hint.textContent = finePointer
-        ? 'Klicken: Abspielen  ·  Papierkorb: Entfernen  ·  Handle: Sortieren'
-        : 'tippen: Abspielen  ·  ← wischen: Löschen  ·  Handle: Sortieren';
+        ? T('queue.hintMouse')
+        : T('queue.hintTouch');
       queueList.appendChild(hint);
     }
     var cur = queueList.querySelector('.cur');

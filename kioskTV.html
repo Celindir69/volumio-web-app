@@ -793,7 +793,7 @@ function handleState(st) {
       show([
         {title: album,         data: res[0]},
         {title: artist,        data: res[1]},
-        {title: 'Mitwirkende', data: res[2]}
+        {title: /^de/i.test(navigator.language || '') ? 'Mitwirkende' : 'Credits', data: res[2]}   /* einziger Text der Seite: nach Gerätesprache */
       ]);
     });
 }

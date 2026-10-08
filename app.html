@@ -18,6 +18,10 @@
   document.write('<script src="web/config.js?t=' + Date.now() + '"><\/script>' +
                  '<script src="web/config.local.js?t=' + Date.now() + '" onerror="void 0"><\/script>');
 </script>
+<script>
+  /* Sprache wählen und Sprachdateien laden (web/js/i18n.js lädt web/lang/<code>.js nach) */
+  document.write('<script src="web/js/i18n.js?t=' + Date.now() + '"><\/script>');
+</script>
 </head>
 <body>
 
@@ -28,22 +32,22 @@
 <div id="toast"></div>
 
 <div id="topBar">
-  <div class="topBtn na" id="btnRotelPower" title="Rotel ein/aus">
+  <div class="topBtn na" id="btnRotelPower" title="Rotel ein/aus" data-i18n-title="html.rotelPower">
     <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
   </div>
   <div id="lyrShiftBar">                   <!-- Bühnenansicht: Lyrics früher/später, mittig über den Lyrics -->
-    <div class="topBtn lyrShift" id="btnLyrEarlier" data-d="-500" title="Lyrics früher">
+    <div class="topBtn lyrShift" id="btnLyrEarlier" data-d="-500" title="Lyrics früher" data-i18n-title="html.lyricsEarlier">
       <svg viewBox="0 0 24 24"><path d="M5 11h14v2H5z"/></svg>
     </div>
-    <div class="topBtn lyrShift" id="btnLyrLater" data-d="500" title="Lyrics später">
+    <div class="topBtn lyrShift" id="btnLyrLater" data-d="500" title="Lyrics später" data-i18n-title="html.lyricsLater">
       <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
     </div>
   </div>
   <div id="topRight">
-    <div class="topBtn" id="btnStage" title="Layout wechseln (Display mit Lyrics)">
+    <div class="topBtn" id="btnStage" title="Layout wechseln (Display mit Lyrics)" data-i18n-title="html.layout">
       <svg viewBox="0 0 24 24"><path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v12h7V6H4zm9 0v12h7V6h-7zM5 7h5v4H5V7zm0 5.5h5V14H5v-1.5zm9-5.5h5v1.5h-5V7zm0 3h5v1.5h-5V10zm0 3h5v1.5h-5V13z"/></svg>
     </div>
-    <div class="topBtn" id="btnVolumio" title="Volumio-Oberfläche">
+    <div class="topBtn" id="btnVolumio" title="Volumio-Oberfläche" data-i18n-title="html.volumioUi">
       <svg viewBox="0 0 24 24"><path d="M3 4h4.2l4.8 11.3L16.8 4H21l-7 16h-4L3 4z"/></svg>
     </div>
   </div>
@@ -118,11 +122,11 @@
 <div class="overlay" id="overlayLyrics">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <h2>Lyrics</h2>
-    <div id="lyrSync" title="Lyrics früher oder später (wird je Titel gemerkt)">
-      <button class="lyrShift" data-d="-500" aria-label="Lyrics früher">−</button>
-      <span id="lyrSyncVal" title="Tippen: zurück auf 0">sync</span>
-      <button class="lyrShift" data-d="500" aria-label="Lyrics später">+</button>
+    <h2 data-i18n="html.lyrics">Lyrics</h2>
+    <div id="lyrSync" title="Lyrics früher oder später (wird je Titel gemerkt)" data-i18n-title="html.lyricsSync">
+      <button class="lyrShift" data-d="-500" aria-label="Lyrics früher" data-i18n-aria="html.lyricsEarlier">−</button>
+      <span id="lyrSyncVal" title="Tippen: zurück auf 0" data-i18n-title="html.lyricsSyncReset" data-i18n="html.sync">sync</span>
+      <button class="lyrShift" data-d="500" aria-label="Lyrics später" data-i18n-aria="html.lyricsLater">+</button>
     </div>
     <div class="overlayClose" id="closeLyrics">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
@@ -135,7 +139,7 @@
 <div class="overlay" id="overlayInfo">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <h2 id="infoOverlayTitle">Info</h2>
+    <h2 id="infoOverlayTitle" data-i18n="html.info">Info</h2>
     <div class="overlayClose" id="closeInfo">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
@@ -150,7 +154,7 @@
 <div class="overlay" id="overlayQueue">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <h2>Warteschlange</h2>
+    <h2 data-i18n="html.queue">Warteschlange</h2>
     <div class="overlayClose" id="closeQueue">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
@@ -164,15 +168,15 @@
 <div class="overlay" id="overlayPlaylists">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <h2 id="plOverlayTitle">Playlisten</h2>
+    <h2 id="plOverlayTitle" data-i18n="html.playlists">Playlisten</h2>
     <div class="overlayClose" id="closePlaylists">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
   </div>
   <div id="plTabBar">
-    <div class="qTab" id="plTab0" style="display:none">Stimmungs-Mix</div>
-    <div class="qTab on" id="plTab1">Playlisten</div>
-    <div class="qTab" id="plTab2">Radio</div>
+    <div class="qTab" id="plTab0" style="display:none" data-i18n="html.tab.moodMix">Stimmungs-Mix</div>
+    <div class="qTab on" id="plTab1" data-i18n="html.tab.playlists">Playlisten</div>
+    <div class="qTab" id="plTab2" data-i18n="html.tab.radio">Radio</div>
   </div>
   <div id="plPanels">
     <div id="mixBody"></div>
@@ -185,18 +189,18 @@
 <div class="overlay" id="overlaySearch">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <h2>Suche</h2>
+    <h2 data-i18n="html.search">Suche</h2>
     <div id="searchSources">
-      <label><input type="checkbox" id="srcLocal" checked> Lokal</label>
+      <label><input type="checkbox" id="srcLocal" checked> <span data-i18n="html.src.local">Lokal</span></label>
       <label class="srcTidal"><input type="checkbox" id="srcTidal" checked> TIDAL</label>
       <label class="srcQobuz"><input type="checkbox" id="srcQobuz" checked> Qobuz</label>
       <label class="srcHra" title="HIGHRESAUDIO"><input type="checkbox" id="srcHra" checked> HRA</label>
       <label class="srcSpotify"><input type="checkbox" id="srcSpotify" checked> Spotify</label>
     </div>
-    <div class="overlayClose" id="btnCheck" title="Bibliothek prüfen" style="display:none">
+    <div class="overlayClose" id="btnCheck" title="Bibliothek prüfen" data-i18n-title="html.libCheck" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M3 5h11v2H3zm0 4h11v2H3zm0 4h7v2H3zm15.3 1.3l-2.8-2.8-1.4 1.4 4.2 4.2 6.7-6.7-1.4-1.4z" transform="translate(-1 0)"/></svg>
     </div>
-    <div class="overlayClose" id="btnHistory" title="Verlauf und Statistik" style="display:none">
+    <div class="overlayClose" id="btnHistory" title="Verlauf und Statistik" data-i18n-title="html.historyStats" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z"/></svg>
     </div>
     <div class="overlayClose" id="closeSearch">
@@ -205,18 +209,18 @@
   </div>
   <div id="searchInputWrap">
     <div id="searchField">
-      <input id="searchInput" type="search" placeholder="Mind. 2 Zeichen…"
+      <input id="searchInput" type="search" placeholder="Mind. 2 Zeichen…" data-i18n-placeholder="html.searchPlaceholder"
         autocomplete="off" autocorrect="off" spellcheck="false">
-      <div id="searchClear" title="Eingabe löschen">
+      <div id="searchClear" title="Eingabe löschen" data-i18n-title="html.searchClear">
         <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
       </div>
     </div>
-    <button id="searchGoBtn">Los</button>
+    <button id="searchGoBtn" data-i18n="html.searchGo">Los</button>
   </div>
   <div id="searchTabBar">
-    <div class="qTab on" data-cat="artists">Künstler</div>
-    <div class="qTab" data-cat="albums">Alben</div>
-    <div class="qTab" data-cat="songs">Titel</div>
+    <div class="qTab on" data-cat="artists" data-i18n="html.tab.artists">Künstler</div>
+    <div class="qTab" data-cat="albums" data-i18n="html.tab.albums">Alben</div>
+    <div class="qTab" data-cat="songs" data-i18n="html.tab.songs">Titel</div>
   </div>
   <div id="searchResults"></div>
 </div>
@@ -225,7 +229,7 @@
 <div class="overlay" id="overlayBrowse">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <div id="browseBack" title="Zurück" style="display:none">
+    <div id="browseBack" title="Zurück" data-i18n-title="html.back" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
     </div>
     <h2 id="browseTitle"></h2>
@@ -241,7 +245,7 @@
   <div class="overlayHandle"></div>
   <div class="overlayHead">
     <h2>Volumio</h2>
-    <a id="openVolumioTab" target="_blank" rel="noopener" title="In neuem Tab öffnen" style="display:none">
+    <a id="openVolumioTab" target="_blank" rel="noopener" title="In neuem Tab öffnen" data-i18n-title="html.openNewTab" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
     </a>
     <div class="overlayClose" id="closeVolumio">
@@ -249,7 +253,7 @@
     </div>
   </div>
   <div id="volumioTabBar"></div>
-  <div id="volumioPanel"><div class="qHint" id="volumioHint">Seite wählen</div></div>
+  <div id="volumioPanel"><div class="qHint" id="volumioHint" data-i18n="html.volumioPick">Seite wählen</div></div>
 </div>
 
 
@@ -257,10 +261,10 @@
 <div class="overlay" id="overlayCheck">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <div id="checkBack" title="Zurück zur Suche">
+    <div id="checkBack" title="Zurück zur Suche" data-i18n-title="html.backToSearch">
       <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
     </div>
-    <h2>Bibliothek prüfen</h2>
+    <h2 data-i18n="html.libCheck">Bibliothek prüfen</h2>
     <div class="overlayClose" id="closeCheck">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
@@ -271,19 +275,19 @@
 <div class="overlay" id="overlayHistory">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <div id="historyBack" title="Zurück zur Suche">
+    <div id="historyBack" title="Zurück zur Suche" data-i18n-title="html.backToSearch">
       <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
     </div>
-    <h2>Verlauf</h2>
+    <h2 data-i18n="html.history">Verlauf</h2>
     <div class="overlayClose" id="closeHistory">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
   </div>
   <div id="histTabBar">
-    <div class="qTab on" data-tab="recent">Zuletzt</div>
-    <div class="qTab" data-tab="top">Meistgespielt</div>
-    <div class="qTab" data-tab="stats">Statistik</div>
-    <div class="qTab" data-tab="year">Rückblick</div>
+    <div class="qTab on" data-tab="recent" data-i18n="html.tab.recent">Zuletzt</div>
+    <div class="qTab" data-tab="top" data-i18n="html.tab.top">Meistgespielt</div>
+    <div class="qTab" data-tab="stats" data-i18n="html.tab.stats">Statistik</div>
+    <div class="qTab" data-tab="year" data-i18n="html.tab.year">Rückblick</div>
   </div>
   <div class="overlayBody" id="histBody"></div>
 </div>
@@ -292,7 +296,7 @@
 <div class="overlay" id="overlayTags">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
-    <h2 id="tagTitle">Tags bearbeiten</h2>
+    <h2 id="tagTitle" data-i18n="html.tagEdit">Tags bearbeiten</h2>
     <div class="overlayClose" id="closeTags">
       <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
     </div>
@@ -300,12 +304,14 @@
   <div class="overlayBody" id="tagBody"></div>
   <div id="tagFoot">
     <div id="tagStatus"></div>
-    <button id="tagUndo" style="display:none">Rückgängig</button>
-    <button id="tagSave" disabled>Speichern</button>
+    <button id="tagUndo" style="display:none" data-i18n="html.undo">Rückgängig</button>
+    <button id="tagSave" disabled data-i18n="html.save">Speichern</button>
   </div>
 </div>
 
 <script>
+  langApply(document);                      /* data-i18n-Texte im HTML in der gewählten Sprache */
+
   /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
   ['streaming', 'infotext', 'core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'moodmix', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
     document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
