@@ -25,9 +25,26 @@ function checkFmtDate(ms) {
 }
 function checkNum(n) { return langNum(n); }
 
+/* Solange der Check offen ist, hält der Tag-Dienst die MPD-Scans zurück (viele Alben hintereinander bearbeiten
+   hieße sonst viele Scans, jeder mit einer Minute Last); beim Schließen wird alles auf einmal eingelesen. */
+var checkHeld = false;
+function checkHold() {
+  checkHeld = true;
+  tagPost('/scan', {hold: true}).catch(function(){});
+}
+function checkRelease() {
+  if (!checkHeld) return;
+  checkHeld = false;
+  tagPost('/scan', {hold: false}).catch(function(){});
+}
+window.addEventListener('pagehide', function(){
+  if (checkHeld && navigator.sendBeacon) navigator.sendBeacon(TAGS + '/scan', JSON.stringify({hold: false}));
+});
+
 function openCheck() {
   closeAllOverlays();
   overlayCheck.classList.add('on');
+  checkHold();
   while (checkBody.firstChild) checkBody.removeChild(checkBody.firstChild);
   checkBody.appendChild(browseNote(T('check.loading')));
   checkLoad();

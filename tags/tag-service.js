@@ -125,7 +125,10 @@ function readLog() {
 
 /* Jedes "mpc update" lässt Volumio seine ganze Albumliste neu aufbauen (rund 1 min Last). Darum möglichst nur
    einen Ordner einlesen: den gemeinsamen Elternordner, solange er mindestens 3 Ebenen tief liegt
-   (z. B. USB/MX-Media/AllFlac), sonst die einzelnen Ordner. */
+   (z. B. USB/MX-Media/AllFlac), sonst die einzelnen Ordner. Sind das mehr als SCAN_MAX_DIRS (Genre über viele
+   Alben geändert), doch den gemeinsamen Elternordner, notfalls die ganze Bibliothek (''): ein Scan statt vieler. */
+var SCAN_MAX_DIRS = 3;
+var SCAN_QUIET = 15000;          /* so lange nach der letzten Änderung warten, dann alle gesammelten Ordner auf einmal */
 function scanDirs(relFiles) {
   var dirs = {};
   relFiles.forEach(function(r){ dirs[path.dirname(r)] = true; });
@@ -137,15 +140,48 @@ function scanDirs(relFiles) {
     while (k < common.length && k < p.length && common[k] === p[k]) k++;
     common = common.slice(0, k);
   });
-  return common.length >= 3 ? [common.join('/')] : list;
+  return common.length >= 3 || list.length > SCAN_MAX_DIRS ? [common.join('/')] : list;
 }
 
+/* Rescans sammeln: Änderungen kurz hintereinander (Bulk-Editor, Bibliotheks-Check, Rückgängig) ergeben einen Scan,
+   SCAN_QUIET nach der letzten; nie, solange MPD noch einliest. Die Antwort wartet nicht auf den Scan,
+   cb(ok) meldet, ob der letzte "mpc update" geklappt hat.
+   Halten (POST /scan {hold:true}, solange der Bibliotheks-Check offen ist): nur sammeln, gescannt wird beim
+   Loslassen ({hold:false}); kommt das nie (Seite zu), spätestens SCAN_HOLD_MAX nach der letzten Änderung. */
+var SCAN_HOLD_MAX = 10 * 60000;
+var scanPending = [], scanTimer = null, scanRunning = false, scanOk = true, scanHold = false;
 function mpdUpdate(relFiles, cb) {
-  var list = scanDirs(relFiles), ok = true;
-  (function step() {
-    if (!list.length) return cb(ok);
-    cp.execFile(MPC, ['update', list.shift()], {timeout: 15000}, function(e){ if (e) ok = false; step(); });
-  })();
+  scanPending = scanPending.concat(relFiles);
+  scanSchedule(scanHold ? SCAN_HOLD_MAX : SCAN_QUIET, scanHold);
+  cb(scanOk);
+}
+function scanSchedule(ms, release) {               /* release: Halten endet (Höchstdauer erreicht) */
+  clearTimeout(scanTimer);
+  scanTimer = setTimeout(function(){ if (release) scanHold = false; scanRun(); }, ms);
+}
+function scanSetHold(on) {
+  scanHold = !!on;
+  if (scanHold) { if (scanPending.length) scanSchedule(SCAN_HOLD_MAX, true); else { clearTimeout(scanTimer); scanTimer = null; } }
+  else if (scanPending.length) scanSchedule(0);
+}
+function scanRun() {
+  scanTimer = null;
+  if (scanRunning || scanHold || !scanPending.length) return;
+  scanRunning = true;
+  libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'status', function(err, st){
+    if (!err && st.updating_db) { scanRunning = false; scanSchedule(SCAN_QUIET); return; }
+    var list = scanDirs(scanPending);
+    scanPending = [];
+    (function step() {
+      if (!list.length) {
+        scanRunning = false;
+        if (scanPending.length && !scanTimer) scanSchedule(scanHold ? SCAN_HOLD_MAX : SCAN_QUIET, scanHold);
+        return;
+      }
+      var d = list.shift();
+      cp.execFile(MPC, d ? ['update', d] : ['update'], {timeout: 15000}, function(e){ scanOk = !e; step(); });
+    })();
+  });
 }
 
 /* ---------- Aufträge ---------- */
@@ -208,8 +244,10 @@ function writeItems(items, batch, scan, cb) {
   });
 }
 
-/* POST /scan {uris}: geänderte Dateien von MPD neu einlesen lassen (nach mehreren /write mit scan:false) */
+/* POST /scan {uris}: geänderte Dateien von MPD neu einlesen lassen (nach mehreren /write mit scan:false);
+   POST /scan {hold:true|false}: Scans zurückhalten bzw. alles Gesammelte jetzt einlesen (siehe mpdUpdate) */
 function doScan(body, cb) {
+  if (typeof body.hold === 'boolean') { scanSetHold(body.hold); return cb(200, {ok: true, hold: scanHold, pending: scanPending.length}); }
   var rel = [];
   (Array.isArray(body.uris) ? body.uris : []).forEach(function(u){ var p = resolveUri(u); if (p && !p.missing) rel.push(p.rel); });
   if (!rel.length) return cb(400, {ok: false, error: 'uris fehlt'});
