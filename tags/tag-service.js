@@ -145,26 +145,37 @@ function scanDirs(relFiles) {
 
 /* Rescans sammeln: Änderungen kurz hintereinander (Bulk-Editor, Bibliotheks-Check, Rückgängig) ergeben einen Scan,
    SCAN_QUIET nach der letzten; nie, solange MPD noch einliest. Die Antwort wartet nicht auf den Scan,
-   cb(ok) meldet, ob der letzte "mpc update" geklappt hat. */
-var scanPending = [], scanTimer = null, scanRunning = false, scanOk = true;
+   cb(ok) meldet, ob der letzte "mpc update" geklappt hat.
+   Halten (POST /scan {hold:true}, solange der Bibliotheks-Check offen ist): nur sammeln, gescannt wird beim
+   Loslassen ({hold:false}); kommt das nie (Seite zu), spätestens SCAN_HOLD_MAX nach der letzten Änderung. */
+var SCAN_HOLD_MAX = 10 * 60000;
+var scanPending = [], scanTimer = null, scanRunning = false, scanOk = true, scanHold = false;
 function mpdUpdate(relFiles, cb) {
   scanPending = scanPending.concat(relFiles);
-  clearTimeout(scanTimer);
-  scanTimer = setTimeout(scanRun, SCAN_QUIET);
+  scanSchedule(scanHold ? SCAN_HOLD_MAX : SCAN_QUIET, scanHold);
   cb(scanOk);
+}
+function scanSchedule(ms, release) {               /* release: Halten endet (Höchstdauer erreicht) */
+  clearTimeout(scanTimer);
+  scanTimer = setTimeout(function(){ if (release) scanHold = false; scanRun(); }, ms);
+}
+function scanSetHold(on) {
+  scanHold = !!on;
+  if (scanHold) { if (scanPending.length) scanSchedule(SCAN_HOLD_MAX, true); else { clearTimeout(scanTimer); scanTimer = null; } }
+  else if (scanPending.length) scanSchedule(0);
 }
 function scanRun() {
   scanTimer = null;
-  if (scanRunning || !scanPending.length) return;
+  if (scanRunning || scanHold || !scanPending.length) return;
   scanRunning = true;
   libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'status', function(err, st){
-    if (!err && st.updating_db) { scanRunning = false; scanTimer = setTimeout(scanRun, SCAN_QUIET); return; }
+    if (!err && st.updating_db) { scanRunning = false; scanSchedule(SCAN_QUIET); return; }
     var list = scanDirs(scanPending);
     scanPending = [];
     (function step() {
       if (!list.length) {
         scanRunning = false;
-        if (scanPending.length && !scanTimer) scanTimer = setTimeout(scanRun, SCAN_QUIET);
+        if (scanPending.length && !scanTimer) scanSchedule(scanHold ? SCAN_HOLD_MAX : SCAN_QUIET, scanHold);
         return;
       }
       var d = list.shift();
@@ -233,8 +244,10 @@ function writeItems(items, batch, scan, cb) {
   });
 }
 
-/* POST /scan {uris}: geänderte Dateien von MPD neu einlesen lassen (nach mehreren /write mit scan:false) */
+/* POST /scan {uris}: geänderte Dateien von MPD neu einlesen lassen (nach mehreren /write mit scan:false);
+   POST /scan {hold:true|false}: Scans zurückhalten bzw. alles Gesammelte jetzt einlesen (siehe mpdUpdate) */
 function doScan(body, cb) {
+  if (typeof body.hold === 'boolean') { scanSetHold(body.hold); return cb(200, {ok: true, hold: scanHold, pending: scanPending.length}); }
   var rel = [];
   (Array.isArray(body.uris) ? body.uris : []).forEach(function(u){ var p = resolveUri(u); if (p && !p.missing) rel.push(p.rel); });
   if (!rel.length) return cb(400, {ok: false, error: 'uris fehlt'});

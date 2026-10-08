@@ -186,8 +186,18 @@ else {
                       });
                       post(port, '/scan', {uris: ['USB/t.dsf', 'USB/t2.dsf']}, function(sc){
                         t('Dienst: /scan liest neu ein', function(){ assert.ok(sc.ok); assert.strictEqual(sc.scan, true); });
-                        s2.close();
-                        artistTracks(done);
+                        post(port, '/scan', {hold: true}, function(h1){
+                          post(port, '/scan', {uris: ['USB/t.dsf']}, function(){
+                            post(port, '/scan', {hold: false}, function(h2){
+                              t('Dienst: Scans zurückhalten (Bibliotheks-Check offen) und beim Loslassen einlesen', function(){
+                                assert.strictEqual(h1.hold, true);
+                                assert.strictEqual(h2.hold, false); assert.ok(h2.pending >= 1);
+                              });
+                              s2.close();
+                              artistTracks(done);
+                            });
+                          });
+                        });
                       });
                     });
                   });
