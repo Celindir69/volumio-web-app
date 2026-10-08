@@ -17,6 +17,7 @@ t('Sprachwahl: Adresse vor Einstellung vor Gerät, Region egal, sonst Englisch',
   assert.strictEqual(i18n.langPick(['de', 'en'], '', '', ['fr-FR', 'de-AT']), 'de');
   assert.strictEqual(i18n.langPick(['de', 'en'], '?x=1&lang=fr', '', ['it']), 'en');
   assert.strictEqual(i18n.langPick(['de', 'en', 'fr'], '', 'fr', []), 'fr');
+  assert.strictEqual(i18n.langPick(['de', 'en'], '', '', ['en', 'de-DE']), 'en');   /* Volumio-Sprache vor dem Gerät */
 });
 
 t('T: Rückfall Sprache -> Englisch -> Deutsch -> Schlüssel, Platzhalter, Einzahl/Mehrzahl', function(){

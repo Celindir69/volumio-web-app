@@ -99,7 +99,7 @@ progress of the mood tags.
 
 ### More
 
-- German and English, following the device language or set explicitly; further languages as a file in `web/lang/`
+- German and English, following the Volumio language setting or set explicitly; further languages as a file in `web/lang/`
   (see [Setup](docs/setup.md#language)).
 - Optional: control a network-connected Rotel amplifier (power, volume, input) via `rotel/rotel-bridge.js`.
 - TIDAL Watchdog: reconnects TIDAL or restarts Volumio if the TIDAL plugin becomes unresponsive.

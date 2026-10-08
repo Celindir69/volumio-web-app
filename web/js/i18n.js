@@ -1,6 +1,6 @@
 /* Mehrsprachigkeit: Texte kommen aus web/lang/<code>.js (z. B. de.js, en.js), im Code nur Schlüssel: T('search.none').
-   Sprache: ?lang=xx in der Adresse, sonst LANGUAGE in config(.local).js, sonst die erste passende Gerätesprache aus
-   LANGUAGES, sonst Englisch. Fehlt ein Text in der gewählten Sprache, gilt der englische, dann der deutsche.
+   Sprache: ?lang=xx in der Adresse, sonst LANGUAGE in config(.local).js, sonst die Sprache der Volumio-Oberfläche,
+   sonst die erste passende Gerätesprache aus LANGUAGES, sonst Englisch. Fehlt ein Text in der gewählten Sprache, gilt der englische, dann der deutsche.
    Neue Sprache: en.js kopieren, übersetzen, als web/lang/<code>.js ablegen und <code> in LANGUAGES eintragen.
    Klassisches Skript, ES5; wird nach config.js geladen und lädt selbst die nötigen Sprachdateien nach. */
 var LANG_TEXTS = {};             /* Code -> {Schlüssel: Text} */
@@ -26,6 +26,11 @@ function langPick(avail, query, setting, device) {
   var hit = (m && find(m[1])) || find(setting);
   for (var i = 0; !hit && device && i < device.length; i++) hit = find(device[i]);
   return hit || (avail.indexOf('en') >= 0 ? 'en' : avail[0] || 'de');
+}
+
+/* zuletzt von Volumio gemeldete Sprache (localStorage, da die Antwort erst nach dem Laden kommt) */
+function langStored() {
+  try { return (typeof localStorage !== 'undefined' && localStorage.getItem('volumioLang')) || ''; } catch (e) { return ''; }
 }
 
 /* Text zum Schlüssel; {name} wird aus vars ersetzt. Ist der Eintrag {one, other}, wählt vars.n die Form */
@@ -79,7 +84,18 @@ if (typeof module !== 'undefined') {
   (function(){
     var cfg = window.APP_CONFIG || {};
     var avail = cfg.LANGUAGES || ['de', 'en'];
-    LANG = LANG_LOCALE = langPick(avail, location.search, cfg.LANGUAGE, navigator.languages || [navigator.language]);
+    var device = [langStored()].concat(navigator.languages || [navigator.language]);   /* Volumio vor dem Gerät */
+    LANG = LANG_LOCALE = langPick(avail, location.search, cfg.LANGUAGE, device);
+    /* von core.js gerufen, sobald Volumio seine Sprache meldet: merken und, falls sie die Wahl ändert, einmal neu laden */
+    window.langFromVolumio = function(code) {
+      code = String(code || '').toLowerCase();
+      if (!code || code === langStored()) return;
+      try { localStorage.setItem('volumioLang', code); } catch (e) {}
+      var want = langPick(avail, location.search, cfg.LANGUAGE, [code].concat(device.slice(1)));
+      var once = false;
+      try { once = sessionStorage.getItem('langReload') === want; sessionStorage.setItem('langReload', want); } catch (e) {}
+      if (want !== LANG && !once) location.reload();
+    };
     document.documentElement.lang = LANG;
     /* Englisch und Deutsch als Rückfall immer mitladen */
     [LANG, 'en', 'de'].filter(function(c, i, a){ return a.indexOf(c) === i; }).forEach(function(c){

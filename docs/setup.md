@@ -14,8 +14,10 @@ Custom settings (Last.fm key, Rotel, enabling/disabling services) go into `web/c
 
 ### Language
 
-The interface is available in German and English. It follows the device (browser) language; if neither matches, it is
-shown in English. To fix the language, set `LANGUAGE: 'de'` or `'en'` in `web/config.local.js`. For a quick test,
+The interface is available in German and English. It uses the language set in Volumio's settings, so the artist and
+album information from Volumio matches it. On the very first visit the app does not know that language yet; it briefly
+shows the device (browser) language and reloads once. If the Volumio language is not available, the device language
+applies, otherwise English. To fix the language, set `LANGUAGE: 'de'` or `'en'` in `web/config.local.js`. For a quick test,
 `http://<player>/app.html?lang=en` also works.
 
 Adding a language: copy `web/lang/en.js`, e.g. to `web/lang/fr.js`, adjust code, name and locale in the last line
@@ -188,7 +190,7 @@ python3 analyse.py --upload http://<player>:8766
 ### Artist and Album Information
 
 The information page queries Volumio first. If nothing is returned (Volumio 4 only provides the information with a subscription, or Volumio does not respond within 6 seconds), the app retrieves the information itself: album information from Last.fm (in the interface language, otherwise English; requires `LASTFM_KEY`), and artist information from Last.fm and Wikipedia, first both in the interface language, then both in English (Wikipedia: only articles that appear to be music-related).
-If the app is set to a different language than the Volumio interface, it retrieves the texts itself first and asks Volumio only if that returns nothing (Volumio returns its texts in its own language).
+If the app is set to a different language than Volumio via `LANGUAGE` or `?lang=`, it retrieves the texts itself first and asks Volumio only if that returns nothing (Volumio returns its texts in its own language).
 
 The source is shown below the text. There is no fallback for contributors.
 
