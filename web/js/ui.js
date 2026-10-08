@@ -13,8 +13,6 @@ function closeAllOverlays() {
   if (ov) ov.classList.remove('on');
   var oc = document.getElementById('overlayCheck');
   if (oc) oc.classList.remove('on');
-  var om = document.getElementById('overlayMix');
-  if (om) om.classList.remove('on');
   var oh = document.getElementById('overlayHistory');
   if (oh) oh.classList.remove('on');
   var ot = document.getElementById('overlayTags');
@@ -52,13 +50,7 @@ btnPlaylists.addEventListener('click', function(){
   closeAllOverlays();
   if (!isOpen) {
     overlayPlaylists.classList.add('on');
-    plTabActive = 1;
-    document.getElementById('plTab1').className = 'qTab on';
-    document.getElementById('plTab2').className = 'qTab';
-    document.getElementById('plOverlayTitle').textContent = 'Playlisten';
-    playlistResults.style.display = 'block';
-    radioPanel.style.display = 'none';
-    loadPlaylists();
+    plShowTab(plTabActive);
   }
 });
 document.getElementById('closePlaylists').addEventListener('click', closeAllOverlays);

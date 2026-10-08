@@ -40,12 +40,12 @@ der Anlage, ohne Bedienung.
 ### Suche und Entdecken
 Die Suche findet Künstler, Alben und Titel in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
 eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
-eingegeben ist, zeigt sie „Vor einem Jahr gehört“ (Alben, die um dieses Datum vor einem Jahr liefen), den Einstieg in den
-Stimmungs-Mix und ein Zufallsalbum, das lange nicht oder nie Gehörtes bevorzugt. Bei Webradio holt die App ein Cover
+eingegeben ist, zeigt sie passend zum Reiter „Vor einem Jahr gehört“ (Künstler, Alben oder Titel, die um dieses Datum vor
+einem Jahr liefen) und einen Zufallskünstler, ein Zufallsalbum oder einen Zufallstitel, bevorzugt lange nicht oder nie Gehörtes. Bei Webradio holt die App ein Cover
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 
 ### Stimmungs-Mix
-Stimmung wählen (mehrere möglich), Energie von ruhig bis kraftvoll eingrenzen und unter „Feinabstimmung“ Stile, Länge
+Eigener erster Reiter neben Playlisten und Radio (Playlisten-Taste). Stimmung wählen (mehrere möglich), Energie von ruhig bis kraftvoll eingrenzen und unter „Feinabstimmung“ Stile, Länge
 und Entdeckungsgrad festlegen: Favoriten, ausgewogen oder versteckte Perlen, je nach eigenem Verlauf. „Mix erstellen“
 zeigt erst eine Vorschau mit der Begründung je Titel; einzelne Titel lassen sich herausnehmen oder neu mischen. Erst
 „Mix abspielen“ ersetzt die Warteschlange. Grundlage sind Last.fm-Tags je Titel, die der Tag-Dienst sammelt, solange

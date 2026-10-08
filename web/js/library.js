@@ -173,23 +173,28 @@ function loadMyRadio() {
     });
 }
 
-document.getElementById('plTab1').addEventListener('click', function(){
-  plTabActive = 1;
-  document.getElementById('plTab1').className = 'qTab on';
-  document.getElementById('plTab2').className = 'qTab';
-  document.getElementById('plOverlayTitle').textContent = 'Playlisten';
-  playlistResults.style.display = 'block';
-  radioPanel.style.display = 'none';
-});
-
-document.getElementById('plTab2').addEventListener('click', function(){
-  plTabActive = 2;
-  document.getElementById('plTab1').className = 'qTab';
-  document.getElementById('plTab2').className = 'qTab on';
-  document.getElementById('plOverlayTitle').textContent = 'Radio';
-  playlistResults.style.display = 'none';
-  radioPanel.style.display = 'block';
-  loadMyRadio();
+/* Reiter 0 Stimmungs-Mix (moodmix.js, nur mit Tag-Dienst sichtbar), 1 Playlisten, 2 Radio;
+   der zuletzt gewählte gilt beim nächsten Öffnen wieder */
+var PL_TABS = [['Stimmungs-Mix', 'mixBody'], ['Playlisten', 'playlistResults'], ['Radio', 'radioPanel']];
+try { plTabActive = +(localStorage.getItem('plTab') || 0) || 0; } catch (e) { plTabActive = 0; }
+function plShowTab(n) {
+  if (!(n >= 0 && n < PL_TABS.length)) n = 0;
+  if (n === 0 && document.getElementById('plTab0').style.display === 'none') n = 1;
+  plTabActive = n;
+  PL_TABS.forEach(function(t, i){
+    document.getElementById('plTab' + i).classList.toggle('on', i === n);
+    document.getElementById(t[1]).style.display = i === n ? 'block' : 'none';
+  });
+  document.getElementById('plOverlayTitle').textContent = PL_TABS[n][0];
+  if (n === 0 && typeof mixRender === 'function') mixRender();
+  else if (n === 1) loadPlaylists();
+  else if (n === 2) loadMyRadio();
+}
+PL_TABS.forEach(function(t, i){
+  document.getElementById('plTab' + i).addEventListener('click', function(){
+    try { localStorage.setItem('plTab', String(i)); } catch (e) { /* egal */ }
+    plShowTab(i);
+  });
 });
 
 /* ---------- Suche ---------- */

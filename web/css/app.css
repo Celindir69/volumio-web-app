@@ -330,7 +330,7 @@
   #plTabBar { flex:0 0 auto; display:flex;
     border-bottom:1px solid rgba(255,255,255,.2); margin:0 calc(5 * var(--vw)); }
 #plPanels { flex:1 1 auto; min-height:0; position:relative; }
-#playlistResults { position:absolute; top:0; left:0; right:0; bottom:0;
+#mixBody, #playlistResults { position:absolute; top:0; left:0; right:0; bottom:0;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   padding:calc(2 * var(--vw)) calc(5 * var(--vw)) max(env(safe-area-inset-bottom,16px),16px) calc(5 * var(--vw)); }
 #radioPanel { position:absolute; top:0; left:0; right:0; bottom:0;
@@ -721,6 +721,7 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .dRand .dTi { font-size:calc(4.2 * var(--vw)); white-space:normal; }
 .dRand .dAr { font-size:calc(3.6 * var(--vw)); white-space:normal; margin-top:calc(.6 * var(--vw)); }
 .dLast { font-size:calc(2.7 * var(--vw)); opacity:.45; margin-top:calc(1.2 * var(--vw)); }
+.dTile .sCover.hRound, .dBig.hRound { border-radius:50%; }
 
 /* Rückblick: Rubriken zum Aufklappen */
 .hFold { display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:calc(1.5 * var(--vw)) 0;
@@ -739,9 +740,6 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .hBar.sel .hFill { opacity:1; box-shadow:0 0 0 1px #fff; }
 
 /* Stimmungs-Mix */
-#mixBack { cursor:pointer; opacity:.7; display:flex; }
-#mixBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:#fff; }
-#overlayMix .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 .mxAsk { font-size:calc(4.4 * var(--vw)); font-weight:600; padding:calc(2 * var(--vw)) 0 calc(3 * var(--vw)); }
 .mxChips { display:flex; flex-wrap:wrap; gap:calc(2 * var(--vw)); }
 .mxChip { font-size:calc(3.5 * var(--vw)); padding:calc(1.8 * var(--vw)) calc(3.6 * var(--vw)); border-radius:999px; cursor:pointer;
@@ -749,7 +747,6 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .mxChip.on { background:#fff; border-color:transparent; color:#111; font-weight:600; }
 .mxChip.mxMore { background:none; opacity:.7; }
 .mxChip.mxSmall { font-size:calc(3.1 * var(--vw)); padding:calc(1.2 * var(--vw)) calc(2.8 * var(--vw)); }
-.dMix { padding:calc(1 * var(--vw)) 0 calc(3 * var(--vw)); }
 .mxLabel { font-size:calc(3 * var(--vw)); text-transform:uppercase; letter-spacing:.08em; opacity:.5; padding:calc(5 * var(--vw)) 0 calc(2 * var(--vw)); }
 .mxEnergy { position:relative; height:calc(9 * var(--vw)); max-height:44px; margin:0 calc(2 * var(--vw)); }
 .mxTrack { position:absolute; left:0; right:0; top:50%; height:calc(1.4 * var(--vw)); min-height:5px; transform:translateY(-50%);

@@ -1,7 +1,6 @@
-/* Stimmungs-Mix: Stimmung, Energie und optional Stil wählen, Vorschau ansehen, dann Warteschlange ersetzen und spielen
+/* Stimmungs-Mix (erster Reiter im Playlisten-Overlay): Stimmung, Energie und optional Stil wählen, Vorschau ansehen, dann Warteschlange ersetzen und spielen
    (Tag-Dienst GET /moodmix). Erstellen ändert die Warteschlange noch nicht; erst „Mix abspielen“.
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach check.js, history.js und discover.js geladen. */
-var overlayMix = document.getElementById('overlayMix');
 var mixBody    = document.getElementById('mixBody');
 var MIX_CORE   = ['relaxed', 'dreamy', 'uplifting', 'melancholic', 'dark', 'reflective', 'happy', 'romantic'];
 var MIX_MORE   = ['calm', 'atmospheric', 'emotional', 'epic', 'intense', 'aggressive', 'sensual', 'sad'];
@@ -33,13 +32,12 @@ function mixEnergyDots(e) {
   return s;
 }
 
-/* von außen: Mix-Blatt öffnen, optional mit einer Stimmung vorgewählt */
+/* von außen: Reiter Stimmungs-Mix öffnen, optional mit einer Stimmung vorgewählt */
 function openMoodMix(mood) {
   closeAllOverlays();
-  if (mood) mixCrit.moods = [mood];
-  mixState.view = 'pick';
-  overlayMix.classList.add('on');
-  mixRender();
+  if (mood) { mixCrit.moods = [mood]; mixState.view = 'pick'; }
+  overlayPlaylists.classList.add('on');
+  plShowTab(0);
 }
 
 function mixRender() {
@@ -332,9 +330,11 @@ function mixPlay(tracks, replace) {
   closeAllOverlays();
 }
 
-document.getElementById('closeMix').addEventListener('click', function(){ closeAllOverlays(); });
-document.getElementById('mixBack').addEventListener('click', function(){
-  if (mixState.view === 'preview') { mixState.view = 'pick'; return mixRender(); }
-  closeAllOverlays();
-  overlaySearch.classList.add('on');
-});
+/* Reiter nur zeigen, wenn der Tag-Dienst läuft; beim ersten Mal (noch nichts gewählt) mit dem Mix beginnen */
+tagGetJson('/health').then(function(r){
+  if (!r || !r.ok) return;
+  document.getElementById('plTab0').style.display = '';
+  var stored = null;
+  try { stored = localStorage.getItem('plTab'); } catch (e) { /* egal */ }
+  if (stored === null || stored === '0') plTabActive = 0;
+}).catch(function(){});

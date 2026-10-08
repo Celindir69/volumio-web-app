@@ -82,23 +82,66 @@ function weight(last, now) {
   return now - last > 90 * DAY ? 2 : 1;
 }
 
-/* ein Album auswählen; last: lastIndex(Verlauf); picks: zuletzt gezeigte Ordner (wird ergänzt); rnd: Zufallszahl 0..1 (Tests) */
-function pick(albums, last, now, picks, rnd) {
-  if (!albums.length) return null;
+/* aus pool einen Eintrag ziehen, gewichtet nach weight(lastOf(x)); keyOf(x): Schlüssel für picks (zuletzt gezeigt, wird ergänzt) */
+function draw(pool, keyOf, lastOf, now, picks, rnd) {
+  if (!pool.length) return null;
   rnd = rnd || Math.random;
   var skip = {};
   (picks || []).forEach(function(d){ skip[d] = true; });
-  var pool = albums.length > (picks || []).length ? albums.filter(function(a){ return !skip[a.dir]; }) : albums;
-  /* Stichprobe statt alle gewichten: schnell auch bei vielen Tausend Alben */
+  if (pool.length > (picks || []).length) pool = pool.filter(function(a){ return !skip[keyOf(a)]; });
+  /* Stichprobe statt alle gewichten: schnell auch bei vielen Tausend Einträgen */
   var cand = [], sum = 0;
   for (var i = 0; i < Math.min(40, pool.length); i++) {
-    var a = pool[Math.floor(rnd() * pool.length)], l = last(a), w = weight(l, now);
+    var a = pool[Math.floor(rnd() * pool.length)], l = lastOf(a), w = weight(l, now);
     cand.push({a: a, last: l, w: w}); sum += w;
   }
   var r = rnd() * sum, c = cand[cand.length - 1];
   for (i = 0; i < cand.length; i++) { r -= cand[i].w; if (r < 0) { c = cand[i]; break; } }
-  if (picks) { picks.push(c.a.dir); if (picks.length > RECENT_PICKS) picks.shift(); }
-  return {dir: c.a.dir, al: c.a.al, ar: c.a.ar, last: c.last};
+  if (picks) { picks.push(keyOf(c.a)); if (picks.length > RECENT_PICKS) picks.shift(); }
+  return c;
 }
 
-module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, lastIndex: lastIndex, pick: pick, weight: weight};
+/* ein Album auswählen; last: lastIndex(Verlauf); picks: zuletzt gezeigte Ordner (wird ergänzt); rnd: Zufallszahl 0..1 (Tests) */
+function pick(albums, last, now, picks, rnd) {
+  var c = draw(albums, function(a){ return a.dir; }, last, now, picks, rnd);
+  return c && {dir: c.a.dir, al: c.a.al, ar: c.a.ar, last: c.last};
+}
+
+/* Künstler der Bibliothek (Albumkünstler, ohne Sampler) -> [{ar, n: Alben, dir: ein Albumordner}] */
+function artists(albums) {
+  var by = {}, out = [];
+  albums.forEach(function(a){
+    if (!a.ar || a.ar === 'Verschiedene') return;
+    var k = plays.norm(a.ar);
+    if (!k) return;
+    if (by[k]) by[k].n++; else { by[k] = {ar: a.ar, n: 1, dir: a.dir}; out.push(by[k]); }
+  });
+  return out;
+}
+
+/* Verlauf -> wann ein Künstler bzw. ein Titel zuletzt lief */
+function lastArtistIndex(list) {
+  var by = {};
+  list.forEach(function(e){ var k = plays.norm(e.ar); if (!(by[k] >= e.t)) by[k] = e.t; });
+  return function(a){ return by[plays.norm(a.ar)] || null; };
+}
+function lastTrackIndex(list) {
+  var by = {};
+  list.forEach(function(e){ var k = plays.trackKey(e); if (!(by[k] >= e.t)) by[k] = e.t; });
+  return function(t){ return by[plays.norm(t[0]) + '|' + plays.norm(t[1])] || null; };
+}
+
+/* Zufallskünstler aus artists(); last: lastArtistIndex */
+function pickArtist(list, last, now, picks, rnd) {
+  var c = draw(list, function(a){ return plays.norm(a.ar); }, last, now, picks, rnd);
+  return c && {ar: c.a.ar, n: c.a.n, dir: c.a.dir, last: c.last};
+}
+
+/* Zufallstitel aus library-tracks.json ([[Künstler, Titel, Datei, Sekunden, Album], …]); last: lastTrackIndex */
+function pickTrack(tracks, last, now, picks, rnd) {
+  var c = draw(tracks, function(t){ return t[2]; }, last, now, picks, rnd);
+  return c && {ar: c.a[0], ti: c.a[1], f: c.a[2], d: c.a[3] || 0, al: c.a[4] || '', last: c.last};
+}
+
+module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, lastIndex: lastIndex, pick: pick, weight: weight,
+                  artists: artists, lastArtistIndex: lastArtistIndex, lastTrackIndex: lastTrackIndex, pickArtist: pickArtist, pickTrack: pickTrack};
