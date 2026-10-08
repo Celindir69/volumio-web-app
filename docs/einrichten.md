@@ -142,7 +142,8 @@ den Titel ab bzw. öffnet Album oder Künstler.
 dieses Datum vor einem Jahr liefen (sonst vor 2, 3 … Jahren), und einen **Zufallskünstler**, ein **Zufallsalbum** oder einen
 **Zufallstitel** (Künstler und Album tippen öffnet, Titel tippen spielt ab, Würfel wählt neu). Bevorzugt kommt, was lange
 nicht oder nie lief. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
-`/data/INTERNAL/tags/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert.
+`/data/INTERNAL/tags/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert
+(Prüfung höchstens einmal pro Minute; nach Tag-Änderungen gut eine Minute nach dem Scan von selbst).
 
 **Genres:** Der vierte Suchreiter (nur mit Tag-Dienst) zeigt ohne Eingabe Kacheln aller Genres, mit Eingabe die passenden.
 Ein Tipp öffnet die Genre-Seite: Gibt es [Audio-Analysen](#audio-analyse-mit-essentia-optional-auf-dem-mac), zuerst Kacheln
