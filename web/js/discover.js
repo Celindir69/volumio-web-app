@@ -122,7 +122,7 @@ function discoverRandom(seq) {
 
 /* beim Öffnen der Suche neu füllen, wenn nichts gesucht wurde */
 if (window.MutationObserver) new MutationObserver(function(){
-  if (overlaySearch.classList.contains('on') && !searchQuery && discoverReady) discoverShow();
+  if (overlaySearch.classList.contains('on') && !searchQuery && discoverReady && searchCat !== 'genres') discoverShow();   /* Genres: Kacheln bleiben */
   if (!overlaySearch.classList.contains('on')) clearTimeout(discoverTimer);
 }).observe(overlaySearch, {attributes: true, attributeFilter: ['class']});
 

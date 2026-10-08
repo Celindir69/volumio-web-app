@@ -70,6 +70,7 @@ function browseGenre(e, seq) {
     if (list.length && subs.length && !e.sub && !e.all) return genreSubTiles(e, list, subs);
     if (e.sub) list = list.filter(function(a){ return (a.st || []).indexOf(e.sub) >= 0; });
     if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.noAlbums'))); return; }
+    browseBody.appendChild(genrePlayAllHead(list));
     browseBody.appendChild(browseHeading(T('disc.albums', {n: list.length})));
     list.forEach(function(a){
       var uri = 'music-library/' + a.dir, art = histAlbumArt(a.ar, a.al, a.dir);
@@ -92,6 +93,28 @@ function browseGenre(e, seq) {
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     browseBody.appendChild(browseNote(T('genre.offline')));
   });
+}
+
+/* „Alle abspielen“ wie auf der Künstlerseite: Warteschlange durch alle Alben der Liste ersetzen (Reihenfolge wie angezeigt) */
+function genrePlayAllHead(list) {
+  var head = document.createElement('div');
+  head.id = 'browseArtistHead';
+  head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
+  var lbl = histEl('div', 'sMeta');
+  lbl.appendChild(histEl('div', 'sTitle bAlbum', T('browse.playAll')));
+  head.appendChild(lbl);
+  head.addEventListener('click', function(){
+    var items = list.map(function(a){ return {uri: 'music-library/' + a.dir, service: 'mpd', type: 'folder', title: a.al, artist: a.ar}; });
+    browseOrigin = null;
+    fetch('/api/v1/replaceAndPlay', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({item: items[0]})
+    }).then(function(){
+      if (items.length > 1) setTimeout(function(){ socket.emit('addToQueue', items.slice(1)); }, 300);
+    }).catch(function(){});
+    closeAllOverlays();
+  });
+  return head;
 }
 
 function genreSubTiles(e, list, subs) {
