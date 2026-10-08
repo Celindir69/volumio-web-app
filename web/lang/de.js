@@ -248,6 +248,7 @@ langRegister('de', 'Deutsch', {
   'mix.energy.high': 'kraftvoll',
   'mix.energy.low': 'ruhig',
   'mix.fine': 'Feinabstimmung',
+  'mix.genre': 'Genre',
   'mix.hits.few': {one: 'Nur {n} Titel passt genau; der Mix wird mit Ähnlichem aufgefüllt.', other: 'Nur {n} Titel passen genau; der Mix wird mit Ähnlichem aufgefüllt.'},
   'mix.hits.none': 'Keine Titel passen genau. Der Mix nimmt dann Ähnliches (Energie etwas weiter, Stile egal).',
   'mix.hits.noneTempo': 'Keine Titel passen genau. Der Mix nimmt dann Ähnliches (Energie und Tempo etwas weiter, Stile egal).',

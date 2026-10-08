@@ -5,20 +5,23 @@ var mixBody    = document.getElementById('mixBody');
 var MIX_CORE   = ['relaxed', 'dreamy', 'uplifting', 'melancholic', 'dark', 'reflective', 'happy', 'romantic'];
 var MIX_MORE   = ['calm', 'atmospheric', 'emotional', 'epic', 'intense', 'aggressive', 'sensual', 'sad'];
 var MIX_DISC   = [[0, T('mix.disc.favorites')], [0.5, T('mix.disc.balanced')], [1, T('mix.disc.hidden')]];
-var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', n: 50, disc: 0.5};
+var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', genres: [], n: 50, disc: 0.5};
+var MIX_GENRES = 10;                           /* so viele Genre-Chips, der Rest hinter „mehr“ */
 var MIX_BPM    = [60, 180, 5];                 /* Tempo-Regler: Ende links/rechts = offen (0) */
-var mixState   = {view: 'pick', fine: false, more: false, styles: null, result: null};
+var mixState   = {view: 'pick', fine: false, more: false, styles: null, genres: null, genresMore: false, result: null};
 var mixCountSeq = 0, mixCountTimer = null;
 
 try { var saved = JSON.parse(localStorage.getItem('moodMix') || 'null'); if (saved && saved.moods) mixCrit = saved; } catch (e) { /* ohne Speicher */ }
 if (!mixCrit.bmin) mixCrit.bmin = 0;
 if (!mixCrit.bmax) mixCrit.bmax = 0;
+if (!mixCrit.genres) mixCrit.genres = [];
 function mixSave() { try { localStorage.setItem('moodMix', JSON.stringify(mixCrit)); } catch (e) { /* egal */ } }
 
 function mixName(m) { var s = MOOD_NAMES[m] || m; return s.charAt(0).toUpperCase() + s.slice(1); }
 function mixQuery() {
   return 'moods=' + encodeURIComponent(mixCrit.moods.join(',')) + '&emin=' + mixCrit.emin + '&emax=' + mixCrit.emax + '&bmin=' + mixCrit.bmin + '&bmax=' + mixCrit.bmax +
-    '&styles=' + encodeURIComponent(mixCrit.styles.join(',')) + '&match=' + mixCrit.match + '&n=' + mixCrit.n + '&disc=' + mixCrit.disc;
+    '&styles=' + encodeURIComponent(mixCrit.styles.join(',')) + '&match=' + mixCrit.match +
+    '&genres=' + encodeURIComponent(mixCrit.genres.join(',')) + '&n=' + mixCrit.n + '&disc=' + mixCrit.disc;
 }
 function mixClear() { while (mixBody.firstChild) mixBody.removeChild(mixBody.firstChild); }
 function mixDuration(sec) {
@@ -75,6 +78,15 @@ function mixPick() {
   mixDual(mixBody, 1, 5, 1, mixCrit.emin, mixCrit.emax, T('mix.energy.low'), T('mix.energy.high'), function(a, b){
     return a === 1 && b === 5 ? T('mix.all') : a === b ? String(a) : a + '–' + b;
   }, function(a, b){ mixCrit.emin = a; mixCrit.emax = b; mixCount(); });
+
+  /* Genre (Genre-Tag des Albums); erscheint, sobald der Tag-Dienst Genres meldet */
+  var genreWrap = histEl('div', 'mxGenre');
+  genreWrap.appendChild(histEl('div', 'mxLabel', T('mix.genre')));
+  var genreBox = histEl('div', 'mxChips mxGenres');
+  genreWrap.appendChild(genreBox);
+  mixBody.appendChild(genreWrap);
+  mixState.genreWrap = genreWrap; mixState.genreBox = genreBox;
+  mixGenres();
 
   /* Feinabstimmung */
   var fold = histEl('div', 'hFold mxFold' + (mixState.fine ? ' open' : ''));
@@ -194,6 +206,26 @@ function mixStyles() {
   }
 }
 
+/* Genre-Chips: Genres unter den Treffern der gewählten Stimmung, die häufigsten zuerst */
+function mixGenres() {
+  var box = mixState.genreBox;
+  if (!box) return;
+  while (box.firstChild) box.removeChild(box.firstChild);
+  var list = mixState.genres || [];
+  mixCrit.genres.forEach(function(g){ if (!list.some(function(x){ return x[0].toLowerCase() === g; })) list = list.concat([[g, 0]]); });
+  mixState.genreWrap.style.display = list.length ? '' : 'none';
+  var on = function(x){ return mixCrit.genres.indexOf(x[0].toLowerCase()) >= 0; };
+  var shown = mixState.genresMore ? list : list.filter(function(x, i){ return i < MIX_GENRES || on(x); });
+  shown.forEach(function(x){
+    box.appendChild(mixChip((on(x) ? '✓ ' : '') + x[0], on(x), function(){
+      var g = x[0].toLowerCase(), i = mixCrit.genres.indexOf(g);
+      if (i >= 0) mixCrit.genres.splice(i, 1); else mixCrit.genres.push(g);
+      mixGenres(); mixCount();
+    }, 'mxSmall'));
+  });
+  if (shown.length < list.length) box.appendChild(mixChip(T('mix.more'), false, function(){ mixState.genresMore = true; mixGenres(); }, 'mxMore mxSmall'));
+}
+
 /* Trefferzahl live (kurz verzögert, damit der Regler nicht für jeden Schritt fragt) */
 function mixCount() {
   mixSave();
@@ -206,6 +238,8 @@ function mixCount() {
       if (mixState.tempo && mixState.hasBpm) mixState.tempo.style.display = '';
       var styleKey = JSON.stringify(r.styles || []);
       if (styleKey !== mixState.styleKey) { mixState.styleKey = styleKey; mixState.styles = r.styles || []; mixStyles(); }
+      var genreKey = JSON.stringify(r.genres || []);
+      if (genreKey !== mixState.genreKey) { mixState.genreKey = genreKey; mixState.genres = r.genres || []; mixGenres(); }
       var h = mixState.hits;
       h.className = 'mxHits';
       if (!r.rated) {

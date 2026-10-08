@@ -56,7 +56,7 @@ track and displays station logos in the station list.
 ### Mood Mix
 
 A dedicated first tab next to Playlists and Radio (playlist button). Select one or more moods, narrow down the energy level
-from calm to powerful, and under "Fine Tuning" choose styles, mix length, and discovery level: favorites, balanced, or
+from calm to powerful, limit it to genres, and under "Fine Tuning" choose styles, mix length, and discovery level: favorites, balanced, or
 hidden gems, based on your listening history. "Create Mix" first displays a preview with the reason for each track;
 individual tracks can be removed or the mix can be reshuffled. Only "Play Mix" replaces the queue.
 

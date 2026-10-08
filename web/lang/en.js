@@ -250,6 +250,7 @@ langRegister('en', 'English', {
   'mix.energy.high': 'powerful',
   'mix.energy.low': 'calm',
   'mix.fine': 'Fine-tuning',
+  'mix.genre': 'Genre',
   'mix.hits.few': {one: 'Only {n} track matches exactly; the mix is filled up with similar ones.', other: 'Only {n} tracks match exactly; the mix is filled up with similar ones.'},
   'mix.hits.none': 'No exact matches. The mix will use similar tracks (wider energy, any style).',
   'mix.hits.noneTempo': 'No exact matches. The mix will use similar tracks (wider energy and tempo, any style).',
