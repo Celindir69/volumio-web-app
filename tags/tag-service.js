@@ -533,6 +533,7 @@ function doEssentiaUpload(req, res) {
 var moodmix = require('./moodmix.js');
 var mixPlays = null;
 function doMoodmix(query, cb) {
+  albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
   var c = moodmix.parse(query);
   if (query.count) { var r = moodmix.count(moodCollector, c); r.ok = true; return cb(200, r); }
   var pl = playStore.load();
