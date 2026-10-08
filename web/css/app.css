@@ -132,6 +132,18 @@
     -webkit-overflow-scrolling:touch;
     padding:0 calc(5 * var(--vw)) max(env(safe-area-inset-bottom,16px),16px) calc(5 * var(--vw)); }
 
+  /* Scrollleisten in allen Overlays: schmal, halbtransparent, ohne Schiene (statt der grauen System-Leiste).
+     Chrome/Safari über ::-webkit-scrollbar; Firefox kennt das nicht und bekommt scrollbar-width/-color.
+     Wo eine Leiste ganz verborgen ist (Reiter, Kachelreihen), gilt das weiter. */
+  .overlay ::-webkit-scrollbar { width:6px; height:6px; background:transparent; }
+  .overlay ::-webkit-scrollbar-track { background:transparent; }
+  .overlay ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.18); border-radius:3px; }
+  .overlay ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.32); }
+  .overlay ::-webkit-scrollbar-corner { background:transparent; }
+  @supports not selector(::-webkit-scrollbar) {
+    .overlay * { scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.18) transparent; }
+  }
+
   /* Lyrics */
   #lyricsText { font-size:calc(4.8 * var(--vw)); line-height:1.7; white-space:pre-wrap;
     padding-bottom:4vh; }
