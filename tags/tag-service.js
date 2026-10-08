@@ -441,7 +441,7 @@ function doPlays(query, cb) {
     var ys = plays.years(list, tz), y = parseInt(query.y, 10) || ys[0] || plays.local(now, tz).getUTCFullYear();
     albumsEnsure();                                      /* Genres kommen aus der Albenliste */
     var gi = albumIdx && albumIdx.list;
-    if (gi && (!albumGenre || albumGenre.list !== gi)) albumGenre = {list: gi, fn: albums.genreIndex(gi)};
+    albumGenreFn();
     var m = parseInt(query.m, 10);
     var yr = plays.year(list, y, tz, now, 10, gi ? albumGenre.fn : null, m >= 1 && m <= 12 ? m - 1 : -1);
     yr.albums_top.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
@@ -506,6 +506,30 @@ var moodCollector = new moodtags.Collector({
   getCfg: function(){ return {key: process.env.LASTFM_KEY || appConfig().LASTFM_KEY}; },
   playing: function(cb){ playerState(function(e, st){ cb(!!(e || (st && st.status === 'play'))); }); }   /* im Zweifel: spielt */
 });
+
+/* ---------- Genres der Bibliothek (Genre-Tag, je Album das häufigste) ---------- */
+/* GET /genrelist[?q=] -> {ok, genres:[{g, n, dir, al, ar}]}; GET /genrealbums?g= -> {ok, albums:[{dir, al, ar}]};
+   GET /albumgenre?q=[[uri, album, künstler], …] -> {ok, genres:[…]} (leer = unbekannt). building: Albenliste entsteht noch */
+function albumGenreFn() {
+  var gi = albumIdx && albumIdx.list;
+  if (gi && (!albumGenre || albumGenre.list !== gi)) albumGenre = {list: gi, fn: albums.genreIndex(gi)};
+  return gi ? albumGenre.fn : null;
+}
+function doGenreLib(route, query, cb) {
+  albumsEnsure(function(list){
+    if (!list) return cb(200, {ok: false, building: true});
+    if (route === '/genrelist') return cb(200, {ok: true, genres: albums.genreList(list, query.q)});
+    if (route === '/genrealbums') return cb(200, {ok: true, albums: albums.genreAlbums(list, query.g)});
+    var q = [];
+    try { q = JSON.parse(String(query.q || '[]')); } catch (e) { return cb(400, {ok: false, error: 'q ungültig'}); }
+    if (!Array.isArray(q) || q.length > 500) return cb(400, {ok: false, error: 'q ungültig'});
+    var fn = albumGenreFn();
+    cb(200, {ok: true, genres: q.map(function(x){
+      x = Array.isArray(x) ? x : [];
+      return fn({u: String(x[0] || ''), al: String(x[1] || ''), ar: String(x[2] || '')});
+    })});
+  });
+}
 
 function doMoodtags(query, cb) {
   if (query.artist || query.title) {
@@ -847,6 +871,8 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre'].indexOf(route) >= 0)
+    return doGenreLib(route, url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/genres')  return doGenres(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);

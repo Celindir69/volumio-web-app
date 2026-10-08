@@ -144,6 +144,8 @@ Tapping plays the track or opens the album or artist.
 
 The Tag Service reads the album list from MPD and stores it in `/data/INTERNAL/tags/albums.json`; it is re-read when the MPD database changes.
 
+**Genres:** The fourth search tab (only with the Tag Service) shows tiles of all genres when nothing is entered, and the matching genres otherwise. Tapping one opens the genre page with all albums of that genre, sorted by artist. An album's genre is its most frequent genre tag (from the album list). The album page shows artist, album and genre one below the other; artist and genre open their pages. In album lists the genre is shown small before the pencil. The [library check](#library-check) helps to unify and fill in genre tags.
+
 The Tag Service fetches artist images once from Deezer and stores them under `/data/INTERNAL/tags/artists/` (Last.fm no longer provides them); if no image is available, Volumio's artist icon is shown.
 
 The Tag Service checks Volumio every 5 seconds (every 15 seconds while paused/stopped) for playback status (`VOLUMIO_URL`, default `http://localhost:3000`). A track counts if it is longer than 30 seconds and has been played either halfway through or for 4 minutes; web radio does not count.

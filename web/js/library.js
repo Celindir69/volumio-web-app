@@ -290,6 +290,7 @@ function searchRow(it, stream) {
 function streamNames() { return streamsOn().map(function(s){ return s.name; }).join('/'); }
 
 function renderSearchResults() {
+  if (searchCat === 'genres' && typeof genreSearch === 'function') return genreSearch();     /* genre.js */
   while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
   var list = searchShowLocal ? (searchData[searchCat] || []) : [];
   var parts = streamsOn().filter(function(s){ return s.show; }).map(function(s){
@@ -312,7 +313,13 @@ function renderSearchResults() {
     lh.className = 'infoSection'; lh.textContent = T('search.local');
     searchResults.appendChild(lh);
   }
-  list.forEach(function(it){ searchResults.appendChild(searchRow(it, false)); });
+  var genreRows = [];
+  list.forEach(function(it){
+    var row = searchRow(it, false);
+    searchResults.appendChild(row);
+    if (searchCat === 'albums') genreRows.push({row: row, uri: it.uri, album: it.title || it.name || '', artist: it.artist || ''});
+  });
+  if (genreRows.length && typeof genreDecorate === 'function') genreDecorate(genreRows);
   parts.forEach(function(p){
     var hd = document.createElement('div');
     hd.className = 'infoSection'; hd.textContent = p.s.name;

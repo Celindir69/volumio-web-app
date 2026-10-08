@@ -97,6 +97,9 @@ langRegister('de', 'Deutsch', {
   'disc.reroll': 'Neu würfeln',
   'disc.tapToPlay': 'Tippen zum Abspielen',
 
+  'genre.noAlbums': 'Keine Alben in diesem Genre.',
+  'genre.none': 'Noch keine Genres: Die Alben haben keine Genre-Tags (Bibliotheks-Check, „Alben ohne Genre“).',
+  'genre.offline': 'Tag-Dienst nicht erreichbar.',
   'hist.chart.hour': 'TAGESZEIT',
   'hist.chart.perDay': 'WIEDERGABEN PRO TAG',
   'hist.chart.perMonth': 'WIEDERGABEN PRO MONAT',
@@ -188,6 +191,7 @@ langRegister('de', 'Deutsch', {
   'html.sync': 'sync',
   'html.tab.albums': 'Alben',
   'html.tab.artists': 'Künstler',
+  'html.tab.genres': 'Genres',
   'html.tab.moodMix': 'Stimmungs-Mix',
   'html.tab.playlists': 'Playlisten',
   'html.tab.radio': 'Radio',

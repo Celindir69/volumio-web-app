@@ -143,6 +143,12 @@ dieses Datum vor einem Jahr liefen (sonst vor 2, 3 … Jahren), und einen **Zufa
 **Zufallstitel** (Künstler und Album tippen öffnet, Titel tippen spielt ab, Würfel wählt neu). Bevorzugt kommt, was lange
 nicht oder nie lief. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
 `/data/INTERNAL/tags/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert.
+
+**Genres:** Der vierte Suchreiter (nur mit Tag-Dienst) zeigt ohne Eingabe Kacheln aller Genres, mit Eingabe die passenden.
+Ein Tipp öffnet die Genre-Seite mit allen Alben des Genres, nach Künstler sortiert. Als Genre eines Albums gilt sein
+häufigstes Genre-Tag (aus der Albenliste). Auf der Albumseite stehen Künstler, Album und Genre untereinander; Künstler und
+Genre öffnen ihre Seite. In Albumlisten steht das Genre klein vor dem Stift. Genre-Tags vereinheitlichen und ergänzen hilft
+der [Bibliotheks-Check](#bibliotheks-check).
 Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/INTERNAL/tags/artists/`
 (Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.
 
