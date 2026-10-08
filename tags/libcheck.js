@@ -4,6 +4,7 @@
 var net  = require('net');
 var fs   = require('fs');
 var path = require('path');
+var genres = require('./genres.js');
 
 var IMG_RE = /\.(jpe?g|png)$/i;
 
@@ -108,8 +109,9 @@ function uniq(list) { var o = {}, out = []; list.forEach(function(x){ if (!o.has
 function filesOf(list) { return list.map(function(s){ return {uri: s.file, title: s.title || path.basename(s.file)}; }); }
 function byName(a, b) { return a.name.localeCompare(b.name); }
 
-/* songs: wie mpdWalk; hasCover(dir) -> true/false. Ergebnis: Listen je Kategorie */
-function analyze(songs, hasCover) {
+/* songs: wie mpdWalk; hasCover(dir) -> true/false; audioOf(song) -> Eintrag der Audio-Analyse oder null (optional).
+   Ergebnis: Listen je Kategorie */
+function analyze(songs, hasCover, audioOf) {
   var dirs = {}, order = [];
   songs.forEach(function(s){
     var d = path.dirname(s.file);
@@ -117,6 +119,7 @@ function analyze(songs, hasCover) {
     dirs[d].push(s);
   });
   var res = {songs: songs.length, albums: order.length, noCover: [], albumArtist: [], mixed: [], noTrack: [], spelling: []};
+  var forGenres = [];
   order.sort().forEach(function(d){
     var list = dirs[d];
     var albums = uniq(list.map(function(s){ return s.album; }).filter(Boolean));
@@ -138,7 +141,11 @@ function analyze(songs, hasCover) {
     }
     var noTrack = list.filter(function(s){ return !/\d/.test(s.track); });
     if (noTrack.length) res.noTrack.push(item({missing: noTrack.length}));
+    forGenres.push({dir: d, name: name, artist: who, files: filesOf(list), songs: list,
+                    audio: audioOf ? list.map(audioOf).filter(Boolean) : []});
   });
+  var gc = genres.check(forGenres);
+  res.genreMissing = gc.missing; res.genreMerge = gc.merge; res.genreStyles = gc.styles;
 
   /* Schreibweisen: Interpret und Album-Interpret, gruppiert nach artistKey */
   var groups = {};

@@ -110,6 +110,20 @@ In the search area at the top right (checkmark icon, only available while the Ta
 
 The check reads the MPD database (`MPD_HOST`, `MPD_PORT`, default `localhost:6600`) and the folders, does not modify any files, and only runs when triggered manually. Result: `/data/INTERNAL/tags/check.json`, retained until the next check.
 
+**Genres:** Two further categories suggest exactly one genre per album from the 15 Discogs top categories (Electronic,
+Rock, Jazz, Classical, Pop, Hip Hop, Funk / Soul, Folk, World, & Country, Latin, Reggae, Blues, Stage & Screen,
+Non-Music, Children's, Brass & Military).
+- *Albums without genre:* suggestion from the audio analysis ([Essentia](#audio-analysis-with-essentia-optional-on-the-mac)), averaged over all
+  tracks of the album. Without audio analysis there is no suggestion.
+- *Merge genres:* a table in `tags/genres.js` maps existing genre tags (e.g. "Trip-Hop", "TripHop", "Klassik", "Hörspiel")
+  to a top category, as well as the Discogs sub-styles from the audio analysis. For ambiguous names ("Indie": Rock or Pop)
+  the audio analysis decides. Identical changes are shown in one row.
+
+The pencil opens the batch editor with the suggestion; nothing is written until you save, and Undo works as usual. The
+sub-styles ("Trip Hop", "Downtempo") are not written to the files but stay in the Tag Service: `GET /genres?dir=<folder>`
+returns the top category and sub-styles of an album (as of the last check), without `dir` all albums.
+The model is weaker at recognising classical music, soundtracks and radio plays.
+
 ### Web Radio: Cover Art and Station Logos
 
 If a web radio station broadcasts "Artist - Title", the Tag Service searches iTunes for the corresponding cover art (falling back to Deezer) and displays it in the app and on the kiosk TV; if no title is available or no match is found, the station logo remains.

@@ -78,7 +78,8 @@ die Ranglisten für diesen Monat.
 Tags einzelner Titel, ganzer Alben oder aller Titel eines Künstlers bearbeiten, mit Textfunktionen wie Groß-/Kleinschreibung,
 Rückgängig und Cover (Datei wählen, online suchen, eingebettetes Cover als `folder.jpg`). Der Bibliotheks-Check findet
 Alben ohne Cover, fehlende oder uneinheitliche Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche
-Albumnamen oder Jahre und Titel ohne Tracknummer; jeder Eintrag öffnet direkt den passenden Editor. Dort steht auch der
+Albumnamen oder Jahre und Titel ohne Tracknummer und schlägt je Album ein Genre vor (Discogs-Oberkategorien, aus
+vorhandenen Genre-Tags und der Audio-Analyse); jeder Eintrag öffnet direkt den passenden Editor. Dort steht auch der
 Fortschritt der Stimmungs-Tags.
 
 <p>

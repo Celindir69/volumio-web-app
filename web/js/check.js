@@ -12,7 +12,9 @@ var CHECK_CATS = [
   {key: 'albumArtist', name: T('check.cat.albumArtist'), hint: T('check.cat.albumArtistHint')},
   {key: 'spelling', name: T('check.cat.spelling'), hint: T('check.cat.spellingHint')},
   {key: 'mixed', name: T('check.cat.mixed'), hint: T('check.cat.mixedHint')},
-  {key: 'noTrack', name: T('check.cat.noTrack'), hint: T('check.cat.noTrackHint')}
+  {key: 'noTrack', name: T('check.cat.noTrack'), hint: T('check.cat.noTrackHint')},
+  {key: 'genreMissing', name: T('check.cat.genreMissing'), hint: T('check.cat.genreMissingHint')},
+  {key: 'genreMerge', name: T('check.cat.genreMerge'), hint: T('check.cat.genreMergeHint')}
 ];
 var CHECK_CHEVRON = '<svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>';
 
@@ -167,7 +169,8 @@ function checkFill(box, cat, list) {
   function more() {
     var end = Math.min(list.length, shown + CHECK_PAGE);
     for (; shown < end; shown++) {
-      if (cat.key === 'spelling') list[shown].variants.forEach(function(v, i){ box.insertBefore(checkSpellingRow(v, i, list[shown]), moreRow); });
+      if (cat.key === 'genreMerge') box.insertBefore(checkGenreGroupRow(list[shown]), moreRow);
+      else if (cat.key === 'spelling') list[shown].variants.forEach(function(v, i){ box.insertBefore(checkSpellingRow(v, i, list[shown]), moreRow); });
       else box.insertBefore(checkAlbumRow(cat.key, list[shown]), moreRow);
     }
     moreRow.style.display = shown < list.length ? '' : 'none';
@@ -196,9 +199,35 @@ function checkAlbumRow(key, it) {
   if (key === 'albumArtist') sub = (it.missing ? T('check.albumArtistMissing') : T('check.albumArtistIs', {names: it.albumartists.join(' / ')})) + ' · ' + it.artists.join(', ') + (it.artists.length > 5 ? ' …' : '');
   else if (key === 'mixed') sub = [it.albums.length > 1 ? it.albums.join(' / ') : '', it.years.length > 1 ? it.years.join(' / ') : ''].filter(Boolean).join(' · ') || it.dir;
   else if (key === 'noTrack') sub = T('check.noTrackSub', {missing: checkNum(it.missing), count: checkNum(it.count), dir: it.dir});
+  if (key === 'genreMissing') return checkGenreAlbumRow(it);
   return checkRow(heading, sub, function(){
     if (key === 'albumArtist' || key === 'mixed') openBulkEditor(it.files.map(function(f){ return f.uri; }), it.name);
     else openTagEditor(it.files, it.name);
+  });
+}
+
+/* Genre-Vorschlag: "Electronic (78 % laut Audio) · Trip Hop, Downtempo" */
+function checkGenreText(it) {
+  if (!it.genre) return T('check.genre.none');
+  var why = it.how === 'audio' ? T('check.genre.byAudio', {p: Math.round(it.share * 100)})
+          : it.how === 'both' ? T('check.genre.byBoth') : T('check.genre.byTable');
+  return T('check.genre.suggest', {genre: it.genre}) + ' ' + why + (it.subs && it.subs.length ? ' · ' + it.subs.join(', ') : '');
+}
+
+function checkGenreAlbumRow(it) {
+  return checkRow(it.name + (it.artist ? ' · ' + it.artist : ''), checkGenreText(it), function(){
+    openBulkEditor(it.files.map(function(f){ return f.uri; }), it.name, {field: 'genre', value: it.genre || ''});
+  });
+}
+
+/* gleiche Änderung "bisher -> Oberkategorie" für mehrere Alben = eine Zeile; der Stift öffnet alle Titel davon */
+function checkGenreGroupRow(g) {
+  var names = g.albums.slice(0, 3).map(function(a){ return a.name; }).join(', ') + (g.albums.length > 3 ? ' …' : '');
+  var audio = g.albums.some(function(a){ return a.how !== 'table'; });
+  return checkRow(g.from.replace(/ \/ –$/, ' / ' + T('check.genre.empty')) + ' → ' + g.genre,
+    T('check.genre.groupSub', {albums: T('check.genre.albums', {n: g.albums.length}), n: g.count}) +
+    (audio ? ' · ' + T('check.genre.withAudio') : '') + ' · ' + names, function(){
+    openBulkEditor(g.files.map(function(f){ return f.uri; }), g.from + ' → ' + g.genre, {field: 'genre', value: g.genre});
   });
 }
 
