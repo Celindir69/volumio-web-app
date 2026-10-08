@@ -111,6 +111,7 @@ langRegister('de', 'Deutsch', {
   'hist.hours': '{n} h',
   'hist.kind.album': 'Alben',
   'hist.kind.artist': 'Künstler',
+  'hist.kind.genre': 'Genres',
   'hist.kind.track': 'Titel',
   'hist.lastfm.authorize': 'Bei Last.fm „Zulassen“ tippen, dann hierher zurückkommen und „Fertig“ tippen.',
   'hist.lastfm.connect': 'Mit Last.fm verbinden',

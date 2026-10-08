@@ -166,4 +166,12 @@ t('Vor einem Jahr: ±3 Tage, sonst weiter zurück, sonst leer', function(){
   assert.strictEqual(ar.items[0].ar, 'Z'); assert.strictEqual(ar.items[0].ti, undefined, 'Künstler ohne Titel');
   assert.strictEqual(tr.items[0].ti, 'd'); assert.strictEqual(tr.items[0].al, 'Genau');
 });
+t('Meistgespielt nach Genre mit dem meistgespielten Album als Bild', function(){
+  var l = [{t: 10, ar: 'A', ti: 'x', al: 'Eins', u: 'USB/A/Eins/1.flac'}, {t: 11, ar: 'A', ti: 'y', al: 'Zwei', u: 'USB/A/Zwei/1.flac'},
+           {t: 12, ar: 'A', ti: 'z', al: 'Zwei', u: 'USB/A/Zwei/2.flac'}, {t: 13, ar: 'B', ti: 'q', al: 'Drei', u: 'tidal://song/1'},
+           {t: 14, ar: 'C', ti: 'r', al: '', u: ''}];
+  var g = plays.topGenre(l, function(e){ return e.ar === 'A' ? 'Rock' : e.ar === 'B' ? 'Pop; Rock' : ''; }, 0, 10);
+  assert.deepStrictEqual(g, [{g: 'Rock', n: 4, ar: 'A', al: 'Zwei', u: 'USB/A/Zwei'}, {g: 'Pop', n: 1, ar: 'B', al: 'Drei'}]);
+  assert.deepStrictEqual(plays.topGenre(l, function(){ return 'Rock'; }, 12, 10)[0].n, 3, 'Zeitraum');
+});
 console.log(n + ' Prüfungen');

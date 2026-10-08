@@ -274,8 +274,9 @@ function year(list, y, tz, now, limit, genreOf, month) {
   return res;
 }
 
-/* Top-Genres: Wiedergaben je Genre; mehrere Genres ("Rock; Pop", "Rock/Pop") zählen je einzeln */
-function topGenres(part, genreOf, limit) {
+/* Top-Genres: Wiedergaben je Genre; mehrere Genres ("Rock; Pop", "Rock/Pop") zählen je einzeln.
+   withAlbum: dazu das meistgespielte Album des Genres (ar, al, u = Ordner) für das Bild */
+function topGenres(part, genreOf, limit, withAlbum) {
   var groups = {};
   part.forEach(function(e){
     var seen = {};
@@ -284,11 +285,29 @@ function topGenres(part, genreOf, limit) {
       var k = g.toLowerCase();
       if (!g || seen[k]) return;
       seen[k] = true;
-      (groups[k] || (groups[k] = {g: g, n: 0})).n++;
+      var grp = groups[k] || (groups[k] = {g: g, n: 0, albums: {}});
+      grp.n++;
+      if (withAlbum && e.al) {
+        var a = grp.albums[keys(e).al + '|' + keys(e).ar] || (grp.albums[keys(e).al + '|' + keys(e).ar] = {n: 0, ar: e.ar, al: e.al});
+        a.n++;
+        if (!a.u && e.u && !/^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio|hi_res_audio)\/|spotify:)/i.test(e.u)) a.u = path.dirname(e.u);
+      }
     });
   });
-  return Object.keys(groups).map(function(k){ return groups[k]; })
-    .sort(function(a, b){ return b.n - a.n || a.g.localeCompare(b.g); }).slice(0, limit);
+  return Object.keys(groups).map(function(k){
+    var grp = groups[k], o = {g: grp.g, n: grp.n};
+    if (withAlbum) {
+      var best = null;
+      Object.keys(grp.albums).forEach(function(x){ if (!best || grp.albums[x].n > best.n) best = grp.albums[x]; });
+      if (best) { o.ar = best.ar; o.al = best.al; if (best.u) o.u = best.u; }
+    }
+    return o;
+  }).sort(function(a, b){ return b.n - a.n || a.g.localeCompare(b.g); }).slice(0, limit);
+}
+
+/* Meistgespielt nach Genre (genreOf wie bei stats) */
+function topGenre(list, genreOf, from, limit, to) {
+  return topGenres(between(list, from, to), genreOf, limit, true);
 }
 
 /* Jahre mit Wiedergaben (Ortszeit), neueste zuerst */
@@ -313,5 +332,5 @@ function ago(list, now, tz, limit, kind) {
   }
 }
 
-module.exports = {Store: Store, Tracker: Tracker, recent: recent, top: top, stats: stats, rangeStart: rangeStart,
+module.exports = {Store: Store, Tracker: Tracker, recent: recent, top: top, topGenre: topGenre, stats: stats, rangeStart: rangeStart,
                   year: year, years: years, ago: ago, localStart: localStart, norm: norm, trackKey: trackKey, local: local};

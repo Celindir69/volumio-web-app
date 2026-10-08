@@ -391,6 +391,15 @@ function doPlays(query, cb) {
   var list = playStore.load(), now = Math.floor(Date.now() / 1000), view = query.view;
   var limit = Math.min(parseInt(query.limit, 10) || 100, 500);
   if (view === 'recent') return cb(200, {ok: true, recording: recording, items: plays.recent(list, parseInt(query.before, 10) || 0, limit)});
+  if (view === 'top' && query.kind === 'genre') {
+    return albumsEnsure(function(al){
+      var fn = al && albumGenreFn();
+      if (!fn) return cb(200, {ok: true, building: true, items: []});
+      var items = plays.topGenre(list, fn, plays.rangeStart(query.range, now), limit);
+      items.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
+      cb(200, {ok: true, items: items});
+    });
+  }
   if (view === 'top') {
     var kind = ['track', 'album', 'artist'].indexOf(query.kind) >= 0 ? query.kind : 'track';
     var items = plays.top(list, kind, plays.rangeStart(query.range, now), limit);
