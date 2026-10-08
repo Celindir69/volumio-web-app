@@ -819,5 +819,4 @@ html.light #toast { background:rgba(40,40,40,.92); }
 html.light #vSlider::-webkit-slider-thumb,
 html.light .mxRange::-webkit-slider-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
 html.light .mxRange::-moz-range-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
-html.light .lyric-line.current { text-shadow:0 1px 6px rgba(255,255,255,.55); }   /* Lyrics: heller Grund, Schein hebt die Zeile */
 html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
