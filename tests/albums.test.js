@@ -58,8 +58,30 @@ t('Auswahl bevorzugt nie Gehörtes und wiederholt die letzten nicht', function()
   for (i = 0; i < 3; i++) { var p = albums.pick(list, function(){ return null; }, NOW, picks); assert.ok(!seen[p.dir]); seen[p.dir] = true; }
 });
 
+t('Zufallskünstler: je Albumkünstler einmal, ohne Sampler, bevorzugt lange nicht gehört', function(){
+  var al = [{dir: 'a', al: 'X', ar: 'Spliff'}, {dir: 'b', al: 'Y', ar: 'spliff'}, {dir: 'c', al: 'Z', ar: 'Verschiedene'}, {dir: 'd', al: 'W', ar: 'Nena'}];
+  var ar = albums.artists(al);
+  assert.deepStrictEqual(ar, [{ar: 'Spliff', n: 2, dir: 'a'}, {ar: 'Nena', n: 1, dir: 'd'}]);
+  var last = albums.lastArtistIndex([{t: NOW - D, ar: 'SPLIFF', ti: 'x'}]);
+  assert.strictEqual(last(ar[0]), NOW - D); assert.strictEqual(last(ar[1]), null);
+  var count = 0, seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  for (var i = 0; i < 400; i++) if (albums.pickArtist(ar, last, NOW, null, rnd).ar === 'Nena') count++;
+  assert.ok(count > 250, 'nie gehört kommt öfter: ' + count);
+  var picks = [], a = albums.pickArtist(ar, last, NOW, picks), b = albums.pickArtist(ar, last, NOW, picks);
+  assert.notStrictEqual(a.ar, b.ar, 'nicht zweimal hintereinander');
+});
+t('Zufallstitel aus der Titelliste, mit zuletzt gehört', function(){
+  var tl = [['Nena', '99 Luftballons', 'USB/N/01.flac', 230, 'Nena'], ['Falco', 'Jeanny', 'USB/F/02.flac', 0]];
+  var last = albums.lastTrackIndex([{t: NOW - D, ar: 'Nena', ti: '99 luftballons'}]);
+  var picks = [], a = albums.pickTrack(tl, last, NOW, picks), b = albums.pickTrack(tl, last, NOW, picks);
+  var nena = a.ar === 'Nena' ? a : b, falco = a.ar === 'Nena' ? b : a;
+  assert.deepStrictEqual(nena, {ar: 'Nena', ti: '99 Luftballons', f: 'USB/N/01.flac', d: 230, al: 'Nena', last: NOW - D});
+  assert.deepStrictEqual(falco, {ar: 'Falco', ti: 'Jeanny', f: 'USB/F/02.flac', d: 0, al: '', last: null});
+});
+
 /* nachgebauter MPD für die Route */
-var tree = {'': 'directory: USB\n', 'USB': 'directory: USB/A\n', 'USB/A': 'file: USB/A/1.flac\nArtist: Spliff\nAlbum: 85555\n'};
+var tree = {'': 'directory: USB\n', 'USB': 'directory: USB/A\n', 'USB/A': 'file: USB/A/1.flac\nArtist: Spliff\nAlbum: 85555\nTitle: Carbonara\nTime: 260\n'};
 var walks = 0;
 var mpd = net.createServer(function(c){
   c.write('OK MPD 0.19.0\n');
@@ -84,8 +106,8 @@ mpd.listen(0, function(){
   process.env.MPD_PORT = String(mpd.address().port);
   var svc = require('../tags/tag-service.js').server;
   svc.listen(0, function(){
-    function get(cb) {
-      http.get({port: svc.address().port, path: '/random'}, function(res){
+    function get(cb, q) {
+      http.get({port: svc.address().port, path: '/random' + (q || '')}, function(res){
         var d = ''; res.on('data', function(c){ d += c; }); res.on('end', function(){ cb(JSON.parse(d)); });
       });
     }
@@ -99,8 +121,18 @@ mpd.listen(0, function(){
             assert.ok(fs.existsSync(path.join(dir, 'albums.json')));
             assert.strictEqual(walks, 1);
           });
-          console.log(n + ' Prüfungen');
-          svc.close(); mpd.close();
+          get(function(r3){
+            t('Zufallskünstler über ?kind=artist', function(){
+              assert.deepStrictEqual(r3, {ok: true, artist: {ar: 'Spliff', n: 1, dir: 'USB/A', last: null}});
+            });
+            get(function(r4){
+              t('Zufallstitel über ?kind=track', function(){
+                assert.deepStrictEqual(r4, {ok: true, track: {ar: 'Spliff', ti: 'Carbonara', f: 'USB/A/1.flac', d: 260, al: '85555', last: null}});
+              });
+              console.log(n + ' Prüfungen');
+              svc.close(); mpd.close();
+            }, '?kind=track');
+          }, '?kind=artist');
         });
       }, 300);
     });

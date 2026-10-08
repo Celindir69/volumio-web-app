@@ -298,15 +298,16 @@ function years(list, tz) {
   return out;
 }
 
-/* "Vor einem Jahr gehört": Alben, die um dieses Datum (±3 Tage) vor einem Jahr liefen; sonst vor 2, 3 … Jahren */
+/* "Vor einem Jahr gehört": Alben (kind 'artist'/'track': Künstler/Titel), die um dieses Datum (±3 Tage) vor einem Jahr liefen;
+   sonst vor 2, 3 … Jahren */
 var AGO_DAYS = 3;
-function ago(list, now, tz, limit) {
+function ago(list, now, tz, limit, kind) {
   if (!list.length) return {years: 0, items: []};
   var d = local(now, tz);
   for (var k = 1; ; k++) {
     var c = localStart(d.getUTCFullYear() - k, d.getUTCMonth(), d.getUTCDate(), tz) + 12 * 3600;
     if (c + AGO_DAYS * DAY < list[0].t) return {years: 0, items: []};
-    var items = top(list, 'album', c - AGO_DAYS * DAY, limit || 12, c + AGO_DAYS * DAY);
+    var items = top(list, kind || 'album', c - AGO_DAYS * DAY, limit || 12, c + AGO_DAYS * DAY);
     if (items.length) return {years: k, at: c, items: items};
   }
 }

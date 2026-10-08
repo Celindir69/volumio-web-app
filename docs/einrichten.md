@@ -91,9 +91,10 @@ In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meis
 (ein Jahr: Summen mit Vergleich zum Vorjahr, Monate und zum Aufklappen Top-Titel, -Alben, -Künstler, -Genres und neu entdeckte Künstler; Tipp auf einen Monatsbalken zeigt die Ranglisten für diesen Monat; Genres aus der Albenliste unten). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.
 
-**Entdecken:** Solange in der Suche nichts eingegeben ist, zeigt sie Alben, die um dieses Datum vor einem Jahr liefen
-(sonst vor 2, 3 … Jahren), und ein **Zufallsalbum** (Cover tippen spielt ab, Würfel wählt neu). Bevorzugt kommen Alben, die
-lange nicht oder nie liefen. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
+**Entdecken:** Solange in der Suche nichts eingegeben ist, zeigt sie passend zum Reiter Künstler, Alben oder Titel, die um
+dieses Datum vor einem Jahr liefen (sonst vor 2, 3 … Jahren), und einen **Zufallskünstler**, ein **Zufallsalbum** oder einen
+**Zufallstitel** (Künstler und Album tippen öffnet, Titel tippen spielt ab, Würfel wählt neu). Bevorzugt kommt, was lange
+nicht oder nie lief. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
 `/data/INTERNAL/tags/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert.
 Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/INTERNAL/tags/artists/`
 (Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.
@@ -123,7 +124,7 @@ liegen in `/data/INTERNAL/tags/moodtags/`, die Titelliste dazu in `/data/INTERNA
 zusammen mit der Albenliste). Fortschritt und Verteilung zeigt der Bibliotheks-Check unter „Stimmungs-Tags (Last.fm)“.
 Ausschalten: `MOODTAGS: false` in `web/config.local.js`, dann den Tag-Dienst neu starten.
 
-**Stimmungs-Mix:** In der Suche (ohne Eingabe) unter „Stimmungs-Mix“ eine Stimmung antippen. Im Blatt lassen sich
+**Stimmungs-Mix:** Playlisten-Taste, Reiter „Stimmungs-Mix“ (erscheint, sobald der Tag-Dienst läuft). Dort lassen sich
 mehrere Stimmungen, ein Energie-Bereich und unter „Feinabstimmung“ Stile, Länge und Entdeckungsgrad (nach dem Verlauf:
 Favoriten, ausgewogen, versteckte Perlen) wählen. „Mix erstellen“ zeigt nur eine Vorschau; erst „Mix abspielen“ ersetzt
 die Warteschlange (das Listensymbol daneben hängt den Mix an). Gibt es weniger als 20 genaue Treffer, nimmt der Mix

@@ -160,7 +160,7 @@
   </div>
 </div>
 
-<!-- Playlisten/Radio-Overlay -->
+<!-- Stimmungs-Mix/Playlisten/Radio-Overlay -->
 <div class="overlay" id="overlayPlaylists">
   <div class="overlayHandle"></div>
   <div class="overlayHead">
@@ -170,10 +170,12 @@
     </div>
   </div>
   <div id="plTabBar">
+    <div class="qTab" id="plTab0" style="display:none">Stimmungs-Mix</div>
     <div class="qTab on" id="plTab1">Playlisten</div>
     <div class="qTab" id="plTab2">Radio</div>
   </div>
   <div id="plPanels">
+    <div id="mixBody"></div>
     <div id="playlistResults"></div>
     <div id="radioPanel"></div>
   </div>
@@ -284,21 +286,6 @@
     <div class="qTab" data-tab="year">Rückblick</div>
   </div>
   <div class="overlayBody" id="histBody"></div>
-</div>
-
-<!-- Stimmungs-Mix: Auswahl, Vorschau, abspielen -->
-<div class="overlay" id="overlayMix">
-  <div class="overlayHandle"></div>
-  <div class="overlayHead">
-    <div id="mixBack" title="Zurück">
-      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-    </div>
-    <h2>Stimmungs-Mix</h2>
-    <div class="overlayClose" id="closeMix">
-      <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
-    </div>
-  </div>
-  <div class="overlayBody" id="mixBody"></div>
 </div>
 
 <!-- Tag-Editor (öffnet über dem Album-Overlay) -->

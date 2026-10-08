@@ -157,5 +157,8 @@ t('Vor einem Jahr: ±3 Tage, sonst weiter zurück, sonst leer', function(){
   a = plays.ago(l, NOW, tz);
   assert.strictEqual(a.years, 1); assert.strictEqual(a.items[0].ti, 'Genau');
   assert.strictEqual(plays.ago([{t: NOW, ar: 'Y', ti: 'c', al: 'Heute'}], NOW, tz).items.length, 0);
+  var ar = plays.ago(l, NOW, tz, 12, 'artist'), tr = plays.ago(l, NOW, tz, 12, 'track');
+  assert.strictEqual(ar.items[0].ar, 'Z'); assert.strictEqual(ar.items[0].ti, undefined, 'Künstler ohne Titel');
+  assert.strictEqual(tr.items[0].ti, 'd'); assert.strictEqual(tr.items[0].al, 'Genau');
 });
 console.log(n + ' Prüfungen');

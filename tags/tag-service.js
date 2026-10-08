@@ -399,7 +399,8 @@ function doPlays(query, cb) {
     return cb(200, {ok: true, years: ys, review: yr});
   }
   if (view === 'ago') {
-    var ag = plays.ago(list, now, tz);
+    var ak = ['artist', 'track'].indexOf(query.kind) >= 0 ? query.kind : 'album';
+    var ag = plays.ago(list, now, tz, 12, ak);
     ag.items.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
     return cb(200, {ok: true, ago: ag});
   }
@@ -407,7 +408,7 @@ function doPlays(query, cb) {
 }
 
 /* ---------- Zufallsalbum ---------- */
-/* GET /random -> {ok, album: {dir, al, ar, last}} oder {ok: false, building: true}, solange die Albenliste entsteht.
+/* GET /random[?kind=artist|track] -> {ok, album: {dir, al, ar, last}} (artist: {ar, n, dir, last}; track: {ar, ti, al, f, d, last}) oder {ok: false, building: true}, solange die Albenliste entsteht.
    Die Liste kommt aus MPD (wie beim Bibliotheks-Check), liegt in albums.json und wird neu gelesen,
    wenn MPDs Datenbank sich geändert hat (Prüfung höchstens alle 10 Minuten). */
 var albums = require('./albums.js');
@@ -503,12 +504,34 @@ function doMoodmix(query, cb) {
   cb(200, m);
 }
 
+var artistPicks = [], trackPicks = [], libTracks = null, artistList = null;
+/* Titelliste der Bibliothek (library-tracks.json), neu gelesen, wenn die Datei sich geändert hat */
+function libTracksLoad() {
+  var st;
+  try { st = fs.statSync(TRACKS_FILE); } catch (e) { return null; }
+  if (!libTracks || libTracks.m !== +st.mtime) {
+    try { libTracks = {m: +st.mtime, list: JSON.parse(fs.readFileSync(TRACKS_FILE, 'utf8'))}; } catch (e) { return libTracks && libTracks.list; }
+  }
+  return libTracks.list;
+}
+
 function doRandom(query, cb) {
+  var kind = query.kind === 'artist' || query.kind === 'track' ? query.kind : 'album';
   albumsEnsure(function(list){
     if (!list || !list.length) return cb(200, {ok: false, building: albumBuilding, error: albumBuilding ? null : 'keine Alben gefunden'});
-    var pl = playStore.load();
+    var pl = playStore.load(), now = Math.floor(Date.now() / 1000);
+    if (kind === 'artist') {
+      if (!artistList || artistList.src !== list) artistList = {src: list, list: albums.artists(list)};
+      var ar = albums.pickArtist(artistList.list, albums.lastArtistIndex(pl), now, artistPicks);
+      return cb(200, ar ? {ok: true, artist: ar} : {ok: false, error: 'keine Künstler gefunden'});
+    }
+    if (kind === 'track') {
+      var tl = libTracksLoad();
+      if (!tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, error: 'keine Titel gefunden'});
+      return cb(200, {ok: true, track: albums.pickTrack(tl, albums.lastTrackIndex(pl), now, trackPicks)});
+    }
     if (!albumLast || albumLast.n !== pl.length) albumLast = {n: pl.length, fn: albums.lastIndex(pl)};
-    cb(200, {ok: true, album: albums.pick(list, albumLast.fn, Math.floor(Date.now() / 1000), albumPicks)});
+    cb(200, {ok: true, album: albums.pick(list, albumLast.fn, now, albumPicks)});
   });
 }
 
