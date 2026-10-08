@@ -249,6 +249,16 @@
   .bCover { flex:0 0 calc(18 * var(--vw)); height:calc(18 * var(--vw)); object-fit:cover; background:var(--ph);
     border-radius:calc(2 * var(--vw)); margin-right:calc(3.5 * var(--vw)); }
   .bAlbum { font-size:calc(4.6 * var(--vw)); font-weight:700; white-space:normal; }
+  /* Genre: klein rechts in Albumzeilen (vor dem Stift), Künstler und Genre auf der Albumseite antippbar (genre.js) */
+  .bGenre { flex:0 1 auto; max-width:30%; margin-left:calc(2 * var(--vw)); font-size:calc(2.9 * var(--vw)); opacity:.6;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .bLink { cursor:pointer; }
+  .bGenre:hover, .bGenre:active, .bLink:hover, .bLink:active { opacity:1; }
+  #browseAlbumHead .bArtist { white-space:normal; margin-bottom:calc(.5 * var(--vw)); }
+  #browseAlbumHead .bGenreHead { margin-top:calc(.5 * var(--vw)); }
+  .bGenreHead:empty { display:none; }
+  .gGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(calc(26 * var(--vw)), 1fr)); gap:calc(4 * var(--vw)) calc(3 * var(--vw));
+    padding-top:calc(2 * var(--vw)); }
   #browsePlayAll { flex:0 0 calc(12 * var(--vw)); height:calc(12 * var(--vw)); max-width:52px; max-height:52px;
     margin-left:calc(3 * var(--vw)); border-radius:50%; background:var(--accent, var(--fg)); cursor:pointer;
     display:flex; align-items:center; justify-content:center; }

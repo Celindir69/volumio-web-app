@@ -222,6 +222,7 @@
     <div class="qTab on" data-cat="artists" data-i18n="html.tab.artists">Künstler</div>
     <div class="qTab" data-cat="albums" data-i18n="html.tab.albums">Alben</div>
     <div class="qTab" data-cat="songs" data-i18n="html.tab.songs">Titel</div>
+    <div class="qTab" data-cat="genres" id="searchTabGenres" style="display:none" data-i18n="html.tab.genres">Genres</div>
   </div>
   <div id="searchResults"></div>
 </div>
@@ -314,7 +315,7 @@
   langApply(document);                      /* data-i18n-Texte im HTML in der gewählten Sprache */
 
   /* App-Skripte immer frisch laden: nach mx-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
-  ['streaming', 'infotext', 'core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'moodmix', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
+  ['streaming', 'infotext', 'core', 'lyrics', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'check', 'history', 'discover', 'genre', 'moodmix', 'ui', 'volumio', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
     document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
   });
 </script>

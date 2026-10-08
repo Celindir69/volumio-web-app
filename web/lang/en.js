@@ -99,6 +99,9 @@ langRegister('en', 'English', {
   'disc.reroll': 'Roll again',
   'disc.tapToPlay': 'Tap to play',
 
+  'genre.noAlbums': 'No albums in this genre.',
+  'genre.none': 'No genres yet: the albums have no genre tags (library check, "Albums without genre").',
+  'genre.offline': 'Tag service not reachable.',
   'hist.chart.hour': 'TIME OF DAY',
   'hist.chart.perDay': 'PLAYS PER DAY',
   'hist.chart.perMonth': 'PLAYS PER MONTH',
@@ -190,6 +193,7 @@ langRegister('en', 'English', {
   'html.sync': 'sync',
   'html.tab.albums': 'Albums',
   'html.tab.artists': 'Artists',
+  'html.tab.genres': 'Genres',
   'html.tab.moodMix': 'Mood Mix',
   'html.tab.playlists': 'Playlists',
   'html.tab.radio': 'Radio',

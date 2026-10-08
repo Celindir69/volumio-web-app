@@ -46,7 +46,7 @@ automatically cycles through the available pages. Switch using the control at th
 
 ### Search and Discover
 
-Search finds artists, albums, and tracks in the local library and on the streaming services configured in Volumio
+Search finds artists, albums, tracks, and genres (all albums per genre) in the local library and on the streaming services configured in Volumio
 (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), each in separate sections with checkboxes for showing or hiding them. As long as
 nothing has been entered, the selected tab shows "Played a Year Ago" (artists, albums, or tracks played around this date
 one year ago) as well as a random artist, random album, or random track, with preference given to music that has not been

@@ -55,6 +55,28 @@ function genreIndex(list) {
   };
 }
 
+/* Genres der Albenliste: [{g, n (Alben), dir, al, ar (Beispielalbum fürs Cover)}], die größten zuerst; q filtert (Teilwort) */
+function genreList(list, q) {
+  var by = {}, out = [];
+  q = String(q || '').toLowerCase().trim();
+  list.forEach(function(a){
+    if (!a.ge || (q && a.ge.toLowerCase().indexOf(q) < 0)) return;
+    var k = a.ge.toLowerCase(), g = by[k];
+    if (!g) { g = by[k] = {g: a.ge, n: 0, dir: a.dir, al: a.al, ar: a.ar}; out.push(g); }
+    g.n++;
+  });
+  return out.sort(function(a, b){ return b.n - a.n || a.g.localeCompare(b.g); });
+}
+
+/* Alben eines Genres (Groß-/Kleinschreibung egal), nach Künstler und Album sortiert; Sampler ("Verschiedene") am Ende */
+function genreAlbums(list, g) {
+  g = String(g || '').toLowerCase();
+  function key(a) { return (a.ar === 'Verschiedene' ? '\uffff' : '') + a.ar.toLowerCase().replace(/^the\s+/, ''); }
+  return list.filter(function(a){ return a.ge && a.ge.toLowerCase() === g; })
+    .map(function(a){ return {dir: a.dir, al: a.al, ar: a.ar}; })
+    .sort(function(a, b){ return key(a).localeCompare(key(b)) || a.al.localeCompare(b.al); });
+}
+
 /* Verlauf -> wann zuletzt gelaufen: nach Ordner (lokal gespielt) und nach Album+Künstler (auch Last.fm) */
 function lastIndex(list) {
   var byDir = {}, byKey = {}, byAlbum = {};
@@ -143,5 +165,5 @@ function pickTrack(tracks, last, now, picks, rnd) {
   return c && {ar: c.a[0], ti: c.a[1], f: c.a[2], d: c.a[3] || 0, al: c.a[4] || '', last: c.last};
 }
 
-module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, lastIndex: lastIndex, pick: pick, weight: weight,
+module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, lastIndex: lastIndex, pick: pick, weight: weight,
                   artists: artists, lastArtistIndex: lastArtistIndex, lastTrackIndex: lastTrackIndex, pickArtist: pickArtist, pickTrack: pickTrack};

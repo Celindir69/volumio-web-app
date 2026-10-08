@@ -5,7 +5,7 @@ var overlayBrowse = document.getElementById('overlayBrowse');
 var browseTitle   = document.getElementById('browseTitle');
 var browseBack    = document.getElementById('browseBack');
 var browseBody    = document.getElementById('browseBody');
-var browseStack   = [];       /* Verlauf: {kind:'artist'|'album', artist, album, uri} */
+var browseStack   = [];       /* Verlauf: {kind:'artist'|'album'|'genre'|'playlist', artist, album, uri, genre} */
 var browseOrigin  = null;     /* Overlay, aus dem die Ansicht geöffnet wurde (Suche, Info): der Zurück-Pfeil führt dorthin */
 var browseSeq     = 0;        /* verwirft Antworten veralteter Anfragen */
 
@@ -108,12 +108,13 @@ function browseRender() {
   var e = browseStack[browseStack.length - 1];
   var seq = ++browseSeq;
   browseBack.style.display = (browseStack.length > 1 || browseOrigin) ? '' : 'none';
-  browseTitle.textContent = e.kind === 'artist' ? e.artist : (e.kind === 'playlist' ? e.name : e.album);
+  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre : e.album;
   browseBody.scrollTop = 0;
   while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
   browseBody.appendChild(browseNote(T('browse.loading')));
   if (e.kind === 'artist') browseArtist(e, seq);
   else if (e.kind === 'playlist') browsePlaylist(e, seq);
+  else if (e.kind === 'genre') browseGenre(e, seq);                 /* genre.js */
   else browseAlbum(e, seq);
 }
 
@@ -227,6 +228,7 @@ function browseArtist(e, seq) {
     albumHead.style.display = 'none';
     browseBody.appendChild(albumHead);
     if (!albums.length && !isStream) browseBody.appendChild(browseNote(T('browse.noAlbumsLocal')));
+    var genreRows = [];
 
     albums.forEach(function(al){
       var row = document.createElement('div');
@@ -249,7 +251,9 @@ function browseArtist(e, seq) {
         browseRender();
       });
       browseBody.appendChild(row);
+      if (!isStream) genreRows.push({row: row, uri: al.uri, album: al.title, artist: al.artist || e.artist});
     });
+    if (genreRows.length && typeof genreDecorate === 'function') genreDecorate(genreRows, seq);   /* Genre vor dem Stift */
 
     function addTitles(list, showAlbum) {
       if (!list.length || seq !== browseSeq) return;
@@ -295,11 +299,30 @@ function browseAlbum(e, seq) {
     if (art) img.src = artUrl(art);
     var meta = document.createElement('div');
     meta.className = 'sMeta';
+    /* Künstler (klein) – Album (groß) – Genre (klein); Künstler und Genre öffnen ihre Seite */
+    var who = info.artist || e.artist || '';
+    var ar = document.createElement('div');
+    ar.className = 'sSub bArtist'; ar.textContent = who;
+    if (who && !streamOf(e.uri) && who !== 'Verschiedene' && !/^various( artists)?$/i.test(who)) {   /* lokal: Alben des Künstlers */
+      ar.classList.add('bLink');
+      ar.addEventListener('click', function(){
+        browseStack.push({kind:'artist', artist:who});
+        browseRender();
+      });
+    }
     var ti = document.createElement('div');
     ti.className = 'sTitle bAlbum'; ti.textContent = e.album;
-    var sub = document.createElement('div');
-    sub.className = 'sSub'; sub.textContent = info.artist || e.artist || '';
-    meta.appendChild(ti); meta.appendChild(sub);
+    var ge = document.createElement('div');
+    ge.className = 'sSub bGenreHead';
+    meta.appendChild(ar); meta.appendChild(ti); meta.appendChild(ge);
+    if (!streamOf(e.uri) && typeof genreLookup === 'function') {
+      genreLookup([{uri: e.uri, album: e.album, artist: who}]).then(function(gs){
+        if (seq !== browseSeq || !gs[0]) return;
+        ge.textContent = gs[0];
+        ge.classList.add('bLink');
+        ge.addEventListener('click', function(){ genreOpen(gs[0]); });
+      });
+    }
     var play = document.createElement('div');
     play.id = 'browsePlayAll';
     play.title = T('browse.playAlbum');

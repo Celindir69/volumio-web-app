@@ -42,7 +42,7 @@ der Anlage, ohne Bedienung.
 </p>
 
 ### Suche und Entdecken
-Die Suche findet Künstler, Alben und Titel in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
+Die Suche findet Künstler, Alben, Titel und Genres (je Genre alle Alben) in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
 eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
 eingegeben ist, zeigt sie passend zum Reiter „Vor einem Jahr gehört“ (Künstler, Alben oder Titel, die um dieses Datum vor
 einem Jahr liefen) und einen Zufallskünstler, ein Zufallsalbum oder einen Zufallstitel, bevorzugt lange nicht oder nie Gehörtes. Bei Webradio holt die App ein Cover

@@ -41,6 +41,15 @@ t('Top-Genres im Rückblick: mehrere Genres je einzeln, Groß/klein zusammen', f
                   2027, {w: 60, s: 120}, NOW + 9, 10, function(e){ return {x: 'Rock; Pop', y: 'rock', z: ''}[e.al]; });
   assert.deepStrictEqual(y.genres_top, [{g: 'Rock', n: 2}, {g: 'Pop', n: 1}]);
 });
+t('Genres: Liste mit Albenzahl und Suche, Alben eines Genres nach Künstler', function(){
+  var list = [{dir: 'U/b', al: 'B', ar: 'The Zed', ge: 'Rock'}, {dir: 'U/a', al: 'A', ar: 'Abba', ge: 'Pop'},
+              {dir: 'U/c', al: 'C', ar: 'Yes', ge: 'rock'}, {dir: 'U/s', al: 'S', ar: 'Verschiedene', ge: 'Rock'},
+              {dir: 'U/x', al: 'X', ar: 'Nobody'}];
+  assert.deepStrictEqual(albums.genreList(list).map(function(g){ return [g.g, g.n]; }), [['Rock', 3], ['Pop', 1]]);
+  assert.deepStrictEqual(albums.genreList(list, 'OP').map(function(g){ return g.g; }), ['Pop']);
+  assert.strictEqual(albums.genreList(list)[0].dir, 'U/b');
+  assert.deepStrictEqual(albums.genreAlbums(list, 'ROCK').map(function(a){ return a.al; }), ['C', 'B', 'S']);
+});
 t('Gewicht: nie oder über ein Jahr 4, über 3 Monate 2, sonst 1', function(){
   assert.strictEqual(albums.weight(null, NOW), 4); assert.strictEqual(albums.weight(NOW - 400 * D, NOW), 4);
   assert.strictEqual(albums.weight(NOW - 100 * D, NOW), 2); assert.strictEqual(albums.weight(NOW - D, NOW), 1);
