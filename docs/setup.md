@@ -188,6 +188,7 @@ python3 analyse.py --upload http://<player>:8766
 ### Artist and Album Information
 
 The information page queries Volumio first. If nothing is returned (Volumio 4 only provides the information with a subscription, or Volumio does not respond within 6 seconds), the app retrieves the information itself: album information from Last.fm (in the interface language, otherwise English; requires `LASTFM_KEY`), and artist information from Last.fm and Wikipedia, first both in the interface language, then both in English (Wikipedia: only articles that appear to be music-related).
+If the app is set to a different language than the Volumio interface, it retrieves the texts itself first and asks Volumio only if that returns nothing (Volumio returns its texts in its own language).
 
 The source is shown below the text. There is no fallback for contributors.
 

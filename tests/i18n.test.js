@@ -52,7 +52,7 @@ t('jeder Schlüssel im Code (T(…), data-i18n*) steht in de.js', function(){
     .concat([path.join(ROOT, 'app.html'), path.join(ROOT, 'kioskTV.html')]);
   var used = {};
   src.forEach(function(f){
-    var s = fs.readFileSync(f, 'utf8'), m, re = /\b(?:T|textT)\(\s*'([\w.-]+)'|data-i18n(?:-title|-placeholder|-aria)?="([\w.-]+)"/g;
+    var s = fs.readFileSync(f, 'utf8'), m, re = /\b(?:T|textT)\(\s*'([\w.-]+)'|data-i18n(?:-title|-placeholder|-aria|-empty)?="([\w.-]+)"/g;
     while ((m = re.exec(s))) if (!/\.$/.test(m[1] || m[2])) used[m[1] || m[2]] = path.basename(f);   /* 'mood.' + id: zusammengesetzt */
   });
   var missing = Object.keys(used).filter(function(k){ return !(k in files.de.texts); }).map(function(k){ return k + ' (' + used[k] + ')'; });

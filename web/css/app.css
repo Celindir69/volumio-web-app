@@ -588,7 +588,7 @@ html.stage #overlayLyrics .overlayHandle, html.stage #overlayLyrics .overlayHead
 html.stage #overlayLyrics .overlayBody { padding:calc(env(safe-area-inset-top,0px) + 76px) max(env(safe-area-inset-right,0px), clamp(20px, 3vw, 56px)) 4vh clamp(20px, 2.6vw, 48px);
   -webkit-mask-image:linear-gradient(to bottom, transparent 0, transparent 60px, #000 120px, #000 calc(100% - 8vh), transparent 100%);
   mask-image:linear-gradient(to bottom, transparent 0, transparent 60px, #000 120px, #000 calc(100% - 8vh), transparent 100%); }
-html.stage #lyricsText:empty:before { content:'Keine Lyrics gefunden'; opacity:.35; font-size:.8em; }
+html.stage #lyricsText:empty:before { content:attr(data-empty); opacity:.35; font-size:.8em; }
 
 /* Queue, Playlisten, Suche … oben rechts als runde Knöpfe */
 html.stage #topRight .actBtn { padding:0; opacity:.55; }
