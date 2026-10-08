@@ -13,6 +13,8 @@ abbrechen (Ctrl-C) und später weitermachen geht jederzeit.
 Voraussetzung: macOS 15+ mit Python 3.14 (pip install essentia-tensorflow mutagen);
 Intel-Mac mit macOS 14: Python 3.13 und pip install "essentia-tensorflow==2.1b6.dev1389" mutagen
 Die vortrainierten Modelle (rund 100 MB) lädt das Skript beim ersten Lauf selbst herunter.
+Optional ffmpeg (brew install ffmpeg): liest Dateien, an denen Essentia scheitert oder abstürzt. Nach dem Einrichten
+holt "python3 analyse.py --retry-errors …" die bisher fehlgeschlagenen Dateien nach.
 Modelle: CC BY-NC-SA 4.0 (nur nicht-kommerziell), https://essentia.upf.edu/models
 """
 import argparse
@@ -21,6 +23,8 @@ import fnmatch
 import json
 import multiprocessing as mp
 import os
+import shutil
+import subprocess
 import sys
 import time
 import urllib.request
@@ -50,6 +54,26 @@ SR_MODEL = 16000
 EFFNET_HOP = 128
 MUSICNN_SECONDS = 45
 MUSICNN_HOP = 187
+CRASH = 'Analyse abgestürzt (Datei beschädigt oder zu groß?)'
+FFMPEG_PATHS = ['/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg']   # falls nicht im PATH (z. B. aus cron)
+
+
+def find_ffmpeg(arg):
+    """ffmpeg für Dateien, die Essentia nicht lesen kann: --ffmpeg PFAD, 'aus' = nie, sonst suchen"""
+    if arg is not None:
+        return '' if arg in ('', 'aus', 'off', 'no') else arg
+    return shutil.which('ffmpeg') or next((p for p in FFMPEG_PATHS if os.access(p, os.X_OK)), '')
+
+
+def ffmpeg_load(ffmpeg, path):
+    """ganze Datei als Mono, 44,1 kHz, float32 (wie MonoLoader)"""
+    import numpy as np
+    r = subprocess.run([ffmpeg, '-v', 'error', '-nostdin', '-i', path, '-vn', '-ac', '1', '-ar', str(SR), '-f', 'f32le', '-'],
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=600)
+    audio = np.frombuffer(r.stdout, dtype=np.float32)
+    if r.returncode != 0 and len(audio) < SR * 5:
+        raise RuntimeError('ffmpeg: ' + (r.stderr.decode('utf-8', 'replace').strip().splitlines() or ['Fehler'])[-1][:150])
+    return audio
 
 
 def head_path(model):
@@ -137,8 +161,9 @@ def read_tags(path):
 W = {}
 
 
-def worker_init(folder, seconds, profile=False, max_minutes=0, marks=''):
+def worker_init(folder, seconds, profile=False, max_minutes=0, marks='', ffmpeg=''):
     W['max_minutes'] = max_minutes
+    W['ffmpeg'] = ffmpeg
     W['marks'] = marks
     os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
     import essentia
@@ -174,7 +199,7 @@ def mean_rows(a):
 
 
 def analyse(job):
-    path, size, mtime = job
+    path, size, mtime, use_ffmpeg = job
     rec = {'v': VERSION, 'p': path, 'sz': size, 'mt': mtime}
     # Merkzettel je Prozess: stürzt der Prozess bei dieser Datei ab (Essentia/TensorFlow), weiß der Hauptprozess welche
     mark = os.path.join(W['marks'], str(os.getpid())) if W.get('marks') else ''
@@ -182,7 +207,7 @@ def analyse(job):
         with open(mark, 'w', encoding='utf-8') as m:
             m.write(path)
     try:
-        return analyse_file(rec, path)
+        return analyse_file(rec, path, use_ffmpeg)
     finally:
         if mark:
             try:
@@ -200,7 +225,25 @@ def length_of(path):
         return 0.0
 
 
-def analyse_file(rec, path):
+def load_audio(rec, path, use_ffmpeg):
+    """Essentia liest; scheitert es (Fehler oder fast nichts gelesen), liest ffmpeg. use_ffmpeg: gleich ffmpeg
+    (die Datei hat Essentia zuvor zum Absturz gebracht). rec['dec'] = 'ffmpeg', wenn ffmpeg gelesen hat."""
+    ff = W.get('ffmpeg')
+    if use_ffmpeg and ff:
+        rec['dec'] = 'ffmpeg'
+        return ffmpeg_load(ff, path)
+    try:
+        audio = W['es'].MonoLoader(filename=path, sampleRate=SR)()
+        if len(audio) >= SR * 5 or not ff:
+            return audio
+    except Exception:
+        if not ff:
+            raise
+    rec['dec'] = 'ffmpeg'
+    return ffmpeg_load(ff, path)
+
+
+def analyse_file(rec, path, use_ffmpeg=False):
     ar, ti, al = read_tags(path)
     if not ar or not ti:
         rec['err'] = 'keine Künstler-/Titel-Tags'
@@ -221,7 +264,7 @@ def analyse_file(rec, path):
                 now = time.time()
                 tt[name] = round(now - t0[0], 2)
                 t0[0] = now
-        audio = es.MonoLoader(filename=path, sampleRate=SR)()
+        audio = load_audio(rec, path, use_ffmpeg)
         lap('laden')
         n = len(audio)
         if n < SR * 5:
@@ -338,12 +381,16 @@ def main():
                     help='längere Dateien auslassen, sie werden ganz geladen (Standard 30, 0 = alle)')
     ap.add_argument('--limit', type=int, default=0, help='höchstens so viele Dateien analysieren (zum Ausprobieren)')
     ap.add_argument('--upload', metavar='URL', help='danach zum Tag-Dienst hochladen, z. B. http://<player>:8766')
+    ap.add_argument('--ffmpeg', metavar='PFAD', help='ffmpeg für Dateien, die Essentia nicht lesen kann '
+                                                    '(Standard: automatisch suchen; "aus" = nicht benutzen)')
     a = ap.parse_args()
     if not a.roots and not a.upload:
         ap.error('Musikordner angeben (oder nur --upload)')
 
     if a.roots:
         fetch_models(a.models)
+        ffmpeg = find_ffmpeg(a.ffmpeg)
+        print('ffmpeg als Ersatz: ' + (ffmpeg or 'keins (brew install ffmpeg)'), flush=True)
         roots = [os.path.abspath(os.path.expanduser(r)) for r in a.roots]
         done = load_done(a.out)
         present, todo = set(), []
@@ -352,7 +399,8 @@ def main():
             o = done.get(p)
             if o and o.get('sz') == size and o.get('mt') == mtime and o.get('v') == VERSION and not (a.retry_errors and o.get('err')):
                 continue
-            todo.append((p, size, mtime))
+            # nach einem Absturz gleich mit ffmpeg lesen, sonst stürzt es wieder ab
+            todo.append((p, size, mtime, bool(ffmpeg and o and o.get('err') == CRASH)))
         if a.limit:
             todo = todo[:a.limit]
         print('%d Audiodateien gefunden, %d zu analysieren (%d Prozesse).' % (len(present), len(todo), a.jobs), flush=True)
@@ -366,7 +414,7 @@ def main():
 
             def pool():
                 return cf.ProcessPoolExecutor(a.jobs, mp_context=ctx, initializer=worker_init,
-                                              initargs=(a.models, a.seconds, a.profile, a.max_minutes, marks))
+                                              initargs=(a.models, a.seconds, a.profile, a.max_minutes, marks, ffmpeg))
 
             def handle(f, rec):
                 nonlocal n, errs
@@ -388,6 +436,7 @@ def main():
             queue = list(reversed(todo))
             solo = []
             blind = 0
+            ff_tried = set()                  # nach einem Absturz schon einmal mit ffmpeg versucht
             ex = pool()
             running = {}
             try:
@@ -424,9 +473,14 @@ def main():
                             running = {}
                             if alone and crashed:
                                 for j in todo:
-                                    if j[0] in crashed:
-                                        handle(f, {'v': VERSION, 'p': j[0], 'sz': j[1], 'mt': j[2],
-                                                   'err': 'Analyse abgestürzt (Datei beschädigt oder zu groß?)'})
+                                    if j[0] not in crashed:
+                                        continue
+                                    if ffmpeg and not j[3] and j[0] not in ff_tried:   # noch einmal einzeln, mit ffmpeg
+                                        ff_tried.add(j[0])
+                                        solo.append((j[0], j[1], j[2], True))
+                                        queue = [q for q in queue if q[0] != j[0]]
+                                    else:
+                                        handle(f, {'v': VERSION, 'p': j[0], 'sz': j[1], 'mt': j[2], 'err': CRASH})
                             else:
                                 solo += [j for j in queue if j[0] in crashed]
                             queue = [j for j in queue if j[0] not in crashed]
