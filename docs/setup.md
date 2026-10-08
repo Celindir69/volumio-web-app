@@ -136,7 +136,7 @@ The radio list displays the station logos using the address provided by Volumio,
 
 ### History and Statistics
 
-In the search area at the top right (clock icon): **Recently Played** (by day), **Most Played** (tracks, albums, or artists; 30 days, 12 months, or all time), **Statistics** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
+In the search area at the top right (clock icon): **Recently Played** (by day), **Most Played** (tracks, albums, artists, or genres; 30 days, 12 months, or all time), **Statistics** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
 
 Tapping plays the track or opens the album or artist.
 
@@ -144,7 +144,7 @@ Tapping plays the track or opens the album or artist.
 
 The Tag Service reads the album list from MPD and stores it in `/data/INTERNAL/tags/albums.json`; it is re-read when the MPD database changes.
 
-**Genres:** The fourth search tab (only with the Tag Service) shows tiles of all genres when nothing is entered, and the matching genres otherwise. Tapping one opens the genre page with all albums of that genre, sorted by artist. An album's genre is its most frequent genre tag (from the album list). The album page shows artist, album and genre one below the other; artist and genre open their pages. In album lists the genre is shown small before the pencil. The [library check](#library-check) helps to unify and fill in genre tags.
+**Genres:** The fourth search tab (only with the Tag Service) shows tiles of all genres when nothing is entered, and the matching genres otherwise. Tapping one opens the genre page: if there are [audio analyses](#audio-analysis-with-essentia-optional-on-the-mac), it first shows tiles of the styles (Discogs sub-styles, e.g. "Trip Hop" under Electronic) with "All" in front, otherwise all albums of the genre right away, sorted by artist. Each album counts up to three sub-styles of its genre, averaged over the analysed tracks; albums without an analysis appear only under "All". Search also finds sub-styles. An album's genre is its most frequent genre tag (from the album list). The album page shows artist, album and genre one below the other; artist and genre open their pages. In album lists the genre is shown small before the pencil. The [library check](#library-check) helps to unify and fill in genre tags.
 
 The Tag Service fetches artist images once from Deezer and stores them under `/data/INTERNAL/tags/artists/` (Last.fm no longer provides them); if no image is available, Volumio's artist icon is shown.
 

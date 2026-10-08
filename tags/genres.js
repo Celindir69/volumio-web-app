@@ -154,5 +154,62 @@ function check(albums) {
   return {missing: missing, merge: merge, styles: styles};
 }
 
+/* ---------- Unterstile je Album (Genre-Seite, Suche) ---------- */
+var SUB_SHARE = 0.15;           /* weitere Unterstile eines Albums ab diesem Anteil (der stärkste zählt immer) */
+var SUB_MAX = 3;
+
+/* Unterstile eines Albums innerhalb seiner Oberkategorie(n) tops: Anteile je Titel (nur Stile dieser Kategorien),
+   über die analysierten Titel gemittelt -> Namen, stärkster zuerst */
+function albumSubs(entries, tops) {
+  var sub = {}, n = 0;
+  entries.forEach(function(o){
+    var t = {}, sum = 0;
+    (o && o.styles || []).forEach(function(x){
+      var p = String(x[0] || '').split('---'), w = +x[1] || 0;
+      if (!p[1] || tops.indexOf(p[0]) < 0 || w <= 0) return;
+      t[p[1]] = (t[p[1]] || 0) + w; sum += w;
+    });
+    if (!sum) return;
+    n++;
+    Object.keys(t).forEach(function(k){ sub[k] = (sub[k] || 0) + t[k] / sum; });
+  });
+  if (!n) return [];
+  return Object.keys(sub).sort(function(a, b){ return sub[b] - sub[a] || a.localeCompare(b); })
+    .filter(function(k, i){ return i === 0 || sub[k] / n >= SUB_SHARE; }).slice(0, SUB_MAX);
+}
+
+/* Unterstile aller Alben: list = Albenliste [{dir, ge}], tracks = [[Künstler, Titel, Datei, Sek., Album], …],
+   audioOf(Künstler, Titel, Album) -> Analyse oder null, dirOf(Datei) -> Albumordner. -> {Ordner: [Unterstile]} */
+function subsIndex(list, tracks, audioOf, dirOf) {
+  var byDir = {}, out = {};
+  tracks.forEach(function(t){
+    var o = audioOf(t[0], t[1], t[4]);
+    if (o) (byDir[dirOf(t[2])] || (byDir[dirOf(t[2])] = [])).push(o);
+  });
+  list.forEach(function(a){
+    var tops = a.ge && byDir[a.dir] ? topsOf(a.ge) : [];
+    var subs = tops.length ? albumSubs(byDir[a.dir], tops) : [];
+    if (subs.length) out[a.dir] = subs;
+  });
+  return out;
+}
+
+/* Unterstile als Kacheln: [{g, s, n (Alben), dir, al, ar}], die größten zuerst.
+   g: nur Alben dieses Genres; q: Teilwort im Namen des Unterstils (Suche über alle Genres) */
+function subList(list, idx, g, q) {
+  var by = {}, out = [];
+  g = String(g || '').toLowerCase(); q = String(q || '').toLowerCase().trim();
+  list.forEach(function(a){
+    if (!a.ge || !idx[a.dir] || (g && a.ge.toLowerCase() !== g)) return;
+    idx[a.dir].forEach(function(s){
+      if (q && s.toLowerCase().indexOf(q) < 0) return;
+      var k = a.ge.toLowerCase() + '\n' + s.toLowerCase(), x = by[k];
+      if (!x) { x = by[k] = {g: a.ge, s: s, n: 0, dir: a.dir, al: a.al, ar: a.ar}; out.push(x); }
+      x.n++;
+    });
+  });
+  return out.sort(function(a, b){ return b.n - a.n || a.s.localeCompare(b.s); });
+}
+
 module.exports = {TOPS: TOPS, genreKey: genreKey, topsOf: topsOf, learnStyles: learnStyles, audioVote: audioVote,
-                  suggest: suggest, check: check};
+                  suggest: suggest, check: check, albumSubs: albumSubs, subsIndex: subsIndex, subList: subList};

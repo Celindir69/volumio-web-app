@@ -99,9 +99,11 @@ langRegister('en', 'English', {
   'disc.reroll': 'Roll again',
   'disc.tapToPlay': 'Tap to play',
 
+  'genre.all': 'All',
   'genre.noAlbums': 'No albums in this genre.',
   'genre.none': 'No genres yet: the albums have no genre tags (library check, "Albums without genre").',
   'genre.offline': 'Tag service not reachable.',
+  'genre.subsHint': 'Styles from the audio analysis. Albums without an analysis are under “All”.',
   'hist.chart.genres': 'GENRES',
   'hist.chart.hour': 'TIME OF DAY',
   'hist.chart.perDay': 'PLAYS PER DAY',

@@ -97,9 +97,11 @@ langRegister('de', 'Deutsch', {
   'disc.reroll': 'Neu würfeln',
   'disc.tapToPlay': 'Tippen zum Abspielen',
 
+  'genre.all': 'Alle',
   'genre.noAlbums': 'Keine Alben in diesem Genre.',
   'genre.none': 'Noch keine Genres: Die Alben haben keine Genre-Tags (Bibliotheks-Check, „Alben ohne Genre“).',
   'genre.offline': 'Tag-Dienst nicht erreichbar.',
+  'genre.subsHint': 'Stilrichtungen aus der Audio-Analyse. Alben ohne Analyse findest du unter „Alle“.',
   'hist.chart.genres': 'GENRES',
   'hist.chart.hour': 'TAGESZEIT',
   'hist.chart.perDay': 'WIEDERGABEN PRO TAG',

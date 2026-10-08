@@ -70,4 +70,23 @@ t('Check: Unterstile je Album nur im Ergebnis', function(){
   assert.deepStrictEqual(r.genreStyles['M/D'], {genre: 'Rock', share: 1, subs: ['Punk']});
 });
 
+t('Unterstile je Album innerhalb seines Genres', function(){
+  assert.deepStrictEqual(g.albumSubs([A([['Electronic---Trip Hop', 0.5], ['Electronic---Downtempo', 0.3], ['Rock---Indie Rock', 0.9]]),
+                                      A([['Electronic---Trip Hop', 0.6], ['Electronic---Ambient', 0.1]])], ['Electronic']),
+    ['Trip Hop', 'Downtempo']);                                          /* Ambient zu schwach, Rock gehört nicht dazu */
+  assert.deepStrictEqual(g.albumSubs([A([['Rock---Punk', 0.9]])], ['Jazz']), []);
+});
+
+t('Unterstil-Index und Kacheln, Suche über alle Genres', function(){
+  var list = [{dir: 'M/A', al: 'A', ar: 'X', ge: 'Electronic'}, {dir: 'M/B', al: 'B', ar: 'Y', ge: 'electronic'},
+              {dir: 'M/C', al: 'C', ar: 'Z', ge: 'Rock'}, {dir: 'M/D', al: 'D', ar: 'Z', ge: 'Rock'}];
+  var tracks = [['X', '1', 'M/A/1.flac', 0, 'A'], ['Y', '1', 'M/B/CD1/1.flac', 0, 'B'], ['Z', '1', 'M/C/1.flac', 0, 'C'], ['Z', '2', 'M/D/1.flac', 0, 'D']];
+  var au = {X1: A([['Electronic---Trip Hop', 0.8]]), Y1: A([['Electronic---Trip Hop', 0.4], ['Electronic---Techno', 0.4]]),
+            Z1: A([['Rock---Post Rock', 0.7], ['Electronic---Trip Hop', 0.3]])};
+  var idx = g.subsIndex(list, tracks, function(ar, ti){ return au[ar + ti] || null; }, function(f){ return f.replace(/\/(CD\d+\/)?[^\/]*$/, ''); });
+  assert.deepStrictEqual(idx, {'M/A': ['Trip Hop'], 'M/B': ['Techno', 'Trip Hop'], 'M/C': ['Post Rock']});
+  assert.deepStrictEqual(g.subList(list, idx, 'Electronic').map(function(x){ return [x.s, x.n]; }), [['Trip Hop', 2], ['Techno', 1]]);
+  assert.deepStrictEqual(g.subList(list, idx, '', 'rock').map(function(x){ return [x.g, x.s, x.n, x.al]; }), [['Rock', 'Post Rock', 1, 'C']]);
+});
+
 console.log(n + ' Prüfungen bestanden');

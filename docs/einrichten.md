@@ -133,7 +133,7 @@ App und auf dem Kiosk-TV; ohne Titel oder ohne Treffer bleibt das Senderlogo. Di
 `/data/INTERNAL/tags/radio-covers/` und `/data/INTERNAL/tags/stations/`.
 
 ### Verlauf und Statistik
-In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben oder Künstler;
+In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag, Top-8-Genres; ein Genre antippen öffnet seine Alben) und **Rückblick**
 (ein Jahr: Summen mit Vergleich zum Vorjahr, Monate und zum Aufklappen Top-Titel, -Alben, -Künstler, -Genres (antippbar) und neu entdeckte Künstler; Tipp auf einen Monatsbalken zeigt die Ranglisten für diesen Monat; Genres aus der Albenliste unten). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.
@@ -145,7 +145,10 @@ nicht oder nie lief. Die Albenliste liest der Tag-Dienst aus MPD und speichert s
 `/data/INTERNAL/tags/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert.
 
 **Genres:** Der vierte Suchreiter (nur mit Tag-Dienst) zeigt ohne Eingabe Kacheln aller Genres, mit Eingabe die passenden.
-Ein Tipp öffnet die Genre-Seite mit allen Alben des Genres, nach Künstler sortiert. Als Genre eines Albums gilt sein
+Ein Tipp öffnet die Genre-Seite: Gibt es [Audio-Analysen](#audio-analyse-mit-essentia-optional-auf-dem-mac), zuerst Kacheln
+der Stilrichtungen (Discogs-Unterstile, z. B. „Trip Hop“ unter Electronic) mit „Alle“ davor, sonst gleich alle Alben des
+Genres, nach Künstler sortiert. Je Album zählen bis zu drei Unterstile seines Genres, gemittelt über die analysierten Titel;
+Alben ohne Analyse stehen nur unter „Alle“. Die Suche findet auch Unterstile. Als Genre eines Albums gilt sein
 häufigstes Genre-Tag (aus der Albenliste). Auf der Albumseite stehen Künstler, Album und Genre untereinander; Künstler und
 Genre öffnen ihre Seite. In Albumlisten steht das Genre klein vor dem Stift. Genre-Tags vereinheitlichen und ergänzen hilft
 der [Bibliotheks-Check](#bibliotheks-check).
