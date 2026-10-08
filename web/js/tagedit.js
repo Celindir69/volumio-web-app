@@ -463,6 +463,7 @@ var artSeq = 0;                                       /* verwirft Antworten eine
 var artUi = null;                                     /* Eingabeelemente der Ansicht */
 var artChanges = [];                                  /* Vorschau: [{from, to, tags:{feld:wert}, files:[f], check}] */
 var artReload = null;                                 /* lädt den Editor nach Rückgängig neu */
+var artPreset = null;                                 /* Vorbelegung {field, value} (Genre-Vorschlag aus dem Check) */
 var TAG_LABELS = {title: T('tag.field.title'), track: T('tag.field.track')};
 TAG_COMMON.forEach(function(fd){ TAG_LABELS[fd[0]] = fd[1]; });
 
@@ -538,9 +539,11 @@ function openArtistEditor(name) {
   }).catch(function(e){ tagBulkFail(seq, e); });
 }
 
-/* bestimmte Dateien, z. B. ein Album (Knopf "Mehrfachbearbeitung" im Album-Editor) */
-function openBulkEditor(uris, heading) {
+/* bestimmte Dateien, z. B. ein Album (Knopf "Mehrfachbearbeitung" im Album-Editor);
+   preset {field, value}: Feld auf "Festlegen" mit diesem Wert vorbelegen und die Vorschau gleich zeigen */
+function openBulkEditor(uris, heading, preset) {
   var seq = tagBulkStart(heading);
+  artPreset = preset || null;
   artReload = function(){ openBulkEditor(uris, heading); };
   tagBulkLoad(seq, uris).catch(function(e){ tagBulkFail(seq, e); });
 }
@@ -595,6 +598,12 @@ function artistRender() {
   }); });
   ui.preview.addEventListener('click', artistPreview);
   sync();
+  if (artPreset) {
+    ui.field.value = artPreset.field; ui.action.value = 'set'; sync();
+    ui.value.value = artPreset.value || '';
+    artPreset = null;
+    if (ui.value.value) artistPreview(); else ui.value.focus();
+  }
 }
 
 /* neuer Wert eines Feldes nach der gewählten Aktion */

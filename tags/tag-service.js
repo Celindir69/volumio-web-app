@@ -275,7 +275,8 @@ function doCheckStart(body, cb) {
     (function step() {                                   /* in Teilen, damit der Fortschritt mitläuft */
       if (i >= jobs.length) {
         cand.forEach(function(c, k){ if (!(results[k] && results[k].ok && results[k].has)) noCover[c.dir] = true; });
-        var res = libcheck.analyze(songs, function(d){ return !noCover[d]; });
+        var res = libcheck.analyze(songs, function(d){ return !noCover[d]; },
+          function(s){ return audioStore.get(s.artist, s.title, s.album); });
         res.at = Date.now();
         res.seconds = Math.round((res.at - checkRun.started) / 1000);
         try { fs.writeFileSync(CHECK_FILE, JSON.stringify(res)); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
@@ -287,6 +288,16 @@ function doCheckStart(body, cb) {
       runPyMany(part, function(r){ results = results.concat(r); checkRun.done = i; step(); });
     })();
   }, function(done, total){ checkRun.done = done; checkRun.total = total; });
+}
+
+/* GET /genres?dir=… -> Oberkategorie und Unterstile eines Albums aus der Audio-Analyse (Stand des letzten Checks);
+   ohne dir alle Alben. Die Unterstile stehen nur hier, in die Dateien schreibt der Check nur die Oberkategorie. */
+function doGenres(query, cb) {
+  var last = null;
+  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { /* noch nie geprüft */ }
+  var all = (last && last.genreStyles) || {};
+  if (query.dir !== undefined) return cb(200, {ok: true, album: all[String(query.dir)] || null});
+  cb(200, {ok: true, albums: all, at: last ? last.at : null});
 }
 
 function doCheckGet(cb) {
@@ -793,6 +804,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/genres')  return doGenres(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
