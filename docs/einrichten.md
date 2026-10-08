@@ -209,6 +209,11 @@ python3 analyse.py --upload http://<player>:8766
 - Stürzt die Analyse bei einer Datei ab (macOS meldet dann „Python wurde unerwartet beendet“), läuft das Skript weiter
   und trägt die Datei als Fehler ein; `--retry-errors` versucht solche Dateien später erneut. Dateien über 30 Minuten
   (Mitschnitte, DJ-Mixe) lässt es aus, weil sie ganz in den Speicher geladen werden (`--max-minutes`, 0 = alle).
+- Mit ffmpeg (`brew install ffmpeg`) liest das Skript Dateien, an denen Essentia scheitert: bei einem Lesefehler, bei
+  fast leerem Ergebnis und nach einem Absturz (dann die Datei noch einmal einzeln, gleich mit ffmpeg). Es sucht ffmpeg
+  selbst (PATH, `/opt/homebrew/bin`, `/usr/local/bin`) und zeigt beim Start, welches es nimmt; `--ffmpeg <pfad>` wählt
+  ein anderes, `--ffmpeg aus` schaltet es ab. Bisher fehlgeschlagene Dateien holt `--retry-errors` nach. Mit ffmpeg
+  gelesene Titel tragen `"dec":"ffmpeg"` in `essentia.jsonl`.
 - Die Ergebnisdatei `essentia.jsonl` liegt auf dem Player unter `/data/INTERNAL/tags/` (ersetzt bei jedem Hochladen die
   vorige; alternativ per `scp` dorthin kopieren). Der Bibliotheks-Check zeigt unter „Stimmungs-Tags“, wie viele Titel
   zugeordnet sind.
