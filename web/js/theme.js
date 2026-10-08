@@ -1,5 +1,5 @@
 /* Hell oder dunkel: ?theme=light|dark|auto in der Adresse, sonst THEME in config(.local).js, sonst 'auto' (wie das Gerät,
-   wechselt mit, z. B. abends). Setzt html.light; die Farben stehen in web/css/base.css. Die Bühnenansicht bleibt dunkel.
+   wechselt mit, z. B. abends). Setzt html.light; die Farben stehen in web/css/base.css. Gilt auch für die Bühnenansicht; kioskTV.html bleibt dunkel.
    Klassisches Skript, ES5; wird im <head> nach config.js geladen, damit die Seite gleich in der richtigen Farbe erscheint. */
 (function(){
   var cfg = window.APP_CONFIG || {};

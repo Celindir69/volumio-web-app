@@ -13,7 +13,7 @@ Eigene Einstellungen (Last.fm-Schlüssel, Rotel, Dienste ein/aus) kommen in `web
 ### Hell und dunkel
 Die Oberfläche folgt der Einstellung des Geräts (hell oder dunkel) und wechselt mit, wenn das Gerät umschaltet.
 Fest einstellen: `THEME: 'light'` oder `'dark'` in `web/config.local.js`; zum Ausprobieren `?theme=light` in der Adresse.
-Die Bühnenansicht für große Bildschirme bleibt immer dunkel.
+Das gilt auch für die Bühnenansicht auf großen Bildschirmen; nur `kioskTV.html` bleibt immer dunkel.
 
 ### Sprache
 Die Oberfläche gibt es auf Deutsch und Englisch. Sie übernimmt die Sprache, die in Volumio unter Einstellungen eingestellt

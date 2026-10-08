@@ -811,11 +811,13 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .mxDel svg { width:calc(4.5 * var(--vw)); height:calc(4.5 * var(--vw)); max-width:20px; max-height:20px; fill:var(--fg); }
 
 /* Light-Mode: was sich nicht über die Farbvariablen in base.css lösen lässt */
-html.light:not(.stage) #cover { box-shadow:0 calc(3 * var(--vw)) calc(9 * var(--vw)) rgba(0,0,0,.28); }
-html.light:not(.stage) .dBig { box-shadow:0 8px 24px rgba(0,0,0,.18); }
-html.light:not(.stage) #searchSources input:checked {
+html.light #cover { box-shadow:0 calc(3 * var(--vw)) calc(9 * var(--vw)) rgba(0,0,0,.28); }
+html.light .dBig { box-shadow:0 8px 24px rgba(0,0,0,.18); }
+html.light #searchSources input:checked {
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z' fill='%23fff'/%3E%3C/svg%3E"); }
-html.light:not(.stage) #toast { background:rgba(40,40,40,.92); }
-html.light:not(.stage) #vSlider::-webkit-slider-thumb,
-html.light:not(.stage) .mxRange::-webkit-slider-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
-html.light:not(.stage) .mxRange::-moz-range-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+html.light #toast { background:rgba(40,40,40,.92); }
+html.light #vSlider::-webkit-slider-thumb,
+html.light .mxRange::-webkit-slider-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+html.light .mxRange::-moz-range-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+html.light .lyric-line.current { text-shadow:0 1px 6px rgba(255,255,255,.55); }   /* Lyrics: heller Grund, Schein hebt die Zeile */
+html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }

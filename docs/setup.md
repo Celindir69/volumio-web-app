@@ -16,7 +16,7 @@ Custom settings (Last.fm key, Rotel, enabling/disabling services) go into `web/c
 
 The interface follows the device setting (light or dark) and switches along when the device does. To fix it, set
 `THEME: 'light'` or `'dark'` in `web/config.local.js`; for a quick test, add `?theme=light` to the address.
-The stage layout for large screens always stays dark.
+This also applies to the stage layout for large screens; only `kioskTV.html` always stays dark.
 
 ### Language
 
