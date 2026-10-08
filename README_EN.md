@@ -73,8 +73,8 @@ energy and mood are derived from the audio, and a tempo control (BPM) is added.
 ### History, Statistics, and Review
 
 The Tag Service records what is played and can scrobble to Last.fm as well as import the existing Last.fm listening history.
-This data is used to provide "Recently Played", rankings (tracks, albums, artists), statistics by day, time of day, and
-weekday, and an annual review with a comparison to the previous year, top genres, and newly discovered artists.
+This data is used to provide "Recently Played", rankings (tracks, albums, artists), statistics by day, time of day,
+weekday, and genre, and an annual review with a comparison to the previous year, top genres, and newly discovered artists.
 Tapping a month displays the rankings for that month.
 
 <p>

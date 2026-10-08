@@ -248,6 +248,25 @@ function histBars(title, values, labels, every, details, opts) {
   return box;
 }
 
+/* Genres als waagrechte Balken (Wiedergaben); Tippen öffnet die Genre-Seite (genre.js) */
+function histGenreBars(title, list) {
+  var box = histEl('div', 'hChart');
+  box.appendChild(browseHeading(title));
+  var max = Math.max.apply(null, list.map(function(g){ return g.n; }).concat([1]));
+  list.forEach(function(g){
+    var row = histEl('div', 'hgRow');
+    row.appendChild(histEl('div', 'hgName', g.g));
+    var bar = histEl('div', 'hgBar'), fill = histEl('div', 'hFill');
+    fill.style.width = Math.round(g.n / max * 100) + '%';
+    bar.appendChild(fill);
+    row.appendChild(bar);
+    row.appendChild(histEl('div', 'hgN', histNum(g.n)));
+    if (typeof genreFromAnywhere === 'function') row.addEventListener('click', function(){ genreFromAnywhere(g.g); });
+    box.appendChild(row);
+  });
+  return box;
+}
+
 function histStats(seq) {
   Promise.all([
     tagGetJson('/plays?view=stats&range=' + histRange + histTz()),
@@ -287,6 +306,7 @@ function histStats(seq) {
         histBody.appendChild(histBars(T('hist.chart.hour'), s.hours, s.hours.map(function(v, i){ return String(i); }), 6,
           s.hours.map(function(v, i){ return T('hist.hourRange', {from: i, to: i + 1}); })));
         histBody.appendChild(histBars(T('hist.chart.weekday'), s.weekdays, HIST_DAYS, 1, langWeekdays('long')));
+        if (s.genres && s.genres.length) histBody.appendChild(histGenreBars(T('hist.chart.genres'), s.genres));
       }
       if (s.first) histBody.appendChild(browseNote(T('hist.since', {day: histDayLower(s.first)})));
     }
@@ -378,7 +398,7 @@ function histYear(seq) {
     section('genres', T('hist.year.topGenres') + suffix, function(body){
       if (!y.genres_top.length) { body.appendChild(browseNote(T('hist.year.noGenres'))); return; }
       y.genres_top.forEach(function(g, i){
-        var row = histRow(g.g, '', histNum(g.n) + '×', function(){});
+        var row = histRow(g.g, '', histNum(g.n) + '×', function(){ if (typeof genreFromAnywhere === 'function') genreFromAnywhere(g.g); });
         row.classList.add('hNoImg');
         row.insertBefore(histEl('div', 'hRank', String(i + 1)), row.firstChild);
         body.appendChild(row);

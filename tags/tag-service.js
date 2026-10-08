@@ -436,7 +436,10 @@ function doPlays(query, cb) {
     return cb(200, {ok: true, items: items});
   }
   var tz = {w: parseInt(query.tzw, 10) || 0, s: parseInt(query.tzs, 10) || 0};
-  if (view === 'stats') return cb(200, {ok: true, recording: recording, stats: plays.stats(list, query.range, now, tz)});
+  if (view === 'stats') {
+    albumsEnsure();                                      /* Genres kommen aus der Albenliste */
+    return cb(200, {ok: true, recording: recording, stats: plays.stats(list, query.range, now, tz, albumGenreFn())});
+  }
   if (view === 'year') {
     var ys = plays.years(list, tz), y = parseInt(query.y, 10) || ys[0] || plays.local(now, tz).getUTCFullYear();
     albumsEnsure();                                      /* Genres kommen aus der Albenliste */
