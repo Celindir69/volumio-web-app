@@ -8,7 +8,9 @@ direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einri
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
 </p>
 
-Alle Bilder in dieser Datei zeigen eine erfundene Beispiel-Bibliothek (Künstler, Cover und Texte sind ausgedacht).
+Alle Bilder in dieser Datei zeigen eine erfundene Beispiel-Bibliothek (Künstler, Cover und Texte sind ausgedacht). Zie zeigen nicht immer den aktuellen Stand der Entwicklung. Manche Features wurden zwischenzeitlich verschoben oder erweitert.
+
+Entwickelt mit KI (Claude code https://claude.ai)
 
 ## Funktionen
 
