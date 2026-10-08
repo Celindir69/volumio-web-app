@@ -41,8 +41,8 @@ vMute.innerHTML = SVG_VOL;
 
 function paintSlider() {
   var pct = vSlider.value / vSlider.max * 100;
-  vSlider.style.background = 'linear-gradient(to right, var(--accent, #fff) ' + pct +
-    '%, rgba(255,255,255,.25) ' + pct + '%)';
+  vSlider.style.background = 'linear-gradient(to right, var(--accent, var(--fg)) ' + pct +
+    '%, rgba(var(--fg-rgb),.25) ' + pct + '%)';
   vVal.textContent = vSlider.value;
 }
 

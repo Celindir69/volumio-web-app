@@ -12,6 +12,12 @@ After an update, perform a hard reload in the browser. An existing `web/config.l
 
 Custom settings (Last.fm key, Rotel, enabling/disabling services) go into `web/config.local.js`; use `web/config.local.js.example` as the template.
 
+### Light and Dark
+
+The interface follows the device setting (light or dark) and switches along when the device does. To fix it, set
+`THEME: 'light'` or `'dark'` in `web/config.local.js`; for a quick test, add `?theme=light` to the address.
+The stage layout for large screens always stays dark.
+
 ### Language
 
 The interface is available in German and English. It follows the device (browser) language; if neither matches, it is

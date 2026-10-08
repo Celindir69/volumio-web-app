@@ -7,6 +7,9 @@ window.APP_CONFIG.LASTFM_SECRET = 'DEIN_SHARED_SECRET';
 window.APP_CONFIG.LANGUAGE = 'en';
 window.APP_CONFIG.LANGUAGES = ['de', 'en', 'fr'];
 */
+/* Immer hell oder immer dunkel (sonst wie das Gerät):
+window.APP_CONFIG.THEME = 'light';
+*/
 /* Rotel-Verstärker (rotel/rotel-bridge.js liest die Adresse aus dieser Datei; danach den Dienst neu starten):
 window.APP_CONFIG.ROTEL = true;
 window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';

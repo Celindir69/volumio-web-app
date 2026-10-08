@@ -19,8 +19,9 @@
                  '<script src="web/config.local.js?t=' + Date.now() + '" onerror="void 0"><\/script>');
 </script>
 <script>
-  /* Sprache wählen und Sprachdateien laden (web/js/i18n.js lädt web/lang/<code>.js nach) */
-  document.write('<script src="web/js/i18n.js?t=' + Date.now() + '"><\/script>');
+  /* hell/dunkel (theme.js), Sprache wählen und Sprachdateien laden (i18n.js lädt web/lang/<code>.js nach) */
+  document.write('<script src="web/js/theme.js?t=' + Date.now() + '"><\/script>' +
+                 '<script src="web/js/i18n.js?t=' + Date.now() + '"><\/script>');
 </script>
 </head>
 <body>
