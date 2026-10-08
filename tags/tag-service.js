@@ -175,6 +175,8 @@ function scanRun() {
     (function step() {
       if (!list.length) {
         scanRunning = false;
+        var t = setTimeout(function(){ albumChecked = 0; albumsEnsure(); }, ALBUMS_AFTER_SCAN_MS);
+        if (t.unref) t.unref();   /* Genres, Zufallsalbum aktuell */
         if (scanPending.length && !scanTimer) scanSchedule(scanHold ? SCAN_HOLD_MAX : SCAN_QUIET, scanHold);
         return;
       }
@@ -471,18 +473,20 @@ function doPlays(query, cb) {
 /* ---------- Zufallsalbum ---------- */
 /* GET /random[?kind=artist|track] -> {ok, album: {dir, al, ar, last}} (artist: {ar, n, dir, last}; track: {ar, ti, al, f, d, last}) oder {ok: false, building: true}, solange die Albenliste entsteht.
    Die Liste kommt aus MPD (wie beim Bibliotheks-Check), liegt in albums.json und wird neu gelesen,
-   wenn MPDs Datenbank sich geändert hat (Prüfung höchstens alle 10 Minuten). */
+   wenn MPDs Datenbank sich geändert hat (Prüfung höchstens einmal pro Minute, nur ein kurzes "stats"). */
 var albums = require('./albums.js');
 var genres = require('./genres.js');
 var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
+var ALBUMS_CHECK_MS = 60000;                             /* so oft höchstens bei MPD nachfragen, ob sich die Datenbank geändert hat */
+var ALBUMS_AFTER_SCAN_MS = 90000;                        /* nach eigenem Scan: Albenliste nachziehen, wenn MPD und Volumio fertig sind */
 var ALBUMS_VERSION = 5;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre */
 var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album, Genre des Albums], …] */
 
 function albumsEnsure(cb) {
   cb = cb || function(){};
   if (!albumIdx) { try { albumIdx = JSON.parse(fs.readFileSync(ALBUMS_FILE, 'utf8')); } catch (e) { /* noch nie gelesen */ } }
-  if (albumBuilding || (albumIdx && Date.now() - albumChecked < 600000)) return cb(albumIdx && albumIdx.list);
+  if (albumBuilding || (albumIdx && Date.now() - albumChecked < ALBUMS_CHECK_MS)) return cb(albumIdx && albumIdx.list);
   albumChecked = Date.now();
   libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'stats', function(err, st){
     var stamp = !err && st.db_update;
