@@ -171,7 +171,7 @@ Collector.prototype.next = function() {
 
 Collector.prototype.step = function() {
   var self = this, cfg = this.getCfg() || {};
-  if (!cfg.key) { this.state = 'fehler'; this.error = 'LASTFM_KEY fehlt in config.local.js'; return this.schedule(this.t.wait); }
+  if (!cfg.key) { this.state = 'fehler'; this.error = 'LASTFM_KEY fehlt (keys.json im Datenordner)'; return this.schedule(this.t.wait); }
   if (Date.now() - this.lastIdleCheck > this.t.idle) {
     this.lastIdleCheck = Date.now();
     return this.playing(function(on){

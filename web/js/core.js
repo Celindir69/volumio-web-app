@@ -158,7 +158,26 @@ var searchData  = streamEmptySearch();
 var searchCat   = 'artists';
 var searchQuery = '';
 
-var LASTFM_KEY = (window.APP_CONFIG && window.APP_CONFIG.LASTFM_KEY) || '';   /* in web/config.local.js eintragen */
+var LASTFM_KEY = (window.APP_CONFIG && window.APP_CONFIG.LASTFM_KEY) || '';   /* nur noch Ersatz, wenn der Tag-Dienst fehlt */
+
+/* Last.fm-Abfragen der Oberfläche laufen über den Tag-Dienst (GET /lastfmapi): der Key bleibt auf dem Player.
+   Ohne Tag-Dienst (oder ohne Key dort) direkt mit LASTFM_KEY aus config.local.js, falls vorhanden.
+   -> Promise {key, fetch}; key leer = keine Last.fm-Abfragen */
+var LFM_API = 'https://ws.audioscrobbler.com/2.0/';
+var lastfmReady = null;
+function lastfmAccess() {
+  if (lastfmReady) return lastfmReady;
+  var direct = {key: LASTFM_KEY, fetch: fetch.bind(window)};
+  if (typeof TAGS === 'undefined') return Promise.resolve(direct);
+  lastfmReady = withTimeout(fetch(TAGS + '/health'), 4000).then(function(r){ return r.json(); }).then(function(h){
+    if (!h || !h.lastfm) return direct;
+    return {key: 'tags', fetch: function(u){
+      if (u.indexOf(LFM_API) !== 0) return fetch(u);
+      return fetch(TAGS + '/lastfmapi?' + u.slice(LFM_API.length + 1).replace(/(^|&)(api_key|format)=[^&]*/g, ''));
+    }};
+  }, function(){ lastfmReady = null; return direct; });   /* Dienst (noch) nicht erreichbar: nächstes Mal neu fragen */
+  return lastfmReady;
+}
 var similarCache = {};
 var similarAllCache = {};       /* Künstlername -> alle Namen von Last.fm (auch die nicht in der Sammlung) */          /* Künstlername -> Array gefundener Namen */
 
@@ -219,7 +238,7 @@ function askVolumio(payload) {
 }
 
 function askOwn(payload) {                     /* Texte selbst holen (infotext.js), in der Sprache LANG */
-  return withTimeout(infoFallback(fetch.bind(window), LASTFM_KEY, payload.mode, payload.artist, payload.album, LANG), 10000)
+  return withTimeout(lastfmAccess().then(function(lf){ return infoFallback(lf.fetch, lf.key, payload.mode, payload.artist, payload.album, LANG); }), 10000)
     .catch(function(){ return null; });
 }
 
@@ -232,7 +251,7 @@ function askTrack(artist, title) {
   if (typeof infoTrack !== 'function' || !artist || !title) return Promise.resolve(null);
   var k = LANG + '|' + artist.toLowerCase() + '|' + title.toLowerCase(), c = trackInfoCache();
   if (k in c) return Promise.resolve(c[k] ? {kind: 'story', value: c[k]} : null);
-  return withTimeout(infoTrack(fetch.bind(window), LASTFM_KEY, artist, title, LANG), 15000).then(function(res){
+  return withTimeout(lastfmAccess().then(function(lf){ return infoTrack(lf.fetch, lf.key, artist, title, LANG); }), 15000).then(function(res){
     c = trackInfoCache();
     c[k] = res ? res.value : 0;
     var keys = Object.keys(c);                                 /* älteste zuerst weg (Einfügereihenfolge) */
@@ -269,12 +288,12 @@ function askDiscography(artist) {
 
 
 function loadSimilarArtists(artist) {
-  if (!LASTFM_KEY) return Promise.resolve([]);   /* ohne Schlüssel keine ähnlichen Künstler */
   if (similarCache[artist]) return Promise.resolve(similarCache[artist]);
-  var url = 'https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar' +
-            '&artist=' + encodeURIComponent(artist) +
-            '&api_key=' + LASTFM_KEY + '&format=json&limit=15';
-  return fetch(url).then(function(r){ return r.json(); })
+  return lastfmAccess().then(function(lf){
+    if (!lf.key) return null;                    /* ohne Schlüssel keine ähnlichen Künstler */
+    return lf.fetch(LFM_API + '?method=artist.getsimilar&artist=' + encodeURIComponent(artist) +
+                    '&api_key=' + encodeURIComponent(lf.key) + '&format=json&limit=15').then(function(r){ return r.json(); });
+  })
     .then(function(j){
       var list = (j && j.similarartists && j.similarartists.artist) || [];
       var names = list.map(function(a){ return a.name; }).filter(function(n){ return n; });

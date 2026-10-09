@@ -4,10 +4,10 @@ window.APP_CONFIG = {
   LANGUAGE: '',       /* Sprache der Oberfläche, z. B. 'de' oder 'en'; leer = wie in Volumio eingestellt (sonst Gerätesprache, sonst Englisch) */
   LANGUAGES: ['de', 'en'],  /* vorhandene Sprachdateien in web/lang/; eine neue Sprache (z. B. fr.js) hier ergänzen */
   THEME: 'auto',      /* 'auto' = hell oder dunkel wie das Gerät; 'light' = immer hell; 'dark' = immer dunkel (kioskTV.html bleibt dunkel) */
-  LASTFM_KEY: '',     /* leer = keine ähnlichen Künstler; auch für Künstler-/Albumtexte, wenn Volumio keine liefert */
-  LASTFM_SECRET: '',  /* "Shared secret" zum Schlüssel: nur nötig zum Scrobbeln (Verlauf) */
+  LASTFM_KEY: '',     /* veraltet: Last.fm-Zugang steht in /data/web-app/data/keys.json (Tag-Dienst); hier nur noch Ersatz ohne Tag-Dienst */
+  LASTFM_SECRET: '',  /* veraltet: wird vom Tag-Dienst einmal nach keys.json übernommen, dann hier löschen */
   HISTORY: true,      /* Verlauf: Tag-Dienst schreibt gespielte Titel mit; false = aus (Tag-Dienst neu starten) */
-  MOODTAGS: true,     /* Stimmungs-Tags: Last.fm-Tags je Titel sammeln, nur wenn nichts spielt (braucht LASTFM_KEY); false = aus */
+  MOODTAGS: true,     /* Stimmungs-Tags: Last.fm-Tags je Titel sammeln, nur wenn nichts spielt (braucht LASTFM_KEY in keys.json); false = aus */
   COLOR_MOOD: true,   /* Farbstimmung aus dem Cover (nur Cover vom Player selbst); false = aus */
   M4A_PROBE: true,    /* m4a: Codec (ALAC/AAC) aus der Datei lesen; false = nur M4A_LOSSLESS */
   M4A_LOSSLESS: true, /* m4a als verlustfrei (ALAC) einstufen; false = kein Abzeichen für m4a (AAC wäre sonst falsch eingestuft) */

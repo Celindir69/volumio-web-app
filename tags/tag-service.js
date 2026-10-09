@@ -14,7 +14,12 @@ var PYTHON      = process.env.PYTHON      || (['/usr/bin/python', '/usr/local/bi
   try { return fs.statSync(p).isFile(); } catch (e) { return false; } }) ? 'python' : 'python3');
 var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
 var MPC         = process.env.MPC         || 'mpc';
-var LOG_FILE    = process.env.TAGS_LOG    || '/data/INTERNAL/tags/changes.jsonl';
+/* Datenordner /data/web-app/data (früher /data/INTERNAL/tags, wird beim ersten Start verschoben; siehe appdata.js) */
+var appdata     = require('./appdata.js');
+var DATA_PREP   = process.env.TAGS_LOG ? {dir: path.dirname(process.env.TAGS_LOG)}
+  : appdata.prepare(process.env.TAGS_DATA || '/data/web-app/data', process.env.TAGS_OLD_DATA || '/data/INTERNAL/tags', console.log);
+var DATA_DIR    = DATA_PREP.dir;
+var LOG_FILE    = process.env.TAGS_LOG    || path.join(DATA_DIR, 'changes.jsonl');
 var MPD_HOST    = process.env.MPD_HOST    || 'localhost';
 var MPD_PORT    = parseInt(process.env.MPD_PORT || '6600', 10);
 var SCRIPT      = path.join(__dirname, 'tags.py');
@@ -25,7 +30,7 @@ var MAX_ARTIST  = 3000;                                  /* Dateien je Künstler
 var PY_BATCH    = 20;                                    /* Dateien je Python-Aufruf */
 var MAX_BODY    = 12 * 1024 * 1024;                     /* Cover-Bilder kommen als base64 mit */
 var JOB_TIMEOUT = 120000;
-var COVER_DIR   = path.join(path.dirname(LOG_FILE), 'covers');   /* Sicherungen alter Cover (für Rückgängig) */
+var COVER_DIR   = path.join(DATA_DIR, 'covers');   /* Sicherungen alter Cover (für Rückgängig) */
 var FOLDER_JPG  = 'folder.jpg';
 
 /* ---------- Pfade ---------- */
@@ -312,7 +317,7 @@ function doArtist(query, cb) {
 /* POST /check startet die Prüfung im Hintergrund, GET /check liefert Fortschritt und das letzte Ergebnis.
    Das Ergebnis liegt in check.json neben dem Änderungsprotokoll, bis neu geprüft wird. */
 var libcheck = require('./libcheck.js');
-var CHECK_FILE = path.join(path.dirname(LOG_FILE), 'check.json');
+var CHECK_FILE = path.join(DATA_DIR, 'check.json');
 var checkRun = null;                                     /* {phase, done, total, started} während der Prüfung */
 var checkError = null;
 
@@ -395,7 +400,7 @@ function appConfig() {
 function doCoverSearch(query, cb) {
   var album = String(query.album || '').trim();
   if (!album) return cb(400, {ok: false, error: 'album fehlt'});
-  coversearch.search({artist: query.artist, album: album, lastfmKey: process.env.LASTFM_KEY || appConfig().LASTFM_KEY}, function(list){
+  coversearch.search({artist: query.artist, album: album, lastfmKey: keys.lastfm().key}, function(list){
     cb(200, {ok: true, results: list.map(function(r){
       var id = String(++coverHitSeq);
       coverHits[id] = r.url; coverHitIds.push(id);
@@ -420,13 +425,12 @@ function doCoverImage(query, res) {
    nach plays.jsonl. GET /plays?view=recent|top|stats liefert Listen und Statistik, /lastfm verbindet und gleicht ab. */
 var plays  = require('./plays.js');
 var lastfm = require('./lastfm.js');
-var DATA_DIR    = path.dirname(LOG_FILE);
 var VOLUMIO_URL = process.env.VOLUMIO_URL || 'http://localhost:3000';
 var playStore = new plays.Store(path.join(DATA_DIR, 'plays.jsonl'));
-var lfm = new lastfm.Sync(path.join(DATA_DIR, 'lastfm.json'), playStore, function(){
-  var c = appConfig();
-  return {key: process.env.LASTFM_KEY || c.LASTFM_KEY, secret: process.env.LASTFM_SECRET || c.LASTFM_SECRET};
-});
+var keys = new appdata.Keys(DATA_DIR, appConfig, console.log);   /* Last.fm-Key und -Secret (keys.json) */
+/* nur in den eigenen Datenordner übernehmen, nie in den alten (liegt evtl. in einer Netzwerkfreigabe) */
+if (!DATA_PREP.error) keys.migrate();
+var lfm = new lastfm.Sync(path.join(DATA_DIR, 'lastfm.json'), playStore, function(){ return keys.lastfm(); });
 var tracker = new plays.Tracker(function(e){ playStore.add([e]); lfm.played(e); }, function(e){ lfm.nowPlaying(e); });
 var recording = false;
 
@@ -550,7 +554,7 @@ var ESSENTIA_MAX = 300 * 1024 * 1024;
 var audioStore = new essentia.Store(ESSENTIA_FILE);
 var moodCollector = new moodtags.Collector({
   dir: path.join(DATA_DIR, 'moodtags'), libFile: TRACKS_FILE, audio: audioStore,
-  getCfg: function(){ return {key: process.env.LASTFM_KEY || appConfig().LASTFM_KEY}; },
+  getCfg: function(){ return {key: keys.lastfm().key}; },
   playing: function(cb){ playerState(function(e, st){ cb(!!(e || (st && st.status === 'play'))); }); }   /* im Zweifel: spielt */
 });
 
@@ -915,6 +919,33 @@ function doHistory(cb) {
   cb(200, {ok: true, batches: list.slice(0, 20)});
 }
 
+/* ---------- Last.fm für die Oberfläche ---------- */
+/* GET /lastfmapi?method=…&artist=…: Abfragen der Oberfläche (Texte, ähnliche Künstler) mit dem Key des Dienstes,
+   damit der Key nicht im Browser liegt. Nur lesende Methoden; Antworten 6 h im Speicher. */
+var LFM_METHODS = ['artist.getinfo', 'album.getinfo', 'track.getinfo', 'artist.getsimilar'];
+var LFM_PARAMS  = ['artist', 'album', 'track', 'lang', 'limit', 'autocorrect'];
+var LFM_TTL = 6 * 3600000, LFM_MAX = 300;
+var lfmCache = {}, lfmCacheKeys = [];
+function doLastfmApi(query, cb) {
+  var method = String(query.method || '').toLowerCase();
+  if (LFM_METHODS.indexOf(method) < 0) return cb(400, {ok: false, error: 'method nicht erlaubt'});
+  var key = keys.lastfm().key;
+  if (!key) return cb(503, {ok: false, error: 'LASTFM_KEY fehlt'});
+  var qs = 'method=' + method;
+  LFM_PARAMS.forEach(function(p){ if (query[p]) qs += '&' + p + '=' + encodeURIComponent(String(query[p]).slice(0, 300)); });
+  var hit = lfmCache[qs];
+  if (hit && Date.now() - hit.at < LFM_TTL) return cb(200, hit.data);
+  var base = process.env.LASTFM_URL || 'https://ws.audioscrobbler.com';
+  coversearch.fetchUrl(base + '/2.0/?' + qs + '&api_key=' + encodeURIComponent(key) + '&format=json', 2 * 1024 * 1024, function(e, r){
+    var data = null;
+    if (!e) { try { data = JSON.parse(r.body.toString('utf8')); } catch (x) { /* kein JSON */ } }
+    if (!data) return cb(200, {});                       /* wie "nichts gefunden"; nicht merken */
+    if (!lfmCache[qs]) { lfmCacheKeys.push(qs); if (lfmCacheKeys.length > LFM_MAX) delete lfmCache[lfmCacheKeys.shift()]; }
+    lfmCache[qs] = {at: Date.now(), data: data};
+    cb(200, data);
+  });
+}
+
 /* ---------- HTTP ---------- */
 
 function send(res, code, obj) {
@@ -930,7 +961,8 @@ function send(res, code, obj) {
 var server = http.createServer(function(req, res){
   var route = req.url.split('?')[0];
   if (req.method === 'OPTIONS') return send(res, 204, {});
-  if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true});
+  if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true, lastfm: !!keys.lastfm().key, keysInWeb: keys.inWeb()});
+  if (req.method === 'GET' && route === '/lastfmapi') return doLastfmApi(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/history') return doHistory(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);

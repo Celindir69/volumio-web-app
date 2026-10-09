@@ -1,8 +1,6 @@
 /* Kopie als web/config.local.js ablegen und anpassen (wird nicht ins Repository übernommen). */
-window.APP_CONFIG.LASTFM_KEY = 'DEIN_LASTFM_SCHLUESSEL';
-/* Scrobbeln (Verlauf): "Shared secret" von https://www.last.fm/api/accounts:
-window.APP_CONFIG.LASTFM_SECRET = 'DEIN_SHARED_SECRET';
-*/
+/* Last.fm-Key und -Secret gehören nicht hierher (diese Datei kann jeder Browser laden), sondern nach
+   /data/web-app/data/keys.json auf dem Player, siehe docs/einrichten.md, Abschnitt Last.fm-Zugang. */
 /* Sprache fest einstellen (sonst wie in Volumio eingestellt); eigene Sprachdatei web/lang/fr.js zusätzlich anmelden:
 window.APP_CONFIG.LANGUAGE = 'en';
 window.APP_CONFIG.LANGUAGES = ['de', 'en', 'fr'];
