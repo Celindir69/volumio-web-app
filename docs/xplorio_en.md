@@ -16,7 +16,7 @@ scroll through endless lists, it takes you on a journey of discovery through you
 ## You know what you want to hear?
 
 Just type it. Search finds artists, albums, tracks and genres in your collection and, if you like, on TIDAL, Qobuz or
-HIGHRESAUDIO too. One tap, and it plays.
+HIGHRESAUDIO too (valid subscription needed). One tap, and it plays.
 
 ## Can't decide?
 
