@@ -1,4 +1,4 @@
-/* Zugang zur originalen Volumio-Oberfläche (Symbol "V" oben rechts)
+/* Zugang zur originalen Volumio-Oberfläche (Menü oben rechts, Eintrag "Volumio-Oberfläche")
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html.
    Die Seiten öffnen im Overlay in einem Rahmen (iframe), die App bleibt darunter erhalten.
    Seiten die app.html selbst übernommen hat, können hier einfach aus der Liste entfernt werden. */
@@ -11,7 +11,6 @@ var VOLUMIO_PAGES = [
 
 ];
 
-var btnVolumio       = document.getElementById('btnVolumio');
 var overlayVolumio   = document.getElementById('overlayVolumio');
 var volumioTabBar    = document.getElementById('volumioTabBar');
 var volumioPanel     = document.getElementById('volumioPanel');
@@ -59,11 +58,11 @@ function closeVolumioFrame() {
   Array.prototype.forEach.call(volumioTabBar.children, function(el){ el.className = 'qTab'; });
 }
 
-btnVolumio.addEventListener('click', function(){
-  var isOpen = overlayVolumio.classList.contains('on');
+function openVolumio() {                       /* aus dem Menü (menu.js) */
   closeAllOverlays();
-  if (!isOpen) overlayVolumio.classList.add('on');
-});
+  overlayVolumio.classList.add('on');
+}
+document.getElementById('volumioBack').addEventListener('click', function(){ openMenu(); });
 document.getElementById('closeVolumio').addEventListener('click', closeAllOverlays);
 
 buildVolumioTabs();

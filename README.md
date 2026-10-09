@@ -90,6 +90,8 @@ Fortschritt der Stimmungs-Tags.
 </p>
 
 ### Weiteres
+- Menü hinter dem Zahnrad oben rechts: Verlauf und Statistik, Bibliotheks-Check, Bibliothek aktualisieren und die
+  originale Volumio-Oberfläche (Durchsuchen, Warteschlange, Einstellungen, Plugins).
 - Hell und dunkel, nach der Einstellung des Geräts oder fest eingestellt.
 - Deutsch und Englisch, wie in Volumio eingestellt oder fest eingestellt; weitere Sprachen als Datei in `web/lang/`
   (siehe [Einrichten](docs/einrichten.md#sprache)).
