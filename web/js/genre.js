@@ -18,6 +18,8 @@ function genreSearch() {
     if (!r || !r.ok) { searchResults.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.none'))); return; }
     if (!list.length && !(r.subs || []).length) { searchResults.appendChild(browseNote(q ? T('search.noResults') : T('genre.none'))); return; }
     if (!q) {
+      if (list.length > GENRE_RANDOM) searchResults.appendChild(genreRandomShelf(list));
+      if (list.length > GENRE_RANDOM) searchResults.appendChild(browseHeading(T('genre.allHead')));
       var grid = histEl('div', 'gGrid');
       list.forEach(function(g){ grid.appendChild(genreTile(g)); });
       searchResults.appendChild(grid);
@@ -49,6 +51,36 @@ function genreSearch() {
     while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
     searchResults.appendChild(browseNote(T('genre.offline')));
   });
+}
+
+/* Reihe „Zufällige Genres“ über der Übersicht, der Würfel zieht neu (nur bei mehr Genres, als in die Reihe passen) */
+var GENRE_RANDOM = 12;
+function genreRandomShelf(list) {
+  var sec = histEl('div', 'dSec'), head = browseHeading(T('disc.shelf.randomGenres')), row = histEl('div', 'dRow');
+  head.classList.add('dHead');
+  var dice = histEl('div', 'dDice');
+  dice.title = T('disc.reroll');
+  dice.innerHTML = DICE_SVG;
+  function fill() {
+    while (row.firstChild) row.removeChild(row.firstChild);
+    var a = list.slice();
+    for (var i = 0; i < GENRE_RANDOM; i++) {
+      var j = i + Math.floor(Math.random() * (a.length - i)), x = a[i];
+      a[i] = a[j]; a[j] = x;
+      row.appendChild(genreTile(a[i]));
+    }
+    discoverFit(row);
+  }
+  dice.addEventListener('click', function(){
+    dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
+    fill();
+  });
+  head.appendChild(dice);
+  sec.appendChild(head);
+  sec.appendChild(row);
+  fill();
+  setTimeout(function(){ discoverFit(row); }, 0);   /* erst im Dokument messbar */
+  return sec;
 }
 
 function genreTile(g) {
