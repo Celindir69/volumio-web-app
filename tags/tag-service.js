@@ -683,17 +683,33 @@ function doSimilar(query, cb) {
     items: list.map(function(x){ return {f: relUri(x.it.f) || x.it.f, ar: x.it.ar, ti: x.it.ti, al: x.it.al || '', d: x.it.d || 0, why: similar.why(seed.r, x.r)}; })});
 }
 
+/* Jahr des Albums je Titel (albums.json, häufigstes Date-Tag im Ordner); Spanne der bekannten Jahre für den Regler */
+var mixYears = null;
+function mixYearsOf(list) {
+  if (!mixYears || mixYears.list !== list) {
+    var by = {}, lo = 0, hi = 0;
+    (list || []).forEach(function(a){
+      if (!a.y) return;
+      by[a.dir] = a.y;
+      if (!lo || a.y < lo) lo = a.y;
+      if (a.y > hi) hi = a.y;
+    });
+    mixYears = {list: list, by: by, span: lo ? [lo, hi] : null};
+  }
+  return mixYears;
+}
 function doMoodmix(query, cb) {
-  albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
-  var c = moodmix.parse(query);
+  albumsEnsure();                                        /* hält library-tracks.json (mit Genre) und albums.json aktuell */
+  var c = moodmix.parse(query), yrs = mixYearsOf(albumIdx && albumIdx.list);   /* nicht warten: bis zur ersten Albenliste ohne Jahre */
   var bad = ratingStore.disliked();
   c.skip = function(it){ return !!bad[ratings.trackKey(it.f)]; };
-  if (query.count) { var r = moodmix.count(moodCollector, c); r.ok = true; return cb(200, r); }
+  c.yearOf = function(it){ return yrs.by[albums.albumDir(relUri(it.f) || it.f)] || 0; };
+  if (query.count) { var r = moodmix.count(moodCollector, c); r.ok = true; r.years = yrs.span; return cb(200, r); }
   var pl = playStore.load();
   if (!mixPlays || mixPlays.n !== pl.length) mixPlays = {n: pl.length, pc: moodmix.playCounts(pl)};
   var m = moodmix.build(moodCollector, mixPlays.pc, c);
   m.ok = true;
-  m.tracks.forEach(function(t){ t.f = relUri(t.f) || t.f; });
+  m.tracks.forEach(function(t){ t.y = c.yearOf(t) || null; t.f = relUri(t.f) || t.f; });
   cb(200, m);
 }
 

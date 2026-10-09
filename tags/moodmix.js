@@ -8,6 +8,7 @@ var MAX_N = 200;
 var MIN_MATCHES = 20;            /* erst darunter werden die Kriterien gelockert */
 var BPM_MIN = 40, BPM_MAX = 220;
 var BPM_TOL = 8;                 /* ab Stufe 1: so viele BPM daneben zählen noch (halb) */
+var YEAR_MIN = 1900, YEAR_MAX = 2099;
 
 function list(s) {
   return String(s || '').split(',').map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean);
@@ -21,10 +22,13 @@ function parse(q) {
   var bmin = parseInt(q.bmin, 10), bmax = parseInt(q.bmax, 10);    /* Tempo (Audio-Analyse); 0 = keine Grenze */
   bmin = bmin >= BPM_MIN && bmin <= BPM_MAX ? bmin : 0; bmax = bmax >= BPM_MIN && bmax <= BPM_MAX ? bmax : 0;
   if (bmin && bmax && bmin > bmax) { var y = bmin; bmin = bmax; bmax = y; }
+  var ymin = parseInt(q.ymin, 10), ymax = parseInt(q.ymax, 10);    /* Jahr des Albums; 0 = keine Grenze */
+  ymin = ymin >= YEAR_MIN && ymin <= YEAR_MAX ? ymin : 0; ymax = ymax >= YEAR_MIN && ymax <= YEAR_MAX ? ymax : 0;
+  if (ymin && ymax && ymin > ymax) { var z = ymin; ymin = ymax; ymax = z; }
   var maxd = parseInt(q.maxd, 10);                                  /* Höchstlänge in Minuten; 0 = keine Grenze */
   maxd = maxd > 0 && maxd <= 600 ? maxd : 0;
   return {maxd: maxd, moods: list(q.moods), styles: list(q.styles), genres: list(q.genres), match: q.match === 'all' ? 'all' : 'any',
-          emin: emin, emax: emax, bmin: bmin, bmax: bmax, n: Math.min(Math.max(n || 50, 1), MAX_N), disc: disc >= 0 && disc <= 1 ? disc : 0.5};
+          emin: emin, emax: emax, bmin: bmin, bmax: bmax, ymin: ymin, ymax: ymax, n: Math.min(Math.max(n || 50, 1), MAX_N), disc: disc >= 0 && disc <= 1 ? disc : 0.5};
 }
 
 /* alle eingeordneten Titel mit Ergebnis; neu nur, wenn sich Bibliothek oder Tags geändert haben */
@@ -72,6 +76,13 @@ function genreOk(it, c) {
   return !c.genres || !c.genres.length || c.genres.indexOf(String(it.ge || '').toLowerCase()) >= 0;
 }
 
+/* Jahresbereich (Jahr des Albums über c.yearOf); Titel ohne bekanntes Jahr fallen dann weg, nie gelockert */
+function yearOk(it, c) {
+  if (!c.ymin && !c.ymax) return true;
+  var y = c.yearOf ? c.yearOf(it) : 0;
+  return !!y && (!c.ymin || y >= c.ymin) && (!c.ymax || y <= c.ymax);
+}
+
 /* Höchstlänge (DJ-Mixe, Mitschnitte); Titel ohne bekannte Länge passen, nie gelockert */
 function lengthOk(it, c) {
   return !c.maxd || !it.d || it.d <= c.maxd * 60;
@@ -81,7 +92,7 @@ function candidates(all, c, level) {
   var out = [];
   all.forEach(function(x){
     if (c.skip && c.skip(x.it)) return;                  /* z. B. „mag ich nicht“ */
-    var s = genreOk(x.it, c) && lengthOk(x.it, c) && fit(x.r, c, level);
+    var s = genreOk(x.it, c) && lengthOk(x.it, c) && yearOk(x.it, c) && fit(x.r, c, level);
     if (s) out.push({it: x.it, r: x.r, s: s});
   });
   return out;
@@ -95,7 +106,7 @@ function count(coll, c) {
   var n = 0, bpm = 0;
   all.forEach(function(x){
     if (x.r.bpm) bpm++;
-    if (!fit(x.r, noStyle, 0) || !lengthOk(x.it, c)) return;
+    if (!fit(x.r, noStyle, 0) || !lengthOk(x.it, c) || !yearOk(x.it, c)) return;
     if (x.it.ge) genres[x.it.ge] = (genres[x.it.ge] || 0) + 1;
     if (!genreOk(x.it, c)) return;
     x.r.style.forEach(function(s){ styles[s] = (styles[s] || 0) + 1; });
@@ -161,4 +172,4 @@ function build(coll, pc, c, rnd) {
   })};
 }
 
-module.exports = {index: index, parse: parse, count: count, build: build, playCounts: playCounts, fit: fit};
+module.exports = {index: index, parse: parse, count: count, build: build, playCounts: playCounts, fit: fit, yearOk: yearOk};
