@@ -23,8 +23,8 @@ function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
 
 t('Kriterien lesen: Grenzen und Standardwerte', function(){
   var c = mm.parse({moods: 'Relaxed, dreamy', emin: '4', emax: '2', n: '999', disc: '7', match: 'x'});
-  assert.deepStrictEqual(c, {maxd: 0, moods: ['relaxed', 'dreamy'], styles: [], genres: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, n: 200, disc: 0.5});
-  assert.deepStrictEqual(mm.parse({}), {maxd: 0, moods: [], styles: [], genres: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, n: 50, disc: 0.5});
+  assert.deepStrictEqual(c, {maxd: 0, moods: ['relaxed', 'dreamy'], styles: [], genres: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, ymin: 0, ymax: 0, n: 200, disc: 0.5});
+  assert.deepStrictEqual(mm.parse({}), {maxd: 0, moods: [], styles: [], genres: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, ymin: 0, ymax: 0, n: 50, disc: 0.5});
 });
 
 t('Trefferzahl und Stile unter den Treffern', function(){
@@ -121,6 +121,19 @@ t('„mag ich nicht“ (skip) kommt nie in den Mix', function(){
   var m = mm.build(coll, {}, c, rnd);
   assert.ok(m.tracks.length > 0);
   assert.ok(m.tracks.every(function(x){ return x.ar !== 'A'; }));
+});
+
+t('Jahresbereich: Jahr des Albums, Titel ohne Jahr fallen dann weg, nie gelockert', function(){
+  var YEARS = {A: 1979, B: 1985, C: 1992, D: 2004};                      /* E und F ohne Jahr */
+  function crit(q) { var c = mm.parse(q); c.yearOf = function(it){ return YEARS[it.ar] || 0; }; return c; }
+  assert.deepStrictEqual([mm.parse({ymin: '1990', ymax: '1980'}).ymin, mm.parse({ymin: '1990', ymax: '1980'}).ymax], [1980, 1990]);
+  assert.strictEqual(mm.parse({ymin: '42'}).ymin, 0);
+  assert.strictEqual(mm.count(coll, crit({moods: 'relaxed,dreamy'})).count, 24);                   /* ohne Grenze: auch ohne Jahr */
+  assert.strictEqual(mm.count(coll, crit({moods: 'relaxed,dreamy', ymin: 1980, ymax: 1989})).count, 6);   /* nur B */
+  assert.strictEqual(mm.count(coll, crit({moods: 'relaxed,dreamy', ymax: 1989})).count, 12);       /* A und B */
+  assert.strictEqual(mm.count(coll, crit({moods: 'relaxed,dreamy', ymin: 1990})).count, 6);        /* C */
+  var m = mm.build(coll, {}, crit({moods: 'relaxed,dreamy,happy', ymin: 2000, n: 30}), rnd);
+  assert.ok(m.tracks.length === 6 && m.tracks.every(function(x){ return x.ar === 'D'; }));        /* zu wenige, aber nicht gelockert */
 });
 
 console.log(n + ' Prüfungen bestanden');

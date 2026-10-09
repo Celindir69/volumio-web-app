@@ -5,7 +5,7 @@ var mixBody    = document.getElementById('mixBody');
 var MIX_CORE   = ['relaxed', 'dreamy', 'uplifting', 'melancholic', 'dark', 'reflective', 'happy', 'romantic'];
 var MIX_MORE   = ['calm', 'atmospheric', 'emotional', 'epic', 'intense', 'aggressive', 'sensual', 'sad'];
 var MIX_DISC   = [[0, T('mix.disc.favorites')], [0.5, T('mix.disc.balanced')], [1, T('mix.disc.hidden')]];
-var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', genres: [], n: 50, disc: 0.5, maxd: 20};
+var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, ymin: 0, ymax: 0, styles: [], match: 'any', genres: [], n: 50, disc: 0.5, maxd: 20};
 var MIX_MAXD   = 20;                           /* Vorgabe Höchstlänge je Titel in Minuten (DJ-Mixe draußen); 0 = keine Grenze */
 var MIX_GENRES = 10;                           /* so viele Genre-Chips, der Rest hinter „mehr“ */
 var MIX_BPM    = [60, 180, 5];                 /* Tempo-Regler: Ende links/rechts = offen (0) */
@@ -15,13 +15,15 @@ var mixCountSeq = 0, mixCountTimer = null;
 try { var saved = JSON.parse(localStorage.getItem('moodMix') || 'null'); if (saved && saved.moods) mixCrit = saved; } catch (e) { /* ohne Speicher */ }
 if (!mixCrit.bmin) mixCrit.bmin = 0;
 if (!mixCrit.bmax) mixCrit.bmax = 0;
+if (!mixCrit.ymin) mixCrit.ymin = 0;
+if (!mixCrit.ymax) mixCrit.ymax = 0;
 if (!mixCrit.genres) mixCrit.genres = [];
 if (typeof mixCrit.maxd !== 'number') mixCrit.maxd = MIX_MAXD;
 function mixSave() { try { localStorage.setItem('moodMix', JSON.stringify(mixCrit)); } catch (e) { /* egal */ } }
 
 function mixName(m) { var s = MOOD_NAMES[m] || m; return s.charAt(0).toUpperCase() + s.slice(1); }
 function mixQuery() {
-  return 'moods=' + encodeURIComponent(mixCrit.moods.join(',')) + '&emin=' + mixCrit.emin + '&emax=' + mixCrit.emax + '&bmin=' + mixCrit.bmin + '&bmax=' + mixCrit.bmax +
+  return 'moods=' + encodeURIComponent(mixCrit.moods.join(',')) + '&emin=' + mixCrit.emin + '&emax=' + mixCrit.emax + '&bmin=' + mixCrit.bmin + '&bmax=' + mixCrit.bmax + '&ymin=' + mixCrit.ymin + '&ymax=' + mixCrit.ymax +
     '&styles=' + encodeURIComponent(mixCrit.styles.join(',')) + '&match=' + mixCrit.match +
     '&genres=' + encodeURIComponent(mixCrit.genres.join(',')) + '&n=' + mixCrit.n + '&disc=' + mixCrit.disc + '&maxd=' + mixCrit.maxd;
 }
@@ -127,6 +129,12 @@ function mixPick() {
   }, function(a, b){ mixCrit.bmin = a === bl ? 0 : a; mixCrit.bmax = b === bh ? 0 : b; mixCount(); });
   fine.appendChild(tempo);
 
+  /* Jahre (Jahr des Albums); Regler von der Spanne der Sammlung, sobald die Trefferzahl sie meldet */
+  var years = histEl('div', 'mxYears');
+  mixState.years = years;
+  fine.appendChild(years);
+  mixYearsPaint();
+
   fine.appendChild(histEl('div', 'mxLabel', T('mix.length')));
   fine.appendChild(mixSeg([[25, T('mix.tracks', {n: 25})], [50, T('mix.tracks', {n: 50})], [100, T('mix.tracks', {n: 100})]], mixCrit.n, function(v){ mixCrit.n = v; }));
   fine.appendChild(histEl('div', 'mxLabel', T('mix.maxLen')));
@@ -176,6 +184,35 @@ function mixDual(parent, min, max, step, a0, b0, left, right, fmt, set) {
   en.appendChild(track); en.appendChild(lo); en.appendChild(hi);
   parent.appendChild(en); parent.appendChild(ends);
   paint();
+}
+
+/* Jahresregler: Ende links/rechts = offen (0); Spanne aus der Sammlung (auf Jahrzehnte gerundet), gewählte Grenzen immer darin */
+function mixYearSpan() {
+  var sp = mixState.yearSpan;
+  if (!sp) return null;
+  var lo = Math.floor(sp[0] / 10) * 10, hi = Math.max(sp[1], lo + 10);
+  if (mixCrit.ymin && mixCrit.ymin <= lo) lo = Math.floor(mixCrit.ymin / 10) * 10 - 10;
+  if (mixCrit.ymax && mixCrit.ymax >= hi) hi = mixCrit.ymax + 1;
+  return [lo, hi];
+}
+function mixYearText(a, b) {
+  if (!a && !b) return T('mix.all');
+  if (!a) return T('mix.year.max', {b: b});
+  if (!b) return T('mix.year.min', {a: a});
+  return a === b ? String(a) : a + '\u2060–\u2060' + b;
+}
+function mixYearsPaint() {
+  var box = mixState.years, sp = mixYearSpan();
+  if (!box) return;
+  while (box.firstChild) box.removeChild(box.firstChild);
+  box.style.display = sp ? '' : 'none';
+  if (!sp) return;
+  var lo = sp[0], hi = sp[1];
+  box.appendChild(histEl('div', 'mxLabel', T('mix.years')));
+  mixDual(box, lo, hi, 1, mixCrit.ymin || lo, mixCrit.ymax || hi, T('mix.years.old'), T('mix.years.new'), function(a, b){
+    return mixYearText(a === lo ? 0 : a, b === hi ? 0 : b);
+  }, function(a, b){ mixCrit.ymin = a === lo ? 0 : a; mixCrit.ymax = b === hi ? 0 : b; mixCount(); });
+  box.appendChild(histEl('div', 'mxHint', T('mix.years.hint')));
 }
 
 /* Auswahl aus festen Werten (Länge, Entdeckungsgrad, Stil-Verknüpfung) */
@@ -237,7 +274,7 @@ function mixGenres() {
 
 /* Feinabstimmung zugeklappt, aber abweichend von den Vorgaben: „(aktiv)“ hinter der Überschrift */
 function mixFineActive() {
-  return mixCrit.styles.length > 0 || !!mixCrit.bmin || !!mixCrit.bmax || mixCrit.n !== 50 || mixCrit.disc !== 0.5 || mixCrit.maxd !== MIX_MAXD;
+  return mixCrit.styles.length > 0 || !!mixCrit.bmin || !!mixCrit.bmax || !!mixCrit.ymin || !!mixCrit.ymax || mixCrit.n !== 50 || mixCrit.disc !== 0.5 || mixCrit.maxd !== MIX_MAXD;
 }
 function mixFineLabel() {
   if (mixState.fineLabel) mixState.fineLabel.textContent = T('mix.fine') + (mixFineActive() ? ' ' + T('mix.fine.active') : '');
@@ -254,6 +291,8 @@ function mixCount() {
       if (seq !== mixCountSeq || !mixState.hits) return;
       mixState.hasBpm = r.bpm > 0;
       if (mixState.tempo && mixState.hasBpm) mixState.tempo.style.display = '';
+      var yk = JSON.stringify(r.years || null);
+      if (yk !== mixState.yearKey) { mixState.yearKey = yk; mixState.yearSpan = r.years || null; mixYearsPaint(); }
       var styleKey = JSON.stringify(r.styles || []);
       if (styleKey !== mixState.styleKey) { mixState.styleKey = styleKey; mixState.styles = r.styles || []; mixStyles(); }
       var genreKey = JSON.stringify(r.genres || []);
@@ -266,7 +305,7 @@ function mixCount() {
         return;
       }
       mixState.go.disabled = false;
-      if (!r.count) { h.textContent = mixCrit.bmin || mixCrit.bmax ? T('mix.hits.noneTempo') : T('mix.hits.none'); h.className += ' warn'; }
+      if (!r.count) { h.textContent = mixCrit.ymin || mixCrit.ymax ? T('mix.hits.noneYears') : mixCrit.bmin || mixCrit.bmax ? T('mix.hits.noneTempo') : T('mix.hits.none'); h.className += ' warn'; }
       else if (r.count < Math.min(mixCrit.n, 20)) { h.textContent = T('mix.hits.few', {n: r.count}); h.className += ' warn'; }
       else if (r.count < mixCrit.n) h.textContent = T('mix.hits.short', {n: r.count});
       else h.textContent = T('mix.hits.ok', {n: r.count});
@@ -296,6 +335,7 @@ function mixSummary() {
   parts.push(mixCrit.emin === 1 && mixCrit.emax === 5 ? T('mix.sum.anyEnergy') : T('mix.sum.energy', {e: mixCrit.emin === mixCrit.emax ? mixCrit.emin : mixCrit.emin + '\u2060–\u2060' + mixCrit.emax}));
   if (mixCrit.bmin || mixCrit.bmax) parts.push(!mixCrit.bmax ? T('mix.sum.bpmMin', {a: mixCrit.bmin}) : !mixCrit.bmin ? T('mix.sum.bpmMax', {b: mixCrit.bmax}) :
     T('mix.sum.bpmRange', {a: mixCrit.bmin, b: mixCrit.bmax}));
+  if (mixCrit.ymin || mixCrit.ymax) parts.push(mixYearText(mixCrit.ymin, mixCrit.ymax));
   var gs = mixCrit.genres;                     /* ohne Auswahl: die Genres im Ergebnis */
   if (!gs.length && mixState.result) mixState.result.tracks.forEach(function(x){ var g = String(x.ge || '').toLowerCase(); if (g && gs.indexOf(g) < 0) gs = gs.concat([g]); });
   if (gs.length) parts.push(gs.length === 1 ? mixGenreName(gs[0]) : T('mix.sum.genres', {n: gs.length}));
@@ -356,7 +396,7 @@ function mixPreview() {
     var meta = histEl('div', 'sMeta');
     meta.appendChild(histEl('div', 'sTitle', x.ti));
     meta.appendChild(histEl('div', 'sSub', x.ar));
-    var why = x.mood.map(mixName).concat(x.ge ? [x.ge] : [], x.style.slice(0, 2));
+    var why = x.mood.map(mixName).concat(x.y && (mixCrit.ymin || mixCrit.ymax) ? [String(x.y)] : [], x.ge ? [x.ge] : [], x.style.slice(0, 2));
     if (x.bpm) why.push(x.bpm + '\u00a0BPM');
     if (x.src === 'artist') why.push(T('mix.why.artist'));
     meta.appendChild(histEl('div', 'mxWhy', why.join(' · ')));

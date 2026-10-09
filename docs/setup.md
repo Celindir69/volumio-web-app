@@ -198,7 +198,7 @@ Progress and distribution are shown in the Library Check under "Mood Tags (Last.
 
 To disable it: set `MOODTAGS: false` in `web/config.local.js`, then restart the Tag Service.
 
-**Mood Mix:** Playlist button, "Mood Mix" tab (appears as soon as the Tag Service is running). Here you can select multiple moods, an energy range, one or more genres (the album's genre tag, never relaxed), and, under "Fine Tuning", styles, length, maximum track length (default 20 min, keeps DJ mixes out), and discovery level (based on playback history: favorites, balanced, hidden gems).
+**Mood Mix:** Playlist button, "Mood Mix" tab (appears as soon as the Tag Service is running). Here you can select multiple moods, an energy range, one or more genres (the album's genre tag, never relaxed), and, under "Fine Tuning", styles, tempo (with audio analysis), years (the album's release year from the Date tag; with a limit, albums without a year are left out, never relaxed), length, maximum track length (default 20 min, keeps DJ mixes out), and discovery level (based on playback history: favorites, balanced, hidden gems).
 
 "Create Mix" only shows a preview; only "Play Mix" replaces the queue (the list icon next to it appends the mix instead). If there are fewer than 20 exact matches, the mix also includes similar tracks (energy ±1, then without style) and indicates this. The same artist is never played twice in a row.
 
