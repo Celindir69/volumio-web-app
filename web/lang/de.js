@@ -326,7 +326,6 @@ langRegister('de', 'Deutsch', {
   'mix.why.artist': 'über Künstler',
 
   'more.decade': 'Jahrzehnte',
-  'more.mix': '25 Titel daraus',
   'more.mood': 'Stimmung und Energie',
   'more.similar': 'Ähnliche Künstler',
   'more.style': 'Stile',

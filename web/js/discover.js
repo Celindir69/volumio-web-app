@@ -247,7 +247,7 @@ function randomMixPlay(q) {
 }
 
 /* ---------- Mehr entdecken (Künstlerseite) ---------- */
-/* Ähnliche Künstler aus der Sammlung (mit beschriftetem Würfel: 25 Titel daraus, jeder Künstler etwa gleich oft) und
+/* Ähnliche Künstler aus der Sammlung (mit Würfel: 25 Titel daraus, jeder Künstler etwa gleich oft) und
    Stimmungen, Energie, Stile und Jahrzehnte des Künstlers (Tag-Dienst GET /artistprofile); jeder Knopf öffnet
    wie beim Entdecken die passenden Alben. Ohne Inhalt bleibt der Abschnitt leer. alive(): Seite noch dieselbe. */
 function discoverMore(artist, alive) {
@@ -276,7 +276,8 @@ function discoverMore(artist, alive) {
       c.classList.remove('roll'); void c.offsetWidth; c.classList.add('roll');
       randomMixPlay({artists: names});
     }, 'dMixChip');
-    dice.innerHTML = DICE_SVG + '<span>' + T('more.mix') + '</span>';
+    dice.innerHTML = DICE_SVG;
+    dice.title = T('disc.mix');
     names.forEach(function(n){ chip(g.chips, n, function(){ openBrowse({kind: 'artist', artist: n}); }); });
     simSec.appendChild(g.sec);
   }).catch(function(){});

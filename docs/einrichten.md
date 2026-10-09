@@ -216,7 +216,7 @@ fehlt die Reihe.
 **Mehr entdecken:** Unten auf der Künstlerseite (eigene Sammlung) führen Knöpfe weiter: ähnliche Künstler aus der
 Sammlung (Last.fm), die Stimmungen und Stile, die mindestens ein Fünftel seiner eingeordneten Titel tragen, seine mittlere
 Energie und die Jahrzehnte seiner Alben. Jeder Knopf öffnet wie beim Entdecken den Künstler bzw. die passenden Alben; der
-bisherige Weg zählt dabei nicht als Filter. „25 Titel daraus“ bei den ähnlichen Künstlern startet einen Zufallsmix, in dem
+bisherige Weg zählt dabei nicht als Filter. Der Würfel vor den ähnlichen Künstlern startet einen Zufallsmix, in dem
 jeder dieser Künstler etwa gleich oft vorkommt, egal wie viel von ihm in der Sammlung liegt.
 
 **Zufallsmix:** Neben „Alle abspielen“ (Künstlerseite, Genre-Listen) startet der Würfel 25 zufällige Titel daraus, nie
