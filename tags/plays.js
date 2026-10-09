@@ -332,5 +332,32 @@ function ago(list, now, tz, limit, kind) {
   }
 }
 
-module.exports = {Store: Store, Tracker: Tracker, recent: recent, top: top, topGenre: topGenre, stats: stats, rangeStart: rangeStart,
+/* Zuletzt gehörte Alben, neueste zuerst: Alben, von denen zuletzt mindestens minTracks verschiedene Titel liefen
+   (ein einzelner Titel aus einem Mix zählt nicht); durchsucht höchstens die letzten scan Einträge.
+   -> [{ti (Album), ar, u (Ordner, nur lokal), last}] */
+function recentAlbums(list, limit, minTracks, scan) {
+  var groups = {}, order = [], stop = Math.max(0, list.length - (scan || 3000));
+  minTracks = minTracks || 2;
+  for (var i = list.length - 1; i >= stop; i--) {
+    var e = list[i];
+    if (!e.al) continue;
+    var local_ = e.u && !/^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio|hi_res_audio)\/|spotify:)/i.test(e.u);
+    var k = local_ ? path.dirname(e.u) : keys(e).al + '|' + keys(e).ar, g = groups[k];
+    if (!g) { g = groups[k] = {ti: e.al, ar: e.ar, last: e.t, tracks: {}, artists: {}, n: 0}; if (local_) g.u = path.dirname(e.u); order.push(k); }
+    var tk = trackKey(e);
+    if (!g.tracks[tk]) { g.tracks[tk] = true; g.n++; }
+    g.artists[keys(e).ar] = true;
+  }
+  var out = [];
+  for (var j = 0; j < order.length && out.length < limit; j++) {
+    var x = groups[order[j]];
+    if (x.n < minTracks) continue;
+    var o = {ti: x.ti, ar: Object.keys(x.artists).length > 2 ? 'Verschiedene' : x.ar, last: x.last};
+    if (x.u) o.u = x.u;
+    out.push(o);
+  }
+  return out;
+}
+
+module.exports = {recentAlbums: recentAlbums, Store: Store, Tracker: Tracker, recent: recent, top: top, topGenre: topGenre, stats: stats, rangeStart: rangeStart,
                   year: year, years: years, ago: ago, localStart: localStart, norm: norm, trackKey: trackKey, local: local};

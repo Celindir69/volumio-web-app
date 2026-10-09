@@ -19,13 +19,13 @@ function albumDir(file) {
   return DISC_RE.test(path.basename(d)) ? path.dirname(d) : d;
 }
 
-/* songs wie libcheck.mpdWalk -> [{dir, al, ar, ge, y}]; ge: häufigstes Genre im Ordner, y: häufigstes Jahr (Date-Tag);
-   beide fehlen, wenn kein Titel des Ordners eins hat */
+/* songs wie libcheck.mpdWalk -> [{dir, al, ar, ge, y, m}]; ge: häufigstes Genre im Ordner, y: häufigstes Jahr (Date-Tag),
+   m: jüngste Änderung einer Datei (Last-Modified aus MPD, Unix-Sekunden); fehlen, wenn kein Titel des Ordners eins hat */
 function fromSongs(songs) {
   var dirs = {}, order = [];
   songs.forEach(function(s){
     var d = albumDir(s.file);
-    if (!dirs[d]) { dirs[d] = {al: '', aa: '', artists: {}, genres: {}, years: {}, n: 0}; order.push(d); }
+    if (!dirs[d]) { dirs[d] = {al: '', aa: '', artists: {}, genres: {}, years: {}, n: 0, m: 0}; order.push(d); }
     var g = dirs[d];
     if (!g.al && s.album) g.al = s.album;
     if (!g.aa && s.albumartist) g.aa = s.albumartist;
@@ -33,6 +33,8 @@ function fromSongs(songs) {
     if (s.genre) g.genres[s.genre] = (g.genres[s.genre] || 0) + 1;
     var y = yearOf(s.date);
     if (y) g.years[y] = (g.years[y] || 0) + 1;
+    var m = Date.parse(s['last-modified'] || '');
+    if (m > 0 && m / 1000 > g.m) g.m = Math.floor(m / 1000);
     g.n++;
   });
   return order.sort().map(function(d){
@@ -42,6 +44,7 @@ function fromSongs(songs) {
     if (ge) o.ge = ge;
     var y = Object.keys(g.years).sort(function(a, b){ return g.years[b] - g.years[a] || a - b; })[0];
     if (y) o.y = +y;
+    if (g.m) o.m = g.m;
     return o;
   });
 }
@@ -222,5 +225,32 @@ function pickTrack(tracks, last, now, picks, rnd) {
   return c && {ar: c.a[0], ti: c.a[1], f: c.a[2], d: c.a[3] || 0, al: c.a[4] || '', last: c.last};
 }
 
-module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, decadeList: decadeList, decadeAlbums: decadeAlbums, yearIndex: yearIndex, yearAlbums: yearAlbums, yearOf: yearOf, lastIndex: lastIndex, pick: pick, weight: weight,
+/* Album des Tages: für denselben Tag (day, z. B. "2026-10-09") immer dasselbe, bevorzugt lange nicht oder nie gehörte;
+   last: lastIndex(Verlauf) */
+function seeded(str) {
+  var h = 2166136261;
+  for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return function() {                                    /* mulberry32 */
+    h = (h + 0x6D2B79F5) | 0;
+    var t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function dayAlbum(list, day, last, now) {
+  var c = draw(list, function(a){ return a.dir; }, last, now, null, seeded(String(day)));
+  return c && {dir: c.a.dir, al: c.a.al, ar: c.a.ar, y: c.a.y, last: c.last};
+}
+
+/* Neu in der Sammlung: Alben, deren Dateien in den letzten days Tagen dazukamen oder sich änderten, die neuesten zuerst */
+var FRESH_DAYS = 180;
+function freshAlbums(list, now, n, days) {
+  var from = now - (days || FRESH_DAYS) * DAY;
+  return list.filter(function(a){ return a.m && a.m >= from; })
+    .sort(function(a, b){ return b.m - a.m || a.dir.localeCompare(b.dir); })
+    .slice(0, n || 8)
+    .map(function(a){ return {dir: a.dir, al: a.al, ar: a.ar, y: a.y, m: a.m}; });
+}
+
+module.exports = {dayAlbum: dayAlbum, freshAlbums: freshAlbums, seeded: seeded, albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, decadeList: decadeList, decadeAlbums: decadeAlbums, yearIndex: yearIndex, yearAlbums: yearAlbums, yearOf: yearOf, lastIndex: lastIndex, pick: pick, weight: weight,
                   artists: artists, lastArtistIndex: lastArtistIndex, lastTrackIndex: lastTrackIndex, pickArtist: pickArtist, pickTrack: pickTrack};

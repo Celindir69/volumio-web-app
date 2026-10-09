@@ -6,6 +6,8 @@ var menuBody    = document.getElementById('menuBody');
 var menuTags    = false;          /* Tag-Dienst erreichbar */
 
 var MENU_ITEMS = [
+  {id: 'welcome', needsTags: true, title: T('menu.welcome'), sub: T('menu.welcomeSub'), open: function(){ openWelcome(false); },
+   icon: 'M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm-1-6h2v3h-2zm0 19h2v3h-2zM1 11h3v2H1zm19 0h3v2h-3zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4zm12.1 12.1l1.4-1.4 2.1 2.1-1.4 1.4zM4.2 18.4l2.1-2.1 1.4 1.4-2.1 2.1zM16.3 6.3l2.1-2.1 1.4 1.4-2.1 2.1z'},
   {id: 'history', needsTags: true, title: T('menu.history'), sub: T('menu.historySub'), open: function(){ openHistory(); },
    icon: 'M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z'},
   {id: 'check', needsTags: true, title: T('menu.check'), sub: T('menu.checkSub'), open: function(){ openCheck(); },

@@ -80,7 +80,7 @@ srv.listen(0, function(){
       assert.ifError(err);
       assert.strictEqual(dirs, 4);
       assert.strictEqual(list.length, 2);
-      assert.deepStrictEqual(list[0], {file: 'USB/A/1.flac', artist: 'Spliff', albumartist: '', album: '85555', title: 'Carbonara', track: '1', date: '', genre: 'Rock', time: '245'});
+      assert.deepStrictEqual(list[0], {file: 'USB/A/1.flac', artist: 'Spliff', albumartist: '', album: '85555', title: 'Carbonara', track: '1', date: '', genre: 'Rock', time: '245', 'last-modified': ''});
       assert.strictEqual(list[1].title, 'Ohne Tags');
       assert.ok(prog.length >= 3);
     });
