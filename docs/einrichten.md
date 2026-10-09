@@ -177,6 +177,13 @@ zieht neu), **Vor einem Jahr gehört** (um dieses Datum vor einem Jahr, sonst vo
 mehr). Leere Reihen fallen weg. Künstler und Album tippen öffnet, Titel tippen spielt ab. Grundlage ist der Verlauf
 (siehe oben).
 
+**Bewertungen** (nur mit Tag-Dienst): Auf der Künstlerseite markiert ein Herz Lieblingskünstler, im Albumkopf gibt es
+ein bis fünf Sterne (den gleichen Stern noch einmal tippen nimmt die Bewertung zurück). Titel haben einen Daumen, im Player
+neben der Qualitätsanzeige und in der Titelliste eines Albums; ein Tipp schaltet weiter von neutral (Umriss) über
+„mag ich“ (Daumen hoch) zu „mag ich nicht“ (Daumen runter) und zurück. „Mag ich“ ist dasselbe wie ein Favorit in Volumio:
+Der Daumen legt den Titel in die Volumio-Favoriten, und vorhandene Favoriten zeigen den Daumen hoch. Herzen, Sterne und
+„mag ich nicht“ speichert der Tag-Dienst in `/data/web-app/data/ratings.json`.
+
 **Zufallsmix:** Neben „Alle abspielen“ (Künstlerseite, Genre-Listen) startet der Würfel 25 zufällige Titel daraus, nie
 derselbe Künstler direkt hintereinander. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
 `/data/web-app/data/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert

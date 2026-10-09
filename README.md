@@ -47,7 +47,8 @@ der Anlage, ohne Bedienung.
 Die Suche findet Künstler, Alben, Titel und Genres (je Genre die Stilrichtungen aus der Audio-Analyse und alle Alben) in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
 eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify (bisher ungetestet)), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
 eingegeben ist, zeigt sie passend zum Reiter Reihen zum Entdecken: zufällige Entdeckungen, vor einem Jahr gehört, lange
-nicht gehört, noch nie gehört und früher oft gehört. Neben „Alle abspielen“ startet ein Würfel einen Zufallsmix aus 25 Titeln. Bei Webradio holt die App ein Cover
+nicht gehört, noch nie gehört und früher oft gehört. Neben „Alle abspielen“ startet ein Würfel einen Zufallsmix aus 25 Titeln.
+Bewertungen: Herz für Künstler, ein bis fünf Sterne für Alben, Daumen hoch oder runter für Titel (Daumen hoch ist der Volumio-Favorit). Bei Webradio holt die App ein Cover
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 
 ### Stimmungs-Mix

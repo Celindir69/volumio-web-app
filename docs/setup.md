@@ -157,6 +157,8 @@ Tapping plays the track or opens the album or artist.
 
 **Discover:** As long as nothing has been entered in "Search & Discover", the page shows several swipeable rows of artists, albums, or tracks matching the selected tab: **Random Discoveries** (preferring music not played for a long time or never; the dice draws again), **Played a Year Ago** (around this date one year ago, otherwise 2, 3, etc. years ago), **Not Heard in a While** (more than six months ago), **Never Heard**, and **Once Played a Lot** (played often, but not in the last six months). Empty rows are hidden. Tap an artist or album to open it, tap a track to play it. All of this is based on the playback history (see above).
 
+**Ratings** (Tag Service only): on the artist page a heart marks favourite artists; the album header has one to five stars (tap the same star again to clear the rating). Tracks have a thumb, in the player next to the quality display and in an album's track list; each tap moves on from neutral (outline) to "like" (thumb up) to "dislike" (thumb down) and back. "Like" is the same as a Volumio favourite: the thumb adds the track to the Volumio favourites, and existing favourites show the thumb up. Hearts, stars and dislikes are stored by the Tag Service in `/data/web-app/data/ratings.json`.
+
 **Random mix:** Next to "Play all" (artist page, genre lists), the dice starts 25 random tracks from that selection, never the same artist twice in a row.
 
 The Tag Service reads the album list from MPD and stores it in `/data/web-app/data/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
