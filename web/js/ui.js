@@ -28,6 +28,22 @@ function toggleOverlay(overlay) {
   if (!isOpen) overlay.classList.add('on');
 }
 
+/* Tippen auf eine freie Stelle neben dem Overlay schließt es. Nicht bei Bedienelementen (die wechseln wie bisher
+   das Overlay), nicht im Tag-Editor (ungesicherte Änderungen) und nicht für die festen Felder der Bühnenansicht. */
+function overlayFreeTap(t) {
+  var open = [].filter.call(document.querySelectorAll('.overlay.on'), function(o){
+    return !(document.documentElement.classList.contains('stage') && (o.id === 'overlayInfo' || o.id === 'overlayLyrics'));
+  });
+  if (!open.length || open.some(function(o){ return o.id === 'overlayTags'; })) return false;
+  return !(t && t.closest && t.closest('.overlay, .topBtn, #meta, #seekWrap, #ctrl, #volWrap, #actions, #toast, button, a, input, iframe'));
+}
+var overlayDownFree = false;                       /* Druck und Loslassen beide frei: Ziehen aus dem Overlay heraus zählt nicht */
+document.addEventListener('pointerdown', function(e){ overlayDownFree = overlayFreeTap(e.target); }, true);
+document.addEventListener('click', function(e){
+  if (overlayDownFree && document.documentElement.contains(e.target) && overlayFreeTap(e.target)) closeAllOverlays();
+  overlayDownFree = false;
+});
+
 btnLyrics.addEventListener('click', function(){
   if (!btnLyrics.classList.contains('has-content')) return;
   toggleOverlay(overlayLyrics);
