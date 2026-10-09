@@ -170,10 +170,15 @@ Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** ge
 (ein Jahr: Summen mit Vergleich zum Vorjahr, Monate und zum Aufklappen Top-Titel, -Alben, -Künstler, -Genres (antippbar) und neu entdeckte Künstler; Tipp auf einen Monatsbalken zeigt die Ranglisten für diesen Monat; Genres aus der Albenliste unten). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.
 
-**Entdecken:** Solange in der Suche nichts eingegeben ist, zeigt sie passend zum Reiter Künstler, Alben oder Titel, die um
-dieses Datum vor einem Jahr liefen (sonst vor 2, 3 … Jahren), und einen **Zufallskünstler**, ein **Zufallsalbum** oder einen
-**Zufallstitel** (Künstler und Album tippen öffnet, Titel tippen spielt ab, Würfel wählt neu). Bevorzugt kommt, was lange
-nicht oder nie lief. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
+**Entdecken:** Solange in „Suchen & Entdecken“ nichts eingegeben ist, zeigt die Seite passend zum Reiter Künstler, Alben
+oder Titel mehrere Reihen zum Wischen: **Zufällige Entdeckungen** (bevorzugt, was lange nicht oder nie lief; der Würfel
+zieht neu), **Vor einem Jahr gehört** (um dieses Datum vor einem Jahr, sonst vor 2, 3 … Jahren), **Lange nicht gehört**
+(über ein halbes Jahr her), **Noch nie gehört** und **Früher oft gehört** (oft gehört, aber seit einem halben Jahr nicht
+mehr). Leere Reihen fallen weg. Künstler und Album tippen öffnet, Titel tippen spielt ab. Grundlage ist der Verlauf
+(siehe oben).
+
+**Zufallsmix:** Neben „Alle abspielen“ (Künstlerseite, Genre-Listen) startet der Würfel 25 zufällige Titel daraus, nie
+derselbe Künstler direkt hintereinander. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
 `/data/web-app/data/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert
 (Prüfung höchstens einmal pro Minute; nach Tag-Änderungen gut eine Minute nach dem Scan von selbst).
 

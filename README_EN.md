@@ -45,13 +45,12 @@ automatically cycles through the available pages. Switch using the control at th
   <img src="docs/bilder/kiosk.jpg" width="49%" alt="kioskTV.html">
 </p>
 
-### Search and Discover
+### Search & Discover
 
 Search finds artists, albums, tracks, and genres (per genre the styles from the audio analysis and all albums) in the local library and on the streaming services configured in Volumio
 (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), each in separate sections with checkboxes for showing or hiding them. As long as
-nothing has been entered, the selected tab shows "Played a Year Ago" (artists, albums, or tracks played around this date
-one year ago) as well as a random artist, random album, or random track, with preference given to music that has not been
-played for a long time or has never been played. For web radio, the app retrieves cover art for the currently playing
+nothing has been entered, the selected tab shows rows to discover: random discoveries, played a year ago, not heard in a
+while, never heard, and once played a lot. Next to "Play all", a dice starts a random mix of 25 tracks. For web radio, the app retrieves cover art for the currently playing
 track and displays station logos in the station list.
 
 ### Mood Mix

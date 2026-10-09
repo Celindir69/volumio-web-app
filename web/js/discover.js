@@ -1,16 +1,17 @@
-/* Suche ohne Eingabe: "Entdecken" passend zum Reiter (Künstler, Alben, Titel): was vor einem Jahr lief und ein Zufallsfund
-   (Tag-Dienst GET /plays?view=ago&kind=…, /random?kind=…).
+/* Suchen & Entdecken ohne Eingabe, passend zum Reiter (Künstler, Alben, Titel): Reihen „Zufällige Entdeckungen“ (mit Würfel),
+   „Vor einem Jahr gehört“, „Lange nicht gehört“, „Noch nie gehört“, „Früher oft gehört“
+   (Tag-Dienst GET /discover?kind=…, /plays?view=ago&kind=…). Leere Reihen fallen weg.
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach library.js und history.js geladen. */
 var discoverReady = false;       /* Tag-Dienst erreichbar */
 var discoverSeq   = 0;
 var discoverTimer = null;
-var discoverRandomBox = null;
-/* Suchreiter -> Art beim Tag-Dienst und Überschriften */
+/* Suchreiter -> Art beim Tag-Dienst */
 var DISCOVER_KIND = {
-  artists: {kind: 'artist', ago: 'disc.ago.artist', rand: T('disc.random.artist')},
-  albums:  {kind: 'album',  ago: 'disc.ago.album',  rand: T('disc.random.album')},
-  songs:   {kind: 'track',  ago: 'disc.ago.track',  rand: T('disc.random.track')}
+  artists: {kind: 'artist', ago: 'disc.ago.artist'},
+  albums:  {kind: 'album',  ago: 'disc.ago.album'},
+  songs:   {kind: 'track',  ago: 'disc.ago.track'}
 };
+var DISCOVER_SHELVES = ['random', 'ago', 'forgotten', 'never', 'oldfav'];   /* Reihenfolge auf der Seite */
 
 function discoverDate(t) { return langDate(t * 1000); }
 function discoverCat() { return DISCOVER_KIND[searchCat] || DISCOVER_KIND.albums; }
@@ -21,24 +22,90 @@ function discoverShow() {
   var seq = ++discoverSeq, cat = discoverCat();
   clearTimeout(discoverTimer);
   while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
-  var box = histEl('div', 'dBox');
-  var agoBox = histEl('div', 'dSec'), randBox = histEl('div', 'dSec');
-  box.appendChild(agoBox); box.appendChild(randBox);
+  var box = histEl('div', 'dBox'), secs = {};
+  DISCOVER_SHELVES.forEach(function(id){ secs[id] = histEl('div', 'dSec'); box.appendChild(secs[id]); });
   searchResults.appendChild(box);
-  discoverRandomBox = randBox;
 
   tagGetJson('/plays?view=ago&kind=' + cat.kind + histTz()).then(function(r){
     var a = r && r.ago;
     if (seq !== discoverSeq || !a || !a.items.length) return;
-    agoBox.appendChild(browseHeading(T(cat.ago, {n: a.years})));
+    secs.ago.appendChild(browseHeading(T(cat.ago, {n: a.years})));
     var row = histEl('div', 'dRow');
     a.items.forEach(function(it){ row.appendChild(discoverTile(cat.kind, it)); });
-    agoBox.appendChild(row);
+    secs.ago.appendChild(row);
     discoverFit(row);
   }).catch(function(){});
 
-  discoverRandom(seq);
+  discoverLoad(seq, cat, secs, false);
   return true;
+}
+
+/* Reihen vom Tag-Dienst; onlyRandom: nur die Zufallsreihe neu (Würfel) */
+function discoverLoad(seq, cat, secs, onlyRandom) {
+  tagGetJson('/discover?kind=' + cat.kind).then(function(r){
+    if (seq !== discoverSeq) return;
+    if (!r || !r.ok) {
+      if (r && r.building) {
+        discoverClear(secs.random);
+        secs.random.appendChild(browseNote(T('disc.building')));
+        discoverTimer = setTimeout(function(){ if (seq === discoverSeq) discoverLoad(seq, cat, secs, false); }, 5000);
+      }
+      return;
+    }
+    r.shelves.forEach(function(sh){
+      if (!secs[sh.id] || (onlyRandom && sh.id !== 'random')) return;
+      discoverShelf(secs[sh.id], sh, cat, secs);
+    });
+  }).catch(function(){});
+}
+
+function discoverClear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+function discoverShelf(sec, sh, cat, secs) {
+  discoverClear(sec);
+  if (!sh.items.length && sh.id !== 'random') return;
+  var head = browseHeading(T('disc.shelf.' + sh.id));
+  if (sh.id === 'random') {
+    head.classList.add('dHead');
+    var dice = histEl('div', 'dDice');
+    dice.title = T('disc.reroll');
+    dice.innerHTML = DICE_SVG;
+    dice.addEventListener('click', function(){
+      dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
+      discoverLoad(discoverSeq, cat, secs, true);
+    });
+    head.appendChild(dice);
+  }
+  sec.appendChild(head);
+  if (!sh.items.length) {
+    sec.appendChild(browseNote(T('disc.none.' + cat.kind)));
+    return;
+  }
+  var row = histEl('div', 'dRow');
+  sh.items.forEach(function(it){ row.appendChild(discoverShelfTile(cat.kind, sh.id, it)); });
+  sec.appendChild(row);
+  discoverFit(row);
+}
+
+/* Kachel einer Reihe: Künstler öffnen, Album öffnen, Titel abspielen; darunter, wann bzw. wie oft gehört */
+function discoverShelfTile(kind, shelf, it) {
+  var tile = histEl('div', 'dTile' + (kind === 'artist' ? ' dArtist' : ''));
+  var dir = kind === 'track' ? it.f.replace(/\/[^\/]*$/, '') : it.dir;
+  var art = kind === 'artist' ? histArtistArt(it.ar) : histAlbumArt(it.ar, it.al, dir);
+  var img = histImg(art, kind === 'artist');
+  if (kind === 'artist') histArtistFallback(img, it.ar);
+  tile.appendChild(img);
+  tile.appendChild(histEl('div', 'dTi', kind === 'artist' ? it.ar : kind === 'track' ? it.ti : it.al));
+  tile.appendChild(histEl('div', 'dAr', kind === 'artist' ? T('disc.albums', {n: it.n}) : histArtistName(it.ar)));
+  var info = shelf === 'oldfav' ? T('disc.plays', {n: it.plays})
+           : shelf === 'never' ? '' : it.last ? T('disc.last', {date: discoverDate(it.last)}) : T('disc.never');
+  if (info) tile.appendChild(histEl('div', 'dSub', info));
+  tile.addEventListener('click', function(){
+    if (kind === 'artist') return openBrowse({kind: 'artist', artist: it.ar});
+    if (kind === 'track') return histPlayUri('music-library/' + it.f, 'mpd', it);
+    openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.al, uri: 'music-library/' + it.dir, albumart: art});
+  });
+  return tile;
 }
 
 /* Kachel für "vor einem Jahr": Künstler öffnen, Album öffnen, Titel abspielen */
@@ -65,60 +132,7 @@ function discoverFit(row) {
   row.classList.remove('fit');
   if (row.scrollWidth <= row.clientWidth + 1) row.classList.add('fit');
 }
-window.addEventListener('resize', function(){ discoverFit(document.querySelector('.dRow')); });
-
-function discoverRandom(seq) {
-  var box = discoverRandomBox, cat = discoverCat();
-  tagGetJson('/random?kind=' + cat.kind).then(function(r){
-    if (seq !== discoverSeq) return;
-    while (box.firstChild) box.removeChild(box.firstChild);
-    var head = browseHeading(cat.rand);
-    head.classList.add('dHead');
-    var dice = histEl('div', 'dDice');
-    dice.title = T('disc.reroll');
-    dice.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm2.5 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM7.5 15a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>';
-    dice.addEventListener('click', function(){
-      dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
-      discoverRandom(++discoverSeq);
-    });
-    head.appendChild(dice);
-    box.appendChild(head);
-    var hit = r && (r.album || r.artist || r.track);
-    if (!r || !r.ok || !hit) {
-      box.appendChild(browseNote(r && r.building ? T('disc.building') :
-        cat.kind === 'artist' ? T('disc.none.artist') : cat.kind === 'track' ? T('disc.none.track') : T('disc.none.album')));
-      if (r && r.building) discoverTimer = setTimeout(function(){ if (seq === discoverSeq) discoverRandom(seq); }, 5000);
-      return;
-    }
-    var art, title, sub, open;
-    if (cat.kind === 'artist') {
-      art = histArtistArt(hit.ar); title = hit.ar; sub = T('disc.albums', {n: hit.n});
-      open = function(){ openBrowse({kind: 'artist', artist: hit.ar}); };
-    } else if (cat.kind === 'track') {
-      var dir = hit.f.replace(/\/[^\/]*$/, '');
-      art = histAlbumArt(hit.ar, hit.al, dir); title = hit.ti; sub = hit.ar + (hit.al ? ' · ' + hit.al : '');
-      open = function(){ histPlayUri('music-library/' + hit.f, 'mpd', hit); };
-    } else {
-      art = histAlbumArt(hit.ar, hit.al, hit.dir); title = hit.al; sub = histArtistName(hit.ar);
-      open = function(){                                 /* wie die Kacheln: erst die Albumansicht */
-        openBrowse({kind: 'album', artist: hit.ar === 'Verschiedene' ? '' : hit.ar, album: hit.al, uri: 'music-library/' + hit.dir, albumart: art});
-      };
-    }
-    var card = histEl('div', 'dRand');
-    var img = histImg(art, cat.kind === 'artist');
-    if (cat.kind === 'artist') histArtistFallback(img, hit.ar);
-    img.className = 'dBig' + (cat.kind === 'artist' ? ' hRound' : '');
-    card.appendChild(img);
-    var meta = histEl('div', 'dMeta');
-    meta.appendChild(histEl('div', 'dTi', title));
-    meta.appendChild(histEl('div', 'dAr', sub));
-    meta.appendChild(histEl('div', 'dLast', hit.last ? T('disc.lastHeard', {date: discoverDate(hit.last)}) : T('disc.neverHeard')));
-    if (cat.kind === 'track') meta.appendChild(histEl('div', 'dLast', T('disc.tapToPlay')));
-    card.appendChild(meta);
-    card.addEventListener('click', open);
-    box.appendChild(card);
-  }).catch(function(){});
-}
+window.addEventListener('resize', function(){ Array.prototype.forEach.call(document.querySelectorAll('.dRow'), discoverFit); });
 
 /* beim Öffnen der Suche neu füllen, wenn nichts gesucht wurde */
 if (window.MutationObserver) new MutationObserver(function(){
@@ -127,3 +141,37 @@ if (window.MutationObserver) new MutationObserver(function(){
 }).observe(overlaySearch, {attributes: true, attributeFilter: ['class']});
 
 tagGetJson('/health').then(function(r){ if (r && r.ok) { discoverReady = true; if (!searchQuery) renderSearchResults(); } }).catch(function(){});
+
+/* ---------- Zufallsmix: Würfel neben „Alle abspielen“ ---------- */
+/* q: {artist} oder {dirs: [...]}; der Tag-Dienst zieht 25 Titel (nie derselbe Künstler direkt hintereinander),
+   die ersetzen die Warteschlange */
+function randomMixPlay(q) {
+  tagPostJson('/randommix', q).then(function(r){
+    var items = (r && r.items || []).map(function(t){
+      return {uri: 'music-library/' + t.f, service: 'mpd', type: 'song', title: t.ti, artist: t.ar, album: t.al};
+    });
+    if (!items.length) return showToast(T(r && r.building ? 'disc.building' : 'mix.empty'));
+    browseOrigin = null;
+    fetch('/api/v1/replaceAndPlay', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({item: items[0]})
+    }).then(function(){
+      if (items.length > 1) setTimeout(function(){ socket.emit('addToQueue', items.slice(1)); }, 300);
+    }).catch(function(){});
+    showToast(T('disc.mixStarted', {n: items.length}));
+    closeAllOverlays();
+  }).catch(function(){ showToast(T('hist.offline')); });
+}
+
+/* Würfel-Knopf für die Zeile „Alle abspielen“ (Klick geht nicht an die Zeile weiter) */
+function randomMixButton(q) {
+  var b = histEl('div', 'mixDice');
+  b.title = T('disc.mix');
+  b.innerHTML = DICE_SVG;
+  b.addEventListener('click', function(ev){
+    ev.stopPropagation();
+    b.classList.remove('roll'); void b.offsetWidth; b.classList.add('roll');
+    randomMixPlay(typeof q === 'function' ? q() : q);
+  });
+  return b;
+}
