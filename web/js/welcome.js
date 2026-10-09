@@ -1,4 +1,4 @@
-/* Begrüßung: einmal beim Öffnen der Seite ein Overlay mit Album des Tages, zuletzt gehörten und neuen Alben
+/* Begrüßung: einmal beim Öffnen der Seite eine Karte in der Mitte mit Album des Tages, zuletzt gehörten und neuen Alben
    (Tag-Dienst GET /welcome). Nicht in der Bühnenansicht, nicht öfter als alle 30 Minuten; abschaltbar unten im Overlay,
    jederzeit über das Menü. Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach discover.js, genre.js und stage.js geladen. */
 var overlayWelcome = document.getElementById('overlayWelcome');
@@ -44,7 +44,7 @@ function welcomeDay(it) {
     ev.stopPropagation();
     browsePlay({uri: 'music-library/' + it.dir, service: 'mpd', type: 'folder', title: it.al, artist: it.ar});
   });
-  box.appendChild(play);
+  meta.appendChild(play);
   box.addEventListener('click', function(){ welcomeAlbumOpen(it, art); });
   return box;
 }
@@ -111,6 +111,7 @@ function openWelcome(auto) {
 }
 
 document.getElementById('closeWelcome').addEventListener('click', closeAllOverlays);
+overlayWelcome.addEventListener('click', function(ev){ if (ev.target === overlayWelcome) closeAllOverlays(); });   /* Tipp auf den Rand */
 
 (function(){
   var p = welcomePref();

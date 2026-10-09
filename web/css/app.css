@@ -797,7 +797,25 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .dSub { font-size:calc(2.6 * var(--vw)); opacity:.45; margin-top:calc(.4 * var(--vw)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dTile .sCover.hRound, .dBig.hRound { border-radius:50%; }
 
-/* Begrüßung (welcome.js): Album des Tages groß, darunter Reihen, Zufallsmix und Schalter */
+/* Begrüßung (welcome.js): Karte in der Mitte über abgedunkeltem Hintergrund (Tipp darauf schließt); im Querformat mit
+   breitem Rand und Album des Tages neben seinen Angaben. Darin Album des Tages, Reihen, Zufallsmix und Schalter */
+#overlayWelcome { position:fixed; inset:0; z-index:15; display:flex; align-items:center; justify-content:center;
+  padding:max(env(safe-area-inset-top,0px), 12px) 12px max(env(safe-area-inset-bottom,0px), 12px);
+  background:rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:opacity .3s; }
+#overlayWelcome.on { opacity:1; pointer-events:auto; }
+.wCard { width:100%; max-height:100%; display:flex; flex-direction:column; background:var(--sheet);
+  -webkit-backdrop-filter:blur(30px); backdrop-filter:blur(30px); border-radius:calc(4 * var(--vw));
+  box-shadow:0 20px 60px rgba(0,0,0,.45); transform:scale(.96); transition:transform .3s cubic-bezier(.4,0,.2,1); }
+#overlayWelcome.on .wCard { transform:none; }
+@media (orientation:landscape) {
+  #overlayWelcome { padding:8vh 12vw; }
+  .wCard { --vw:min(1vw, 6px); max-width:1100px; border-radius:20px; }
+  .wDay { flex-direction:row; align-items:center; gap:calc(6 * var(--vw)); text-align:left; }
+  .wDay .dBig { max-width:220px; max-height:220px; }
+  .wDay .dMeta { margin-top:0; }
+  .wDay .wPlay { margin-top:calc(4 * var(--vw)); }
+}
+
 .wDay { margin-bottom:calc(5 * var(--vw)); }
 .wDay .dBig { width:56vw; height:56vw; max-width:260px; max-height:260px; }
 .wPlay { display:inline-flex; align-items:center; gap:calc(1.5 * var(--vw)); margin-top:calc(3 * var(--vw));

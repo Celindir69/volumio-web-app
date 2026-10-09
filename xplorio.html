@@ -305,9 +305,9 @@
   <div class="overlayBody" id="histBody"></div>
 </div>
 
-<!-- Begrüßung beim Öffnen (welcome.js) -->
-<div class="overlay" id="overlayWelcome">
-  <div class="overlayHandle"></div>
+<!-- Begrüßung beim Öffnen (welcome.js): eigene Karte in der Mitte, nicht als Overlay-Blatt -->
+<div id="overlayWelcome">
+  <div class="wCard">
   <div class="overlayHead">
     <h2 id="welcomeTitle">Hallo</h2>
     <div class="overlayClose" id="closeWelcome">
@@ -315,6 +315,7 @@
     </div>
   </div>
   <div class="overlayBody" id="welcomeBody"></div>
+  </div>
 </div>
 
 <!-- Tag-Editor (öffnet über dem Album-Overlay) -->
