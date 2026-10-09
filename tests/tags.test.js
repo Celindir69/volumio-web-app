@@ -193,6 +193,8 @@ else {
                                 assert.strictEqual(h1.hold, true);
                                 assert.strictEqual(h2.hold, false); assert.ok(h2.pending >= 1);
                               });
+                              post(port, '/scan', {all: true}, function(all){
+                              t('Dienst: ganze Bibliothek einlesen (Knopf im Bibliotheks-Check)', function(){ assert.ok(all.ok && all.scan); });
                               var ckFile = path.join(root, 'log', 'check.json');
                               fs.mkdirSync(path.dirname(ckFile), {recursive: true});
                               fs.writeFileSync(ckFile, JSON.stringify({at: 1, noCover: []}));
@@ -206,6 +208,7 @@ else {
                                   s2.close();
                                   artistTracks(done);
                                 });
+                              });
                               });
                             });
                           });
