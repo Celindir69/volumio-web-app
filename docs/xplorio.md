@@ -3,11 +3,11 @@
 *Die Musiksammlung, die du schon hast, ist größer als die, die du hörst.*
 
 Irgendwann ist sie da: die Sammlung mit Tausenden Alben, liebevoll zusammengetragen über Jahre. Und trotzdem landest du
-immer wieder bei denselben zwanzig Platten. Nicht, weil der Rest schlechter wäre, sondern weil lange Listen von A bis Z
+immer wieder bei denselben zwanzig Alben. Nicht, weil der Rest schlechter wäre, sondern weil lange Listen von A bis Z
 keine Lust auf Neues machen.
 
 **Xplorio** ist eine neue Oberfläche für deinen Volumio-Player, gemacht für genau diese Sammlungen. Statt dich durch
-endlose Listen scrollen zu lassen, nimmt sie dich mit auf Entdeckungsreise durch deine eigene Musik.
+endlose Listen scrollen zu lassen, nimmt sie dich mit auf Entdeckungsreise durch deine eigene Musikwelt.
 
 <p align="center">
   <img src="bilder/display-ipad.jpg" width="720" alt="Xplorio auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
@@ -16,7 +16,7 @@ endlose Listen scrollen zu lassen, nimmt sie dich mit auf Entdeckungsreise durch
 ## Du weißt, was du hören willst?
 
 Dann tipp es einfach ein. Die Suche findet Künstler, Alben, Titel und Genres in deiner Sammlung und, wenn du möchtest,
-gleich auch bei TIDAL, Qobuz oder HIGHRESAUDIO. Ein Tipp, und es läuft.
+gleich auch bei TIDAL, Qobuz oder HIGHRESAUDIO (aktives Abo vorausgesetzt). Ein Tipp, und es läuft.
 
 ## Du bist unschlüssig?
 
@@ -57,7 +57,7 @@ was gerade lief.
 Dann fang genau dort an. Tipp auf den Künstler und sieh, was von ihm in deiner Sammlung liegt. Schau dir ähnliche
 Künstler an, die du auch besitzt. Lies, wer an dem Album mitgewirkt hat und was es darüber zu wissen gibt. Folge deinem
 eigenen Pfad durch die Sammlung, bis zum nächsten Album, das dich packt. Und wenn du dich nicht entscheiden kannst:
-Bei Künstlern, Genres, Stimmungen und Jahrzehnten spielt der Würfel 25 Titel daraus.
+Bei Künstlern, Genres, Stimmungen und Jahrzehnten spielt der Würfel 25 zufällige Titel daraus.
 
 Dazu laufen die **Lyrics** synchron mit, die Farben passen sich dem Cover an, und ein Abzeichen zeigt dir, in welcher
 Qualität gerade gespielt wird.
@@ -89,7 +89,7 @@ mit dabei: für einzelne Titel, ganze Alben oder alles von einem Künstler, samt
 findet fehlende Cover, verschiedene Schreibweisen desselben Künstlers und Alben ohne Genre, und führt dich mit einem
 Tipp direkt zur Korrektur.
 
-Und wer noch tiefer gehen will, lässt die Musik auf einem leistungsstarken Rechner anhören: Die mitgelieferte
+Und wer noch tiefer gehen will, lässt die Musik auf einem leistungsstarken Rechner analysieren: Die mitgelieferte
 **Audio-Analyse** erkennt Energie, Tempo und Stimmung direkt aus dem Klang und macht Stimmungs-Mix und Entdecken noch
 treffsicherer.
 
@@ -108,7 +108,7 @@ entfernt.
 Xplorio läuft auf Volumio, entwickelt auf einem Musical Fidelity MX-Stream, und ist kostenlos und quelloffen.
 Wie du es auf deinen Player bringst, steht in der [Einrichtung](einrichten.md).
 
-**Deine Sammlung wartet. Fang an zu entdecken.**
+**Deine Sammlung wartet. Fang an, sie zu entdecken.**
 
 ---
 
