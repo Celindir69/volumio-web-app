@@ -346,6 +346,20 @@ function doCheckGet(cb) {
   cb(200, {ok: true, running: checkRun, error: checkError, result: last});
 }
 
+/* POST /checkdone {key}: Eintrag als bearbeitet merken (bleibt ausgegraut), bis neu geprüft wird.
+   Steht in check.json, eine neue Prüfung überschreibt die Datei und damit auch die Markierungen. */
+function doCheckDone(body, cb) {
+  var key = body && body.key;
+  if (typeof key !== 'string' || !key || key.length > 1000) return cb(400, {ok: false, error: 'key fehlt'});
+  var last;
+  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { return cb(200, {ok: false, error: 'noch nicht geprüft'}); }
+  if (checkRun) return cb(200, {ok: false, error: 'Prüfung läuft'});
+  last.done = last.done || {};
+  last.done[key] = 1;
+  try { fs.writeFileSync(CHECK_FILE, JSON.stringify(last)); } catch (e) { return cb(500, {ok: false, error: e.message}); }
+  cb(200, {ok: true});
+}
+
 /* ---------- Cover online suchen ---------- */
 /* GET /coversearch?artist=…&album=… -> {ok, results:[{id, source}]}; GET /coverimage?id=… liefert das Bild.
    Nur Adressen, die die Suche selbst gefunden hat, werden geladen (über die id). Last.fm-Schlüssel aus web/config*.js. */
@@ -921,7 +935,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'POST' && route === '/essentia') return doEssentiaUpload(req, res);
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/lastfm', '/lyricsoffset'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -929,7 +943,7 @@ var server = http.createServer(function(req, res){
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet}[route];
     fn(body || {}, function(c, o){ send(res, c, o); });
   });
 });

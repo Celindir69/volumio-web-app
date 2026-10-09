@@ -6,6 +6,8 @@ var btnCheck     = document.getElementById('btnCheck');
 var checkTimer   = null;
 var checkOpen    = {};          /* aufgeklappte Kategorien bleiben beim Neuzeichnen offen */
 var CHECK_PAGE   = 100;         /* so viele Einträge je Kategorie, dann "weitere anzeigen" */
+var checkDone    = {};          /* bearbeitete Einträge (Tag-Dienst merkt sie bis zur nächsten Prüfung) */
+var checkDoneAt  = 0;           /* zu welcher Prüfung checkDone gehört */
 
 var CHECK_CATS = [
   {key: 'noCover', name: T('check.cat.noCover'), hint: T('check.cat.noCoverHint')},
@@ -94,6 +96,8 @@ function checkRender(res) {
   head.appendChild(info); head.appendChild(btn);
   checkBody.appendChild(head);
   if (!r) { checkMoodSection(); checkBody.scrollTop = keepScroll; return; }
+  if (checkDoneAt !== r.at) { checkDone = {}; checkDoneAt = r.at; }
+  Object.keys(r.done || {}).forEach(function(k){ checkDone[k] = 1; });
 
   CHECK_CATS.forEach(function(cat){
     var list = r[cat.key] || [];
@@ -186,7 +190,7 @@ function checkFill(box, cat, list) {
   function more() {
     var end = Math.min(list.length, shown + CHECK_PAGE);
     for (; shown < end; shown++) {
-      if (cat.key === 'genreMerge') box.insertBefore(checkGenreGroupRow(list[shown]), moreRow);
+      if (cat.key === 'genreMerge') box.insertBefore(checkGenreGroupRow(cat.key, list[shown]), moreRow);
       else if (cat.key === 'spelling') list[shown].variants.forEach(function(v, i){ box.insertBefore(checkSpellingRow(v, i, list[shown]), moreRow); });
       else box.insertBefore(checkAlbumRow(cat.key, list[shown]), moreRow);
     }
@@ -199,14 +203,21 @@ function checkFill(box, cat, list) {
   more();
 }
 
-function checkRow(title, sub, onEdit) {
-  var row = document.createElement('div'); row.className = 'sRow';
+/* Bearbeitete Einträge bleiben ausgegraut, auch nach dem Schließen, bis neu geprüft wird */
+function checkMarkDone(key) {
+  if (checkDone[key]) return;
+  checkDone[key] = 1;
+  tagPost('/checkdone', {key: key}).catch(function(){});
+}
+
+function checkRow(key, title, sub, onEdit) {
+  var row = document.createElement('div'); row.className = 'sRow' + (checkDone[key] ? ' done' : '');
   var meta = document.createElement('div'); meta.className = 'sMeta';
   var ti = document.createElement('div'); ti.className = 'sTitle'; ti.textContent = title;
   var su = document.createElement('div'); su.className = 'sSub'; su.textContent = sub;
   meta.appendChild(ti); meta.appendChild(su);
   row.appendChild(meta);
-  row.appendChild(tagPenButton('tagEditMini', T('check.edit'), function(){ row.classList.add('done'); onEdit(); }));
+  row.appendChild(tagPenButton('tagEditMini', T('check.edit'), function(){ row.classList.add('done'); checkMarkDone(key); onEdit(); }));
   return row;
 }
 
@@ -216,8 +227,8 @@ function checkAlbumRow(key, it) {
   if (key === 'albumArtist') sub = (it.missing ? T('check.albumArtistMissing') : T('check.albumArtistIs', {names: it.albumartists.join(' / ')})) + ' · ' + it.artists.join(', ') + (it.artists.length > 5 ? ' …' : '');
   else if (key === 'mixed') sub = [it.albums.length > 1 ? it.albums.join(' / ') : '', it.years.length > 1 ? it.years.join(' / ') : ''].filter(Boolean).join(' · ') || it.dir;
   else if (key === 'noTrack') sub = T('check.noTrackSub', {missing: checkNum(it.missing), count: checkNum(it.count), dir: it.dir});
-  if (key === 'genreMissing') return checkGenreAlbumRow(it);
-  return checkRow(heading, sub, function(){
+  if (key === 'genreMissing') return checkGenreAlbumRow(key, it);
+  return checkRow(key + '|' + it.dir, heading, sub, function(){
     if (key === 'albumArtist' || key === 'mixed') openBulkEditor(it.files.map(function(f){ return f.uri; }), it.name);
     else openTagEditor(it.files, it.name);
   });
@@ -231,17 +242,17 @@ function checkGenreText(it) {
   return T('check.genre.suggest', {genre: it.genre}) + ' ' + why + (it.subs && it.subs.length ? ' · ' + it.subs.join(', ') : '');
 }
 
-function checkGenreAlbumRow(it) {
-  return checkRow(it.name + (it.artist ? ' · ' + it.artist : ''), checkGenreText(it), function(){
+function checkGenreAlbumRow(key, it) {
+  return checkRow(key + '|' + it.dir, it.name + (it.artist ? ' · ' + it.artist : ''), checkGenreText(it), function(){
     openBulkEditor(it.files.map(function(f){ return f.uri; }), it.name, {field: 'genre', value: it.genre || ''});
   });
 }
 
 /* gleiche Änderung "bisher -> Oberkategorie" für mehrere Alben = eine Zeile; der Stift öffnet alle Titel davon */
-function checkGenreGroupRow(g) {
+function checkGenreGroupRow(key, g) {
   var names = g.albums.slice(0, 3).map(function(a){ return a.name; }).join(', ') + (g.albums.length > 3 ? ' …' : '');
   var audio = g.albums.some(function(a){ return a.how !== 'table'; });
-  return checkRow(g.from.replace(/ \/ –$/, ' / ' + T('check.genre.empty')) + ' → ' + g.genre,
+  return checkRow(key + '|' + g.from + '|' + g.genre, g.from.replace(/ \/ –$/, ' / ' + T('check.genre.empty')) + ' → ' + g.genre,
     T('check.genre.groupSub', {albums: T('check.genre.albums', {n: g.albums.length}), n: g.count}) +
     (audio ? ' · ' + T('check.genre.withAudio') : '') + ' · ' + names, function(){
     openBulkEditor(g.files.map(function(f){ return f.uri; }), g.from + ' → ' + g.genre, {field: 'genre', value: g.genre});
@@ -250,7 +261,7 @@ function checkGenreGroupRow(g) {
 
 function checkSpellingRow(v, i, group) {
   var others = group.variants.filter(function(o){ return o !== v; }).map(function(o){ return o.name; }).join(', ');
-  return checkRow(v.name, T('check.spellingSub', {n: v.count, others: others}), function(){ openArtistEditor(v.name); });
+  return checkRow('spelling|' + v.name, v.name, T('check.spellingSub', {n: v.count, others: others}), function(){ openArtistEditor(v.name); });
 }
 
 btnCheck.addEventListener('click', openCheck);

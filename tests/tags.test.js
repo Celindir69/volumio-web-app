@@ -193,8 +193,20 @@ else {
                                 assert.strictEqual(h1.hold, true);
                                 assert.strictEqual(h2.hold, false); assert.ok(h2.pending >= 1);
                               });
-                              s2.close();
-                              artistTracks(done);
+                              var ckFile = path.join(root, 'log', 'check.json');
+                              fs.mkdirSync(path.dirname(ckFile), {recursive: true});
+                              fs.writeFileSync(ckFile, JSON.stringify({at: 1, noCover: []}));
+                              post(port, '/checkdone', {key: 'noCover|USB/A'}, function(d1){
+                                post(port, '/checkdone', {}, function(d2){
+                                  t('Dienst: bearbeitete Check-Einträge bleiben bis zur nächsten Prüfung gemerkt', function(){
+                                    assert.ok(d1.ok); assert.strictEqual(d2.ok, false);
+                                    var ck = JSON.parse(fs.readFileSync(ckFile, 'utf8'));
+                                    assert.deepStrictEqual(ck.done, {'noCover|USB/A': 1}); assert.strictEqual(ck.at, 1);
+                                  });
+                                  s2.close();
+                                  artistTracks(done);
+                                });
+                              });
                             });
                           });
                         });
