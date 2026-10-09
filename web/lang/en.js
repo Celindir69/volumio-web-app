@@ -327,6 +327,12 @@ langRegister('en', 'English', {
   'mix.tracks': {one: '{n} track', other: '{n} tracks'},
   'mix.why.artist': 'via artist',
 
+  'more.decade': 'Decades',
+  'more.mix': '25 tracks from these',
+  'more.mood': 'Mood and energy',
+  'more.similar': 'Similar artists',
+  'more.style': 'Styles',
+  'more.title': 'MORE TO DISCOVER',
   'mood.aggressive': 'aggressive',
   'mood.atmospheric': 'atmospheric',
   'mood.calm': 'calm',

@@ -109,13 +109,45 @@ function mix(pool, k, rnd) {
   return out;
 }
 
-/* Titel für den Mix: {artist} -> Titel des Künstlers und seiner Alben; {dirs: [...]} -> Titel dieser Albumordner */
+/* Titel für den Mix: {artist} -> Titel des Künstlers und seiner Alben; {artists: [...]} -> dasselbe für mehrere;
+   {dirs: [...]} -> Titel dieser Albumordner */
 function mixPool(tracks, albumList, q) {
-  var dirs = {};
+  var dirs = {}, want = {}, any = false;
   (q.dirs || []).forEach(function(d){ dirs[String(d)] = true; });
-  var want = q.artist ? plays.norm(q.artist) : '';
-  if (want) (albumList || []).forEach(function(a){ if (plays.norm(a.ar) === want) dirs[a.dir] = true; });
-  return tracks.filter(function(t){ return (want && plays.norm(t[0]) === want) || dirs[albums.albumDir(t[2])]; });
+  (q.artist ? [q.artist] : []).concat(q.artists || []).forEach(function(a){ var k = plays.norm(a); if (k) { want[k] = true; any = true; } });
+  if (any) (albumList || []).forEach(function(a){ if (want[plays.norm(a.ar)]) dirs[a.dir] = true; });
+  return tracks.filter(function(t){ return (any && want[plays.norm(t[0])]) || dirs[albums.albumDir(t[2])]; });
 }
 
-module.exports = {statIndex: statIndex, shelves: shelves, mix: mix, mixPool: mixPool, sample: sample, ROW: ROW};
+/* Mix über mehrere Künstler (ähnliche Künstler): jeder Künstler etwa gleich oft, egal wie viel von ihm da ist;
+   Künstler des Albums (Ordner) zählt, sonst der des Titels. Nie derselbe Künstler direkt hintereinander, solange
+   ein anderer übrig ist; jede Datei höchstens einmal. */
+function mixBalanced(pool, k, albumList, rnd) {
+  rnd = rnd || Math.random;
+  var dirArtist = {}, by = {}, seen = {};
+  (albumList || []).forEach(function(a){ if (a.ar !== 'Verschiedene') dirArtist[a.dir] = plays.norm(a.ar); });
+  pool.forEach(function(t){
+    if (seen[t[2]]) return;
+    seen[t[2]] = true;
+    var a = dirArtist[albums.albumDir(t[2])] || plays.norm(t[0]);
+    (by[a] || (by[a] = [])).push(t);
+  });
+  Object.keys(by).forEach(function(a){ by[a] = sample(by[a], by[a].length, rnd); });
+  var out = [], used = {}, prev = null;
+  while (out.length < k) {
+    var left = Object.keys(by).filter(function(a){ return by[a].length; });
+    if (!left.length) break;
+    /* am wenigsten gespielte zuerst, darunter zufällig; den vorigen nur, wenn er als einziger übrig ist */
+    var cand = left.filter(function(a){ return a !== prev; });
+    if (!cand.length) cand = left;
+    var min = Math.min.apply(null, cand.map(function(a){ return used[a] || 0; }));
+    cand = cand.filter(function(a){ return (used[a] || 0) === min; });
+    var pick = cand[Math.floor(rnd() * cand.length)];
+    out.push(by[pick].shift());
+    used[pick] = (used[pick] || 0) + 1;
+    prev = pick;
+  }
+  return out;
+}
+
+module.exports = {statIndex: statIndex, shelves: shelves, mix: mix, mixPool: mixPool, mixBalanced: mixBalanced, sample: sample, ROW: ROW};

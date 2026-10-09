@@ -246,6 +246,71 @@ function randomMixPlay(q) {
   }).catch(function(){ showToast(T('hist.offline')); });
 }
 
+/* ---------- Mehr entdecken (Künstlerseite) ---------- */
+/* Ähnliche Künstler aus der Sammlung (mit beschriftetem Würfel: 25 Titel daraus, jeder Künstler etwa gleich oft) und
+   Stimmungen, Energie, Stile und Jahrzehnte des Künstlers (Tag-Dienst GET /artistprofile); jeder Knopf öffnet
+   wie beim Entdecken die passenden Alben. Ohne Inhalt bleibt der Abschnitt leer. alive(): Seite noch dieselbe. */
+function discoverMore(artist, alive) {
+  var box = histEl('div', 'dMore'), head = null;
+  function group(label) {
+    if (!head) { head = browseHeading(T('more.title')); box.insertBefore(head, box.firstChild); }
+    var sec = histEl('div', 'dMoreSec');
+    sec.appendChild(histEl('div', 'mxLabel', label));
+    var chips = histEl('div', 'mxChips');
+    sec.appendChild(chips);
+    return {sec: sec, chips: chips};
+  }
+  function chip(box_, label, onClick, cls) {
+    var c = histEl('div', 'mxChip' + (cls ? ' ' + cls : ''), label);
+    c.addEventListener('click', function(ev){ ev.stopPropagation(); onClick(c); });
+    box_.appendChild(c);
+    return c;
+  }
+  function moodset(title, q) { openBrowse({kind: 'moodset', title: title, q: q}); }
+  var simSec = histEl('div'), tagSec = histEl('div');            /* feste Reihenfolge, egal was zuerst ankommt */
+  box.appendChild(simSec); box.appendChild(tagSec);
+  loadSimilarArtists(artist).then(function(names){
+    if (!alive() || !names || !names.length) return;
+    var g = group(T('more.similar'));
+    var dice = chip(g.chips, '', function(c){
+      c.classList.remove('roll'); void c.offsetWidth; c.classList.add('roll');
+      randomMixPlay({artists: names});
+    }, 'dMixChip');
+    dice.innerHTML = DICE_SVG + '<span>' + T('more.mix') + '</span>';
+    names.forEach(function(n){ chip(g.chips, n, function(){ openBrowse({kind: 'artist', artist: n}); }); });
+    simSec.appendChild(g.sec);
+  }).catch(function(){});
+  if (!discoverReady) return box;
+  tagGetJson('/artistprofile?artist=' + encodeURIComponent(artist)).then(function(r){
+    if (!alive() || !r || !r.ok) return;
+    var g;
+    if (r.moods.length || r.energy) {
+      g = group(T('more.mood'));
+      r.moods.forEach(function(m){ var name = mixName(m); chip(g.chips, name, function(){ moodset(name, 'moods=' + encodeURIComponent(m)); }); });
+      DISCOVER_ENERGY.forEach(function(e){
+        if (r.energy < e[0] || r.energy > e[1]) return;
+        var name = T(e[2]);
+        chip(g.chips, name, function(){ moodset(name, 'emin=' + e[0] + '&emax=' + e[1]); });
+      });
+      tagSec.appendChild(g.sec);
+    }
+    if (r.styles.length) {
+      g = group(T('more.style'));
+      r.styles.forEach(function(s){
+        var name = s.charAt(0).toUpperCase() + s.slice(1);
+        chip(g.chips, name, function(){ moodset(name, 'styles=' + encodeURIComponent(s)); });
+      });
+      tagSec.appendChild(g.sec);
+    }
+    if (r.decades.length) {
+      g = group(T('more.decade'));
+      r.decades.forEach(function(d){ chip(g.chips, T('disc.decade', {d: d}), function(){ openBrowse({kind: 'decade', decade: d}); }); });
+      tagSec.appendChild(g.sec);
+    }
+  }).catch(function(){});
+  return box;
+}
+
 /* Würfel-Knopf für die Zeile „Alle abspielen“ (Klick geht nicht an die Zeile weiter) */
 function randomMixButton(q) {
   var b = histEl('div', 'mixDice');

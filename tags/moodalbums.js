@@ -51,4 +51,26 @@ function list(sums, albumList, q) {
     .sort(function(a, b){ return key(a).localeCompare(key(b)) || a.al.localeCompare(b.al); });
 }
 
-module.exports = {summarize: summarize, fit: fit, list: list, SHARE: SHARE};
+/* „Mehr entdecken“ auf der Künstlerseite: Stimmungen und Stile, die mindestens PROFILE_SHARE seiner eingeordneten Titel
+   tragen (die häufigsten zuerst, je höchstens PROFILE_MAX), mittlere Energie und die Jahrzehnte seiner Alben.
+   idx: moodmix.index; albumList: albums.json; key: Künstler normiert (plays.norm) -> {n, moods, styles, energy, decades} */
+var PROFILE_SHARE = 0.2, PROFILE_MAX = 5;
+function artistProfile(idx, albumList, key, norm) {
+  var n = 0, moods = {}, styles = {}, eSum = 0, eN = 0, dec = {};
+  idx.forEach(function(x){
+    if (norm(x.it.ar) !== key) return;
+    n++;
+    (x.r.mood || []).forEach(function(m){ moods[m] = (moods[m] || 0) + 1; });
+    (x.r.style || []).forEach(function(s){ styles[s] = (styles[s] || 0) + 1; });
+    if (typeof x.r.energy === 'number') { eSum += x.r.energy; eN++; }
+  });
+  (albumList || []).forEach(function(a){ if (a.y && norm(a.ar) === key) dec[Math.floor(a.y / 10) * 10] = true; });
+  function top(o) {
+    return Object.keys(o).filter(function(k){ return o[k] >= Math.max(1, n * PROFILE_SHARE); })
+      .sort(function(a, b){ return o[b] - o[a] || (a < b ? -1 : 1); }).slice(0, PROFILE_MAX);
+  }
+  return {n: n, moods: top(moods), styles: top(styles), energy: eN ? Math.round(eSum / eN) : 0,
+          decades: Object.keys(dec).map(Number).sort(function(a, b){ return a - b; })};
+}
+
+module.exports = {summarize: summarize, fit: fit, list: list, artistProfile: artistProfile, SHARE: SHARE};

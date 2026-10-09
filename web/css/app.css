@@ -804,6 +804,11 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .mxChip.on { background:var(--fg); border-color:transparent; color:var(--ink); font-weight:600; }
 .mxChip.mxMore { background:none; opacity:.7; }
 .mxChip.mxSmall { font-size:calc(3.1 * var(--vw)); padding:calc(1.2 * var(--vw)) calc(2.8 * var(--vw)); }
+.dMore { padding-bottom:calc(4 * var(--vw)); }
+.dMoreSec .mxLabel { padding-top:calc(3 * var(--vw)); }
+.mxChip.dMixChip { display:inline-flex; align-items:center; gap:calc(1.5 * var(--vw)); background:var(--fg); color:var(--ink); border-color:transparent; font-weight:600; }
+.mxChip.dMixChip svg { width:calc(4 * var(--vw)); height:calc(4 * var(--vw)); max-width:20px; max-height:20px; fill:var(--ink); }
+.mxChip.dMixChip.roll svg { animation:dRoll .45s ease-out; }
 .mxLabel { font-size:calc(3 * var(--vw)); text-transform:uppercase; letter-spacing:.08em; opacity:.5; padding:calc(5 * var(--vw)) 0 calc(2 * var(--vw)); }
 .mxEnergy { position:relative; height:calc(9 * var(--vw)); max-height:44px; margin:0 calc(2 * var(--vw)); }
 .mxTrack { position:absolute; left:0; right:0; top:50%; height:calc(1.4 * var(--vw)); min-height:5px; transform:translateY(-50%);
