@@ -26,6 +26,7 @@ function loadQueue() {
     queueData = (j && j.queue) ? j.queue : [];
     while (queueList.firstChild) queueList.removeChild(queueList.firstChild);
 
+    var qRows = [];
     queueData.forEach(function(t, i){
       var wrap = document.createElement('div');
       wrap.className = 'qRowWrap';
@@ -74,6 +75,7 @@ function loadQueue() {
       var pen = tagTrackButton(t);                        /* lokale Datei: Tags bearbeiten */
       if (pen) row.appendChild(pen);
       row.appendChild(trash); row.appendChild(handle);
+      qRows.push(row);
 
       var del = document.createElement('div');
       del.className = 'qDelete';
@@ -201,6 +203,7 @@ function loadQueue() {
 
       queueList.appendChild(wrap);
     });
+    if (typeof rateQueue === 'function') rateQueue(queueData, qRows);   /* Daumen je Titel (rating.js) */
 
     if (queueData.length) {
       var hint = document.createElement('div');

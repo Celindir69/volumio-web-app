@@ -217,6 +217,7 @@ function browseArtist(e, seq) {
       var lbl = document.createElement('div');
       lbl.className = 'bAlbum'; lbl.textContent = T('browse.playAll');
       head.appendChild(lbl);
+      head.appendChild(rateArtistHeart(e.artist));      /* Lieblingskünstler (rating.js) */
       head.appendChild(randomMixButton({artist: e.artist}));   /* 25 zufällige Titel des Künstlers (discover.js) */
       head.appendChild(tagArtistButton(e.artist));    /* Tags aller lokalen Titel des Künstlers bearbeiten */
       head.addEventListener('click', function(){
@@ -340,6 +341,7 @@ function browseAlbum(e, seq) {
     head.appendChild(play);
     browseBody.appendChild(head);
 
+    var rows = [];
     tracks.forEach(function(t, i){
       var row = document.createElement('div');
       var isCur = (e.album === curAlbum && (t.title || t.name) === mTitle.textContent);
@@ -363,7 +365,9 @@ function browseAlbum(e, seq) {
         playlistPlay({uri:e.uri, name:e.album, service:info.service || e.service || 'mpd', type:'folder'}, tracks, i);
       });
       browseBody.appendChild(row);
+      rows.push(row);
     });
+    rateAlbumPage(seq, e, who, tracks, meta, rows);         /* Sterne und Daumen (rating.js) */
     browseBody.appendChild(browseNote(T('browse.hintAlbum')));
   }).catch(function(){
     if (seq !== browseSeq) return;

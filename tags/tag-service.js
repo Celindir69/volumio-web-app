@@ -686,6 +686,7 @@ function doRandom(query, cb) {
 /* GET /discover?kind=artist|album|track -> {ok, shelves: [{id: random|forgotten|never|oldfav, items}]}
    POST /randommix {artist} oder {dirs: [...]} -> {ok, items: [{f, ar, ti, al, d}]} (25 Titel, Würfel neben „Alle abspielen“) */
 var discover = require('./discover.js');
+var ratings  = require('./ratings.js');
 var discStats = null;
 function discoverStats(pl) {
   if (!discStats || discStats.n !== pl.length || discStats.first !== (pl[0] && pl[0].t)) discStats = {n: pl.length, first: pl[0] && pl[0].t, idx: discover.statIndex(pl)};
@@ -706,6 +707,22 @@ function doDiscover(query, cb) {
     cb(200, {ok: true, shelves: discover.shelves(kind, ents, discoverStats(playStore.load()), now)});
   });
 }
+/* ---------- Bewertungen (ratings.js) ---------- */
+/* POST /ratings {artist, album, tracks: [uri, …]} -> {ok, artist, album, tracks}; POST /rate {kind, v, name | uri, ar, al, ti} */
+var ratingStore = new ratings.Store(path.join(DATA_DIR, 'ratings.json'));
+function doRatings(body, cb) {
+  if (Array.isArray(body.tracks) && body.tracks.length > MAX_ITEMS) return cb(400, {ok: false, error: 'zu viele Titel'});
+  var out = ratingStore.get(body);
+  out.ok = true;
+  cb(200, out);
+}
+function doRate(body, cb) {
+  var v;
+  try { v = ratingStore.set(body); } catch (e) { return cb(500, {ok: false, error: 'Speichern fehlgeschlagen'}); }
+  if (v === null) return cb(400, {ok: false, error: 'ungültige Bewertung'});
+  cb(200, {ok: true, v: v});
+}
+
 function doRandomMix(body, cb) {
   if (!body.artist && !(body.dirs && body.dirs.length)) return cb(400, {ok: false, error: 'artist oder dirs fehlt'});
   albumsEnsure(function(list){
@@ -1022,7 +1039,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'POST' && route === '/essentia') return doEssentiaUpload(req, res);
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset', '/randommix'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset', '/randommix', '/ratings', '/rate'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -1030,7 +1047,7 @@ var server = http.createServer(function(req, res){
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet, '/randommix': doRandomMix}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet, '/randommix': doRandomMix, '/ratings': doRatings, '/rate': doRate}[route];
     fn(body || {}, function(c, o){ send(res, c, o); });
   });
 });
