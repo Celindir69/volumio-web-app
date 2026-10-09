@@ -431,6 +431,7 @@
   .sSub { font-size:calc(3.2 * var(--vw)); opacity:.6; white-space:nowrap;
     overflow:hidden; text-overflow:ellipsis; margin-top:calc(.8 * var(--vw)); }
   .sHint { font-size:calc(2.8 * var(--vw)); opacity:.4; text-align:center; padding:calc(4 * var(--vw)) 0; }
+  .sHint.simSeed { text-align:left; opacity:.55; padding:0 0 calc(3 * var(--vw)); }
 
 
 #volWrap { flex:0 0 auto; display:flex; align-items:center; gap:calc(3 * var(--vw));
