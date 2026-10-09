@@ -24,6 +24,16 @@ t('MusicBrainz: Titel und Künstler passend, Datum vollständig, nicht jünger a
   assert.strictEqual(rd.pickDate({}, 'X', 'Y', 0), '');
 });
 
+t('Bibliotheks-Check: Date-Tag gegen MusicBrainz (Jahr, volles Datum, fehlend)', function(){
+  var L = [{dir: 'A/1', al: 'Eins', ar: 'A', y: 1981}, {dir: 'A/2', al: 'Zwei', ar: 'A', y: 1994}, {dir: 'A/3', al: 'Drei', ar: 'A', y: 1990, rd: '1990-02-03'},
+           {dir: 'A/4', al: 'Vier', ar: 'A'}, {dir: 'A/5', al: 'Fünf', ar: 'A', y: 2000}, {dir: 'A/6', al: 'Sechs', ar: 'A', y: 2001, rd: '2001-05-05'}];
+  var mb = {'A/1': '1981-10-14', 'A/2': '1989-01-02', 'A/3': '1990-03-01', 'A/4': '1977-07-07', 'A/6': '2001-05-05'};
+  var songs = [{file: 'A/2/CD1/1.flac', title: 'x'}, {file: 'A/2/CD2/1.flac', title: 'y'}];
+  var d = rd.diffs(L, songs, function(x){ return mb[x] || ''; }, albums.albumDir);
+  assert.deepStrictEqual(d.map(function(x){ return [x.name, x.tag, x.mb, x.count]; }),
+    [['Drei', '1990-02-03', '1990-03-01', 0], ['Vier', '', '1977-07-07', 0], ['Zwei', '1994', '1989-01-02', 2]]);
+});
+
 pending++;
 (function(){
   var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-')), file = path.join(dir, 'r.jsonl'), urls = [];

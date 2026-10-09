@@ -338,6 +338,8 @@ function doCheckStart(body, cb) {
         cand.forEach(function(c, k){ if (!(results[k] && results[k].ok && results[k].has)) noCover[c.dir] = true; });
         var res = libcheck.analyze(songs, function(d){ return !noCover[d]; },
           function(s){ return audioStore.get(s.artist, s.title, s.album); });
+        res.releaseDate = releasedates.diffs(albums.fromSongs(songs), songs,
+          function(d){ var r = releaseDates.by[d]; return (r && r.d) || ''; }, albums.albumDir);   /* Date-Tag gegen MusicBrainz */
         res.at = Date.now();
         res.seconds = Math.round((res.at - checkRun.started) / 1000);
         try { fs.writeFileSync(CHECK_FILE, JSON.stringify(res)); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
