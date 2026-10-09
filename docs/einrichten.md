@@ -178,7 +178,7 @@ mehr). Leere Reihen fallen weg. Künstler und Album tippen öffnet, Titel tippen
 (siehe oben).
 
 **Nach Stimmung, Energie, Stil und Jahrzehnt:** Unter den Reihen stehen Auswahlknöpfe. Stimmung (Entspannt, Verträumt,
-Melancholisch, Düster, Fröhlich, Kraftvoll), Energie (Ruhig, Mittlere Energie, Energiegeladen) und Stil (Acoustic, Ambient,
+Melancholisch, Düster, Fröhlich, Intensiv, Episch; dieselben Namen wie im Stimmungs-Mix), Energie (Ruhig, Mittlere Energie, Energiegeladen) und Stil (Acoustic, Ambient,
 Electronic, Funky, Soulful, Experimental) erstellen sofort einen Stimmungs-Mix (siehe unten) mit diesem Kriterium und
 zeigen die Vorschau; „Ändern“ führt zur gewohnten Auswahl. Wie viele Titel passen, hängt von den Stimmungs-Tags ab.
 Ein Jahrzehnt öffnet seine Alben, nach Jahr sortiert, mit „Alle abspielen“ und Würfel. Das Jahr ist das häufigste

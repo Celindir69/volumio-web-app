@@ -61,7 +61,7 @@ function discoverLoad(seq, cat, secs, onlyRandom) {
 }
 
 /* Auswahlknöpfe unter den Reihen: Stimmung, Energie, Stil (je ein fertiger Stimmungs-Mix, moodmix.js) und Jahrzehnt (Alben, genre.js) */
-var DISCOVER_MOODS = [['relaxed'], ['dreamy'], ['melancholic'], ['dark'], ['happy'], ['intense', 'epic', 'disc.mood.powerful']];
+var DISCOVER_MOODS = [['relaxed'], ['dreamy'], ['melancholic'], ['dark'], ['happy'], ['intense'], ['epic']];   /* Namen wie im Stimmungs-Mix */
 var DISCOVER_ENERGY = [[1, 2, 'disc.energy.low'], [3, 3, 'disc.energy.mid'], [4, 5, 'disc.energy.high']];
 var DISCOVER_STYLES = [
   ['Acoustic', ['acoustic', 'folk', 'singer-songwriter']],
@@ -89,8 +89,7 @@ function discoverChips(seq) {
   if (typeof openMoodMixWith === 'function') {
     var g = group(T('disc.chips.mood'));
     DISCOVER_MOODS.forEach(function(m){
-      var label = m.length > 2 ? T(m[2]) : mixName(m[0]), moods = m.length > 2 ? m.slice(0, 2) : m;
-      chip(g, label, function(){ openMoodMixWith({moods: moods}); });
+      chip(g, mixName(m[0]), function(){ openMoodMixWith({moods: m}); });
     });
     g = group(T('disc.chips.energy'));
     DISCOVER_ENERGY.forEach(function(e){ chip(g, T(e[2]), function(){ openMoodMixWith({emin: e[0], emax: e[1]}); }); });

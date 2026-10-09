@@ -54,7 +54,7 @@ Bewertungen: Herz für Künstler, ein bis fünf Sterne für Alben, Daumen hoch o
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 
 ### Stimmungs-Mix
-Eigener erster Reiter neben Playlisten und Radio (Playlisten-Taste). Stimmung wählen (mehrere möglich), Energie von ruhig bis kraftvoll eingrenzen, auf Genres beschränken und unter „Feinabstimmung“ Stile, Länge
+Eigener erster Reiter neben Playlisten und Radio (Playlisten-Taste). Stimmung wählen (mehrere möglich), Energie von ruhig bis energiegeladen eingrenzen, auf Genres beschränken und unter „Feinabstimmung“ Stile, Länge
 und Entdeckungsgrad festlegen: Favoriten, ausgewogen oder versteckte Perlen, je nach eigenem Verlauf. „Mix erstellen“
 zeigt erst eine Vorschau mit der Begründung je Titel; einzelne Titel lassen sich herausnehmen oder neu mischen. Erst
 „Mix abspielen“ ersetzt die Warteschlange. Grundlage sind Last.fm-Tags je Titel, die der Tag-Dienst sammelt, solange
