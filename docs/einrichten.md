@@ -197,6 +197,11 @@ Ein Jahrzehnt öffnet seine Alben, nach Jahr sortiert, mit „Alle abspielen“ 
 Date-Tag im Albumordner (aus MPD, also der Wert im Tag-Editor); Alben ohne Jahr fehlen dort. Nach dem Update liest
 der Tag-Dienst die Albenliste einmal neu, bis dahin fehlen die Jahrzehnte.
 
+**Erscheinungsjahr:** Hinter dem Albumtitel steht das Jahr in Klammern, in der Player-Ansicht, im Albumkopf, in den
+Albenlisten der Künstlerseite, bei Genre, Jahrzehnt und Stimmung und bei Alben in der Suche. Ein Tipp auf das Jahr
+öffnet die Alben dieses Jahres. Jahres- und Jahrzehntseite haben zwei Reiter: „Alben“ und „Entdecken“. „Entdecken“ zeigt
+Künstler mit Alben aus dem Jahrzehnt, die dort häufigsten Stimmungen und Stile und die angrenzenden Jahrzehnte.
+
 **Bewertungen** (nur mit Tag-Dienst): Auf der Künstlerseite markiert ein Herz Lieblingskünstler, im Albumkopf gibt es
 ein bis fünf Sterne (den gleichen Stern noch einmal tippen nimmt die Bewertung zurück). Titel haben einen Daumen, in der
 Warteschlange und in der Titelliste eines Albums; ein Tipp schaltet weiter von neutral (Umriss) über

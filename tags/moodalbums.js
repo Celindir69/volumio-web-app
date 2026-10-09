@@ -73,4 +73,37 @@ function artistProfile(idx, albumList, key, norm) {
           decades: Object.keys(dec).map(Number).sort(function(a, b){ return a - b; })};
 }
 
-module.exports = {summarize: summarize, fit: fit, list: list, artistProfile: artistProfile, SHARE: SHARE};
+/* Entdecken zu einem Jahrzehnt (Jahres- und Jahrzehnt-Seite): Künstler mit Alben darin (die mit den meisten zuerst),
+   häufige Stimmungen und Stile der Titel darin (Anteil mindestens PROFILE_SHARE), Nachbar-Jahrzehnte mit Alben.
+   idx: moodmix.index; albumList: albums.json; albumDir: Ordner eines Titels -> {n, artists, moods, styles, decades} */
+var DECADE_ARTISTS = 24;
+function decadeProfile(idx, albumList, d, albumDir) {
+  var inDec = {}, artists = {}, names = {}, has = {};
+  (albumList || []).forEach(function(a){
+    if (!a.y) return;
+    var dd = a.y - a.y % 10;
+    has[dd] = true;
+    if (dd !== d) return;
+    inDec[a.dir] = true;
+    if (a.ar === 'Verschiedene' || !a.ar) return;
+    var k = a.ar.toLowerCase();
+    artists[k] = (artists[k] || 0) + 1;
+    names[k] = names[k] || a.ar;
+  });
+  var n = 0, moods = {}, styles = {};
+  idx.forEach(function(x){
+    if (!inDec[albumDir(String(x.it.f || '').replace(/^mnt\//, ''))]) return;
+    n++;
+    (x.r.mood || []).forEach(function(m){ moods[m] = (moods[m] || 0) + 1; });
+    (x.r.style || []).forEach(function(s){ styles[s] = (styles[s] || 0) + 1; });
+  });
+  function top(o, k, share) {
+    return Object.keys(o).filter(function(x){ return o[x] >= Math.max(1, n * share); })
+      .sort(function(a, b){ return o[b] - o[a] || (a < b ? -1 : 1); }).slice(0, k);
+  }
+  return {n: n, artists: top(artists, DECADE_ARTISTS, 0).map(function(k){ return names[k]; }),
+          moods: top(moods, 6, PROFILE_SHARE / 2), styles: top(styles, 6, PROFILE_SHARE / 2),
+          decades: [d - 10, d, d + 10].filter(function(x){ return has[x]; })};
+}
+
+module.exports = {summarize: summarize, fit: fit, list: list, artistProfile: artistProfile, decadeProfile: decadeProfile, SHARE: SHARE};

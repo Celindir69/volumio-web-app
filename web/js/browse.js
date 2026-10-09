@@ -108,7 +108,7 @@ function browseRender() {
   var e = browseStack[browseStack.length - 1];
   var seq = ++browseSeq;
   browseBack.style.display = (browseStack.length > 1 || browseOrigin) ? '' : 'none';
-  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.kind === 'decade' ? T('disc.decade', {d: e.decade}) : e.kind === 'moodset' ? e.title : e.kind === 'similar' ? T('similar.title', {ti: e.title}) : e.album;
+  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.kind === 'decade' ? T('disc.decade', {d: e.decade}) : e.kind === 'year' ? String(e.year) : e.kind === 'moodset' ? e.title : e.kind === 'similar' ? T('similar.title', {ti: e.title}) : e.album;
   browseBody.scrollTop = 0;
   while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
   browseBody.appendChild(browseNote(T('browse.loading')));
@@ -116,6 +116,7 @@ function browseRender() {
   else if (e.kind === 'playlist') browsePlaylist(e, seq);
   else if (e.kind === 'genre') browseGenre(e, seq);                 /* genre.js */
   else if (e.kind === 'decade') browseDecade(e, seq);               /* genre.js */
+  else if (e.kind === 'year') browseYear(e, seq);                   /* genre.js */
   else if (e.kind === 'moodset') browseMoodSet(e, seq);             /* genre.js */
   else if (e.kind === 'similar') browseSimilar(e, seq);             /* discover.js */
   else browseAlbum(e, seq);
@@ -190,6 +191,29 @@ function browseTrackRow(t, e, showAlbum) {
   return row;
 }
 
+/* Reiter auf einer Seite (Künstler, Jahr, Jahrzehnt): defs [[id, Name], …] -> {id: Bereich}; der gewählte steht im
+   browseStack-Eintrag (e.tab) und bleibt beim Zurück offen; der erste ist Vorgabe */
+function browseTabs(e, defs) {
+  var tabs = histEl('div', 'bTabs'), panes = {};
+  defs.forEach(function(x){
+    panes[x[0]] = histEl('div');
+    var t = histEl('div', 'infoTab', x[1]);
+    t.addEventListener('click', function(){ e.tab = x[0]; show(); });
+    tabs.appendChild(t);
+  });
+  function show() {
+    var cur = panes[e.tab] ? e.tab : defs[0][0];
+    defs.forEach(function(x, i){
+      tabs.children[i].classList.toggle('on', x[0] === cur);
+      panes[x[0]].style.display = x[0] === cur ? '' : 'none';
+    });
+  }
+  browseBody.appendChild(tabs);
+  defs.forEach(function(x){ browseBody.appendChild(panes[x[0]]); });
+  show();
+  return panes;
+}
+
 function browseArtist(e, seq) {
   if (e.stream && !e.uri) {                         /* aus dem Player bei einem Titel vom Dienst: Künstler dort suchen */
     var svc = streamById(e.stream);
@@ -241,27 +265,12 @@ function browseArtist(e, seq) {
     /* eigene Sammlung: Reiter „Alben & Titel“ und „Entdecken“ (discover.js); der gewählte bleibt beim Zurück (e.tab) */
     var pane = browseBody, more = null;
     if (!isStream) {
-      var tabs = histEl('div', 'bTabs'), panes = {albums: histEl('div'), more: histEl('div')};
+      var panes = browseTabs(e, [['albums', T('browse.tab.albums')], ['more', T('browse.tab.more')]]);
       var moreNote = browseNote(T('browse.loading'));
       panes.more.appendChild(moreNote);
       more = discoverMore(e.artist, function(){ return seq === browseSeq; }, function(){ if (moreNote.parentNode) moreNote.parentNode.removeChild(moreNote); },
         function(){ if (!panes.more.querySelector('.dMoreSec')) { moreNote.textContent = T('more.empty'); panes.more.insertBefore(moreNote, more); } });
       panes.more.appendChild(more);
-      [['albums', T('browse.tab.albums')], ['more', T('browse.tab.more')]].forEach(function(x){
-        var t = histEl('div', 'infoTab', x[1]);
-        t.addEventListener('click', function(){ e.tab = x[0]; show(); });
-        tabs.appendChild(t);
-      });
-      var show = function(){
-        var cur = e.tab === 'more' ? 'more' : 'albums';
-        Array.prototype.forEach.call(tabs.children, function(t, i){ t.classList.toggle('on', (i === 1) === (cur === 'more')); });
-        panes.albums.style.display = cur === 'albums' ? '' : 'none';
-        panes.more.style.display = cur === 'more' ? '' : 'none';
-      };
-      browseBody.appendChild(tabs);
-      browseBody.appendChild(panes.albums);
-      browseBody.appendChild(panes.more);
-      show();
       pane = panes.albums;
     }
 
@@ -374,9 +383,12 @@ function browseAlbum(e, seq) {
     var ge = document.createElement('div');
     ge.className = 'sSub bGenreHead';
     meta.appendChild(ar); meta.appendChild(ti); meta.appendChild(ge);
-    if (!streamOf(e.uri) && typeof genreLookup === 'function') {
-      genreLookup([{uri: e.uri, album: e.album, artist: who}]).then(function(gs){
-        if (seq !== browseSeq || !gs[0]) return;
+    if (!streamOf(e.uri) && typeof albumInfoLookup === 'function') {
+      albumInfoLookup([{uri: e.uri, album: e.album, artist: who}]).then(function(info){
+        var gs = info.genres;
+        if (seq !== browseSeq) return;
+        if (info.years[0]) ti.appendChild(yearSpan(info.years[0]));
+        if (!gs[0]) return;
         ge.textContent = gs[0];
         ge.classList.add('bLink');
         ge.addEventListener('click', function(){ genreOpen(gs[0]); });
@@ -515,13 +527,13 @@ mArtist.addEventListener('click', function(){
   openBrowse({kind:'artist', artist:a, stream:curStream ? curStream.id : undefined});   /* Titel vom Dienst: dort suchen */
 });
 mAlbum.addEventListener('click', function(){
-  var a = mArtist.textContent, al = mAlbum.textContent;
+  var a = mArtist.textContent, al = curAlbumTitle;
   if (curRadio || !a || !al) return;
   openBrowse({kind:'album', artist:a, album:al, stream:curStream ? curStream.id : undefined});
 });
 mTitle.addEventListener('click', function(){       /* Webradio: Klick auf "Künstler - Titel"; eigene Datei: Mehr wie dieser Titel */
   if (curRadio && radioArtist) return openBrowse({kind:'artist', artist:radioArtist});
-  if (similarOk()) openBrowse({kind:'similar', file:curUri, artist:mArtist.textContent, title:curTitle, album:mAlbum.textContent});
+  if (similarOk()) openBrowse({kind:'similar', file:curUri, artist:mArtist.textContent, title:curTitle, album:curAlbumTitle});
 });
 function similarOk() { return !curRadio && !curStream && !!curUri && !!curTitle && discoverReady; }
 browseBack.addEventListener('click', function(){

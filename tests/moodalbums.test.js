@@ -49,4 +49,16 @@ t('Profil eines Künstlers: häufige Stimmungen und Stile, mittlere Energie, Jah
   assert.deepStrictEqual(ma.artistProfile(ix, al, 'gamma', norm), {n: 0, moods: [], styles: [], energy: 0, decades: []});
 });
 
+t('Entdecken zum Jahrzehnt: Künstler mit Alben darin, häufige Stimmungen und Stile, Nachbar-Jahrzehnte', function(){
+  var al = [{dir: 'USB/A/Ruhig', al: 'Ruhig', ar: 'Alpha', y: 1999}, {dir: 'USB/B/Laut', al: 'Laut', ar: 'Beta', y: 1991},
+            {dir: 'USB/C/Single', al: 'Single', ar: 'Gamma', y: 2003}, {dir: 'USB/A/Zwei', al: 'Zwei', ar: 'Alpha', y: 1995}];
+  var p = ma.decadeProfile(idx, al, 1990, require('../tags/albums.js').albumDir);
+  assert.strictEqual(p.n, 6);
+  assert.deepStrictEqual(p.artists, ['Alpha', 'Beta']);
+  assert.strictEqual(p.moods[0], 'relaxed');
+  assert.ok(p.styles.indexOf('ambient') >= 0);
+  assert.deepStrictEqual(p.decades, [1990, 2000]);
+  assert.deepStrictEqual(ma.decadeProfile(idx, al, 2000, function(f){ return f.replace(/\/[^\/]*$/, ''); }).decades, [1990, 2000]);
+});
+
 console.log(n + ' Prüfungen');

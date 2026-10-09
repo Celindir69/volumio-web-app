@@ -254,6 +254,8 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
   .bLink { cursor:pointer; }
   .bGenre:hover, .bGenre:active, .bLink:hover, .bLink:active { opacity:1; }
+  .bYear { font-weight:400; opacity:.6; cursor:pointer; white-space:nowrap; }
+  .bYear:hover, .bYear:active { opacity:1; text-decoration:underline; }
   #browseAlbumHead .bArtist { white-space:normal; margin-bottom:calc(.5 * var(--vw)); }
   #browseAlbumHead .bGenreHead { margin-top:calc(.5 * var(--vw)); }
   .bGenreHead:empty { display:none; }

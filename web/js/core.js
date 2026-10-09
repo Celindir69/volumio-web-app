@@ -137,6 +137,7 @@ var curArtist = '';
 var curPos      = -1;
 var curUri      = '';        /* Datei bzw. uri und Titel des laufenden Titels (Mehr wie dieser Titel, browse.js) */
 var curTitle    = '';
+var curAlbumTitle = '', curAlbumUri = '';   /* Album in der Wiedergabe ohne „(Jahr)“ (genre.js) */
 var queueData   = [];
 var stRandom    = false;
 var stRepeatMode= 'off';
