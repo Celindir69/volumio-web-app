@@ -226,6 +226,7 @@ langRegister('en', 'English', {
   'info.similar.searching': 'Finding similar artists…',
   'info.similar.searchingAt': 'Searching {services}…',
   'info.tab.album': 'Album',
+  'info.tab.track': 'Track',
   'info.tab.artist': 'Artist',
   'info.tab.collection': 'Library',
   'info.tab.credits': 'Credits',

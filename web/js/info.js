@@ -19,7 +19,34 @@ paintTime();
 }
 
 /* ---------- Info ---------- */
+/* Reiter "Titel" (Text zum einzelnen Lied): nur wenn etwas gefunden wurde. Bei Alben als zweiter Reiter (Album bleibt
+   der Startreiter, damit nichts springt); beim Webradio ganz vorn, dort gibt es kein Album und der Titel ist das Neue */
+var trackInfo = null;            /* {key, item, radio} des laufenden Titels */
+function trackInfoAt() { return trackInfo && trackInfo.radio ? 0 : 1; }
+function withTrackInfo(list) {
+  if (!trackInfo || !trackInfo.item || !list.length) return list;
+  var at = trackInfoAt();
+  return list.slice(0, at).concat([trackInfo.item], list.slice(at));
+}
+function setTrackInfo(key, title, data, radio) {
+  var cur = infoItems[infoIdx];
+  var item = data ? {title: title, label: T('info.tab.track'), data: data, track: true} : null;
+  trackInfo = {key: key, item: item, radio: !!radio};
+  var at = -1;
+  infoItems.forEach(function(it, i){ if (it.track) at = i; });
+  if (!infoItems.length || (at < 0 && !item)) return;  /* Album/Künstler noch nicht da: kommt mit showInfo */
+  if (at >= 0) infoItems.splice(at, 1);
+  if (item) infoItems.splice(trackInfoAt(), 0, item);
+  var idx = infoItems.indexOf(cur);                    /* auf dem gleichen Reiter bleiben */
+  if (item && radio && infoIdx === 0) idx = -1;        /* Radio: stand der Startreiter offen, den Titel zeigen */
+  infoIdx = idx >= 0 ? idx : 0;
+  btnInfo.className = 'actBtn' + (infoItems.length ? ' has-content' : '');
+  buildInfoTabs();
+  if (idx < 0) renderInfo(false);                      /* der alte Titel-Reiter war offen */
+}
+
 function showInfo(list) {
+  list = withTrackInfo(list);
   infoItems = list.filter(function(i){ return i && (i.data || i.always || i.lazy); });
   infoIdx = 0;
   btnInfo.className = 'actBtn' + (infoItems.length ? ' has-content' : '');
@@ -98,7 +125,7 @@ function renderInfo(dir) {
 
 if (!it.data || it.data.kind === 'story') {
   var img = document.createElement('img');
-  if (it.title === curAlbum) {
+  if (it.title === curAlbum || it.track) {
     img.src = lastArt || tinyart(curArtist, curAlbum);
     img.className = 'infoImg album';             /* im Querformat ausgeblendet: das Cover ist dort ohnehin zu sehen */
   } else {

@@ -80,4 +80,57 @@ t('Album ohne Schlüssel und Netzfehler: nichts', function(){
   ]).then(function(r){ assert.deepStrictEqual(r, [null, null]); });
 });
 
+/* ---------- einzelne Titel ---------- */
+var SONG = 'Teardrop ist ein Lied der britischen Band Massive Attack aus dem Jahr 1998, gesungen von Elizabeth Fraser.';
+function wiki(pages, summaries) {
+  return function(u){
+    if (/rest\.php\/v1\/search/.test(u)) return res({pages: pages});
+    var k = decodeURIComponent(u.split('/summary/')[1] || '');
+    return summaries[k] ? res(summaries[k]) : res({}, false);
+  };
+}
+
+t('Titel: Liedname ohne Zusätze', function(){
+  assert.strictEqual(it.infoSongName('Paint It Black (Remastered 2019)'), 'Paint It Black');
+  assert.strictEqual(it.infoSongName('Hey Jude - Remastered 2015'), 'Hey Jude');
+  assert.strictEqual(it.infoSongName('Live and Let Die'), 'Live and Let Die');
+  return Promise.resolve();
+});
+
+t('Titel: Last.fm-Text zum Lied', function(){
+  var urls = [];
+  return it.infoTrack(function(u){ urls.push(u); return res({track: {wiki: {content: SONG}}}); }, 'KEY', 'Massive Attack', 'Teardrop (2019 Remaster)', 'de')
+    .then(function(r){
+      assert.strictEqual(r.src, 'Last.fm');
+      assert.ok(/method=track\.getinfo/.test(urls[0]) && /track=Teardrop&/.test(urls[0]) && /lang=de/.test(urls[0]));
+    });
+});
+
+t('Titel: Wikipedia nur mit passendem Artikel (Lied, Interpret genannt)', function(){
+  var fetchFn = wiki([{key: 'Teardrop', title: 'Teardrop'}, {key: 'Teardrop_(Lied)', title: 'Teardrop (Lied)'}], {
+    'Teardrop': {type: 'standard', description: 'Begriffsklärung', extract: 'Teardrop steht für mehrere Dinge, die lang genug beschrieben sind.'},
+    'Teardrop_(Lied)': {type: 'standard', description: 'Lied von Massive Attack', extract: SONG}
+  });
+  return it.infoTrack(fetchFn, '', 'Massive Attack', 'Teardrop', 'de').then(function(r){
+    assert.strictEqual(r.src, 'Wikipedia');
+    assert.ok(r.value.indexOf(SONG) === 0);
+    /* anderer Interpret: gleichnamiges Lied gehört nicht dazu */
+    return it.infoTrack(fetchFn, '', 'Elton John', 'Teardrop', 'de');
+  }).then(function(r){ assert.strictEqual(r, null); });
+});
+
+t('Titel: gleichnamiges Album (Titelstück) wird nicht genommen', function(){
+  var fetchFn = wiki([{key: 'Mezzanine_(Album)', title: 'Mezzanine (Album)'}], {
+    'Mezzanine_(Album)': {type: 'standard', description: 'Album von Massive Attack', extract: 'Mezzanine ist das dritte Album von Massive Attack mit dem Titel Teardrop als Single.'}
+  });
+  return it.infoTrack(fetchFn, '', 'Massive Attack', 'Mezzanine', 'en').then(function(r){ assert.strictEqual(r, null); });
+});
+
+t('Titel: offline oder leer ergibt null', function(){
+  return Promise.all([
+    it.infoTrack(function(){ return Promise.reject(new Error('offline')); }, 'KEY', 'A', 'B', 'de'),
+    it.infoTrack(function(){ return res({}); }, 'KEY', 'A', '', 'de')
+  ]).then(function(r){ assert.deepStrictEqual(r, [null, null]); });
+});
+
 Promise.all(pending).then(function(){ console.log(n + ' Prüfungen bestanden'); }, function(e){ console.error(e); process.exit(1); });
