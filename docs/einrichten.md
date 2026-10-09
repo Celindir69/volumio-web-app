@@ -172,7 +172,8 @@ App und auf dem Kiosk-TV; ohne Titel oder ohne Treffer bleibt das Senderlogo. Di
 `/data/xplorio/data/radio-covers/` und `/data/xplorio/data/stations/`.
 
 ### Begrüßung
-Beim Öffnen der Seite (nur mit Tag-Dienst) erscheint ein Overlay mit Gruß nach Tageszeit: das **Album des Tages**
+Beim Öffnen der Seite (nur mit Tag-Dienst) erscheint in der Mitte eine Karte mit Gruß nach Tageszeit (im Querformat mit
+breitem Rand): das **Album des Tages**
 (zufällig, bevorzugt lange nicht oder nie gehört; bleibt den ganzen Tag dasselbe) mit „Abspielen“, **Zuletzt gehört**
 (Alben, von denen zuletzt mindestens zwei Titel liefen), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
 180 Tagen dazukamen oder sich änderten, nach dem Änderungsdatum aus MPD) und ein Zufallsmix. Tippen daneben schließt es.
