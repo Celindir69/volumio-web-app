@@ -6,7 +6,7 @@ All commands are run on the player (via SSH), as a user with `sudo` privileges. 
 
 Copy `app.html` and `web/` to `/volumio/http/www3/`, then open `http://<player>/app.html`.
 
-Copy `kioskTV.html` to `/volumio/http/www/` (the Volumio kiosk gets its files from `www/`).
+Copy `kioskTV.html` next to `app.html` (the kiosk loads `http://localhost:3000/kioskTV.html`, i.e. from the folder Volumio serves).
 
 After an update, perform a hard reload in the browser. An existing `web/config.local.js` is preserved.
 
@@ -54,7 +54,7 @@ Then on the player:
 | `sudo xplorio-deploy -y <branch>` | deploy without confirmation |
 | `sudo xplorio-deploy --rollback` | restore the latest backup (repeat to go back step by step) |
 
-Targets: `app.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/xplorio/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
+Targets: `app.html`, `kioskTV.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/xplorio/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
 
 `tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/xplorio/backup/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
 

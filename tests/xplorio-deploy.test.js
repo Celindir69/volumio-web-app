@@ -19,7 +19,7 @@ t('erster Lauf spielt alles ein', function(){
   assert.ok(/Eingespielt/.test(out));
   assert.ok(fs.existsSync(path.join(R, 'volumio/http/www3/web/js/core.js')));
   assert.ok(fs.existsSync(path.join(R, 'data/xplorio/tags/tag-service.js')));
-  assert.ok(fs.existsSync(path.join(R, 'volumio/http/www/kioskTV.html')));
+  assert.ok(fs.existsSync(path.join(R, 'volumio/http/www/kioskTV.html')) && fs.existsSync(path.join(R, 'volumio/http/www3/kioskTV.html')));
   assert.ok(/Eingespielt nach \/volumio\/http\/www, www3\./.test(out), out);
   assert.ok(fs.existsSync(path.join(R, 'volumio/http/www/web/js/core.js')));          /* auch in den anderen vorhandenen Ordner */
   assert.ok(!fs.existsSync(path.join(R, 'volumio/http/www4')));                      /* neue Ordner legt es nicht an */

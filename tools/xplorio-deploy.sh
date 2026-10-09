@@ -7,7 +7,7 @@
 #   sudo xplorio-deploy -y [branch]        ohne Rückfrage
 #   sudo xplorio-deploy --rollback         letzte Sicherung wiederherstellen (alt: --zurueck)
 #
-# Die Oberfläche (app.html, web/, tools/) kommt in jeden vorhandenen Ordner /volumio/http/www*/: Welchen Volumio
+# Die Oberfläche (app.html, kioskTV.html, web/, tools/) kommt in jeden vorhandenen Ordner /volumio/http/www*/: Welchen Volumio
 # ausliefert, hängt von Version und gewählter Oberfläche ab (Volumio 3: www3, Volumio 4: www4). Neue Ordner legt das
 # Skript nicht an; gibt es keinen, bricht es ab.
 # Alles Übrige liegt in /data/xplorio (bleibt bei Volumio-Updates erhalten; zum Sichern genügt dieser Ordner):
@@ -41,13 +41,12 @@ KEEP=5
 # Ziele je Datei im Repo, eins je Zeile (leer = nicht auf den Player)
 target() {
   case "$1" in
-    kioskTV.html)            [ -d "$ROOT/volumio/http/www" ] && echo "$ROOT/volumio/http/www/$1"; true ;;   # nur in ein vorhandenes www/
     tags/*)                  echo "$APP/$1" ;;
     rotel/rotel-bridge.js)   echo "$APP/$1" ;;
     tools/xplorio-deploy.sh) echo "$ROOT/usr/local/bin/$PROG"; for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;   # auch für die Verweise
     tools/web-app-deploy.sh) [ -e "$ROOT/usr/local/bin/web-app-deploy" ] && echo "$ROOT/usr/local/bin/web-app-deploy"; true ;;   # nur vorhandene alte Namen
     tools/mx-deploy.sh)      for p in mx-deploy volumio4-deploy; do [ -e "$ROOT/usr/local/bin/$p" ] && echo "$ROOT/usr/local/bin/$p"; done; true ;;
-    app.html|web/*|tools/*)  for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;
+    app.html|kioskTV.html|web/*|tools/*)  for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;
   esac
 }
 TAB=$'\t'                                           # Einträge der Listen: Repo-Pfad TAB Ziel
@@ -145,7 +144,7 @@ done < <(find . -type f ! -name '*.pyc' | sort)
 show() { while IFS="$TAB" read -r f t; do
   [ -n "$f" ] || continue
   r=${t#$ROOT/volumio/http/}
-  if [ "$r" != "$t" ] && [ "${WWWS#* }" != "$WWWS" ] && [ "$f" != kioskTV.html ]; then echo "$f (${r%%/*})"; else echo "$f"; fi
+  if [ "$r" != "$t" ] && [ "${WWWS#* }" != "$WWWS" ]; then echo "$f (${r%%/*})"; else echo "$f"; fi
 done; }
 
 UNITS=$(old_units)
