@@ -3,14 +3,15 @@
 [English version](README_EN.md)
 
 Eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
-direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Neben den Dateien, die auf dem Player laufen, enthält es nur Tests (`tests/`) und die Einrichtungs-Doku;
-`mx-deploy` spielt nur die Laufzeitdateien ein.
+direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Auf Volumio 3 vermutlich auch, wurde aber nicht getestet. 
+Zusätzlich zu den Dateien, die auf dem Player laufen, enthält diese Repository nur Tests (`tests/`) und die Einrichtungs-Doku;
+`mx-deploy` bzw. `volumio4-deploy` spielt nur die Laufzeitdateien ein.
 
 <p align="center">
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
 </p>
 
-Alle Bilder in dieser Datei zeigen eine erfundene Beispiel-Bibliothek (Künstler, Cover und Texte sind ausgedacht). Zie zeigen nicht immer den aktuellen Stand der Entwicklung. Manche Features wurden zwischenzeitlich verschoben oder erweitert.
+Alle Bilder in dieser Datei zeigen eine erfundene Beispiel-Bibliothek (Künstler, Cover und Texte sind ausgedacht). Sie zeigen nicht immer den aktuellen Stand der Entwicklung. Manche Features wurden zwischenzeitlich verschoben oder erweitert.
 
 Entwickelt mit KI (Claude code https://claude.ai)
 
@@ -97,7 +98,8 @@ Fortschritt der Stimmungs-Tags.
 - Deutsch und Englisch, wie in Volumio eingestellt oder fest eingestellt; weitere Sprachen als Datei in `web/lang/`
   (siehe [Einrichten](docs/einrichten.md#sprache)).
 - Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
-- TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt.
+- TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt. 
+  (Was auf meinem MX-Streamaufgrund eines Session-Timeouts etwa nach 4 Stundenohne Tidal-Nutzung auftritt)
 - `mx-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`; auf Volumio 4
   dasselbe Skript als `volumio4-deploy`.
 
@@ -117,7 +119,8 @@ Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`) oder Volumio 4 (Node und 
 [docs/einrichten.md](docs/einrichten.md). Aktualisieren direkt auf dem Player: `sudo mx-deploy` bzw. `sudo volumio4-deploy`
 (`tools/mx-deploy.sh`, siehe dort).
 
-Rotel-Verstärker und TIDAL sind optional (siehe Einrichtung). Eigene Einstellungen (z. B. ein Last.fm-Schlüssel für ähnliche Künstler, Stimmungs-Tags und Infotexte) gehören in `web/config.local.js`
+Rotel-Verstärker und TIDAL-Wächter sind optional (siehe Einrichtung). 
+Eigene Einstellungen (z. B. ein Last.fm-Schlüssel für ähnliche Künstler, Stimmungs-Tags und Infotexte) gehören in `web/config.local.js`
 (Vorlage `web/config.local.js.example`); diese Datei ist nicht im Repository.
 
 ## Tests
