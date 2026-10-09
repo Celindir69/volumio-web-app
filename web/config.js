@@ -7,6 +7,7 @@ window.APP_CONFIG = {
   LASTFM_KEY: '',     /* veraltet: Last.fm-Zugang steht in /data/xplorio/data/keys.json (Tag-Dienst); hier nur noch Ersatz ohne Tag-Dienst */
   LASTFM_SECRET: '',  /* veraltet: wird vom Tag-Dienst einmal nach keys.json übernommen, dann hier löschen */
   HISTORY: true,      /* Verlauf: Tag-Dienst schreibt gespielte Titel mit; false = aus (Tag-Dienst neu starten) */
+  RELEASEDATES: true, /* Geburtstage: fehlende Erscheinungsdaten der Alben bei MusicBrainz nachschlagen; false = aus */
   MOODTAGS: true,     /* Stimmungs-Tags: Last.fm-Tags je Titel sammeln, nur wenn nichts spielt (braucht LASTFM_KEY in keys.json); false = aus */
   COLOR_MOOD: true,   /* Farbstimmung aus dem Cover (nur Cover vom Player selbst); false = aus */
   M4A_PROBE: true,    /* m4a: Codec (ALAC/AAC) aus der Datei lesen; false = nur M4A_LOSSLESS */
