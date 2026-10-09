@@ -150,4 +150,34 @@ function mixBalanced(pool, k, albumList, rnd) {
   return out;
 }
 
-module.exports = {statIndex: statIndex, shelves: shelves, mix: mix, mixPool: mixPool, mixBalanced: mixBalanced, sample: sample, ROW: ROW};
+/* Titel einer Entdecken-Reihe für deren Würfel (immer Titel, egal welcher Reiter): random gewichtet wie die Reihe,
+   forgotten/never/oldfav nach denselben Regeln wie die Reihe, ago: extra.keys (Künstler|Titel), gems: extra.files */
+function shelfPool(shelf, tracks, stats, now, extra, rnd) {
+  extra = extra || {};
+  if (shelf === 'gems') return tracks.filter(function(t){ return extra.files && extra.files[t[2]]; });
+  if (shelf === 'ago') return tracks.filter(function(t){ return extra.keys && extra.keys[plays.norm(t[0]) + '|' + plays.norm(t[1])]; });
+  var statOf = stats.track;
+  if (shelf === 'random') return weighted(tracks, statOf, now, 100, rnd);
+  if (shelf === 'never') return tracks.filter(function(t){ return !statOf(t).n; });
+  if (shelf === 'forgotten') return tracks.filter(function(t){ var s = statOf(t); return s.n && now - s.last > LONG; });
+  if (shelf === 'oldfav') {
+    return tracks.filter(function(t){ var s = statOf(t); return s.n >= OLDFAV_MIN.track && now - s.last > OLDFAV_GAP; })
+      .sort(function(a, b){ return statOf(b).n - statOf(a).n; }).slice(0, 100);
+  }
+  return [];
+}
+
+/* Zufallsmix mit Obergrenze je Künstler (Albumkünstler unberücksichtigt: Künstler des Titels); Reihenfolge wie mix() */
+function mixCapped(pool, k, maxPer, rnd) {
+  var per = {}, out = [], seen = {};
+  sample(pool, pool.length, rnd).forEach(function(t){
+    var a = plays.norm(t[0]);
+    if (out.length >= k || seen[t[2]] || (per[a] || 0) >= maxPer) return;
+    seen[t[2]] = true;
+    per[a] = (per[a] || 0) + 1;
+    out.push(t);
+  });
+  return mix(out, k, rnd);
+}
+
+module.exports = {statIndex: statIndex, shelves: shelves, mix: mix, mixPool: mixPool, mixBalanced: mixBalanced, shelfPool: shelfPool, mixCapped: mixCapped, sample: sample, ROW: ROW};

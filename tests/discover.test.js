@@ -91,4 +91,30 @@ t('Zufallsmix für mehrere Künstler: geht einem die Musik aus, füllen die ande
   assert.strictEqual(m.length, 14);
 });
 
+t('Würfel der Reihen: Titel nach den Regeln der Reihe', function(){
+  var norm = require('../tags/plays.js').norm, agoKeys = {};
+  agoKeys[norm('A2') + '|' + norm('Titel 2-1')] = true;
+  function names(list) { return list.map(function(x){ return x[1]; }); }
+  var never = d.shelfPool('never', tracks, st, NOW);
+  assert.strictEqual(never.length, tracks.length - 3);
+  assert.ok(names(never).indexOf('Titel 0-0') < 0 && names(never).indexOf('Titel 1-0') < 0);
+  assert.deepStrictEqual(names(d.shelfPool('forgotten', tracks, st, NOW)).sort(), ['Titel 0-0', 'Titel 2-1']);
+  assert.deepStrictEqual(names(d.shelfPool('oldfav', tracks, st, NOW)), ['Titel 0-0']);
+  assert.deepStrictEqual(names(d.shelfPool('ago', tracks, st, NOW, {keys: agoKeys})), ['Titel 2-1']);
+  assert.deepStrictEqual(names(d.shelfPool('gems', tracks, null, NOW, {files: {'USB/A3/Album 3/01.flac': true}})), ['Titel 3-1']);
+  assert.strictEqual(d.shelfPool('random', tracks, st, NOW, {}, rnd).length, 100);
+});
+
+t('Würfel der Reihen: höchstens 3 je Künstler, jede Datei einmal, kein Künstler direkt hintereinander', function(){
+  var m = d.mixCapped(tracks.concat(tracks), 25, 3, rnd), per = {}, files = {};
+  assert.strictEqual(m.length, 25);
+  m.forEach(function(x, i){
+    per[x[0]] = (per[x[0]] || 0) + 1;
+    assert.ok(!files[x[2]]); files[x[2]] = true;
+    if (i) assert.notStrictEqual(x[0], m[i - 1][0]);
+  });
+  assert.ok(Object.keys(per).every(function(a){ return per[a] <= 3; }));
+  assert.strictEqual(d.mixCapped(tracks.slice(0, 8), 25, 3, rnd).length, 6);   /* A0 und A1 je 4 Titel: je 3 */
+});
+
 console.log(n + ' Prüfungen');

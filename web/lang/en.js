@@ -125,7 +125,7 @@ langRegister('en', 'English', {
   'gems.why.artist': '♥ Unheard',
   'gems.why.artistRare': '♥ Barely heard',
   'gems.why.like': 'Like {ar}',
-  'disc.reroll': 'Roll again',
+  'disc.reroll': 'New selection',
 
   'genre.all': 'All',
   'genre.allHead': 'ALL GENRES',
