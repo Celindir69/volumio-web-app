@@ -5,8 +5,8 @@ var n = 0;
 function t(name, fn) { fn(); n++; console.log('ok   ' + name); }
 
 var root = fs.mkdtempSync(path.join(os.tmpdir(), 'appdata-'));
-var oldDir = path.join(root, 'INTERNAL', 'tags'), newDir = path.join(root, 'web-app');
-fs.mkdirSync(path.join(root, 'INTERNAL')); fs.mkdirSync(oldDir);
+var oldDir = path.join(root, 'INTERNAL', 'tags'), newDir = path.join(root, 'web-app', 'data');
+fs.mkdirSync(path.join(root, 'INTERNAL')); fs.mkdirSync(oldDir); fs.mkdirSync(path.join(root, 'web-app'));
 fs.writeFileSync(path.join(oldDir, 'tag-service.js'), '// Programm');
 fs.writeFileSync(path.join(oldDir, 'plays.jsonl'), '{"t":1}\n');
 fs.writeFileSync(path.join(oldDir, 'lastfm.json'), '{"sk":"S"}');

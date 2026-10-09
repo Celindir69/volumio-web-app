@@ -58,7 +58,8 @@ restart_services() {               # $1: Liste geänderter Repo-Pfade
   if echo "$1" | grep -q '^tags/'; then
     chown -R volumio:volumio /data/INTERNAL/tags 2>/dev/null || true
     # Datenordner des Tag-Dienstes (außerhalb von Webordner und Netzwerkfreigabe); der Dienst zieht beim Start dorthin um
-    [ -d /data/web-app ] || { mkdir -m 700 /data/web-app && chown volumio:volumio /data/web-app && echo "Datenordner /data/web-app angelegt"; } || true
+    mkdir -p /data/web-app 2>/dev/null || true
+    [ -d /data/web-app/data ] || { mkdir -m 700 /data/web-app/data && chown volumio:volumio /data/web-app/data && echo "Datenordner /data/web-app/data angelegt"; } || true
     systemctl restart tag-service 2>/dev/null && echo "tag-service neu gestartet" || echo "Hinweis: tag-service nicht neu gestartet (eingerichtet?)"
   fi
   if echo "$1" | grep -q '^rotel/'; then

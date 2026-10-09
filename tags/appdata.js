@@ -1,5 +1,5 @@
 /* Datenordner des Tag-Dienstes und Zugangsdaten. Node 8, nur ES5.
-   Daten (Verlauf, Last.fm-Sitzung, Check, Analyse …) liegen in /data/web-app: außerhalb des Webordners und
+   Daten (Verlauf, Last.fm-Sitzung, Check, Analyse …) liegen in /data/web-app/data: außerhalb des Webordners und
    außerhalb von /data/INTERNAL, das Volumio als Netzwerkfreigabe anbietet. Früher lagen sie neben dem Programm in
    /data/INTERNAL/tags; beim ersten Start werden sie verschoben.
    Last.fm-Key und -Secret stehen in keys.json im Datenordner (nur für den Dienst lesbar), nicht mehr in
@@ -15,7 +15,7 @@ var KEYS_FILE = 'keys.json';
 function exists(p) { try { fs.lstatSync(p); return true; } catch (e) { return false; } }
 
 /* Datenordner anlegen (nur für den Dienst lesbar) und alte Daten aus oldDir hinüberschieben.
-   Klappt das Anlegen nicht (keine Rechte auf /data), bleibt es beim alten Ordner. -> {dir, moved:[…], error} */
+   Klappt das Anlegen nicht (Elternordner fehlt oder keine Rechte), bleibt es beim alten Ordner. -> {dir, moved:[…], error} */
 function prepare(dir, oldDir, log) {
   log = log || function(){};
   try { fs.mkdirSync(dir, 448); }                          /* 0700 */
