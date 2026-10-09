@@ -1,5 +1,5 @@
 /* Last.fm: verbinden (Freigabe im Browser), scrobbeln, "läuft gerade" und den bisherigen Verlauf einlesen.
-   Braucht LASTFM_KEY und LASTFM_SECRET (web/config.local.js). Der Sitzungsschlüssel bleibt auf dem Player
+   Braucht LASTFM_KEY und LASTFM_SECRET (keys.json im Datenordner, siehe appdata.js). Der Sitzungsschlüssel bleibt auf dem Player
    (lastfm.json neben dem Verlauf) und geht nie an den Browser. Node 8, nur ES5. */
 var fs     = require('fs');
 var path   = require('path');
@@ -100,7 +100,7 @@ Sync.prototype.status = function() {
 /* 1. Schritt: Freigabe-Adresse holen; der Nutzer bestätigt sie bei Last.fm */
 Sync.prototype.connect = function(cb) {
   var self = this, c = this.cfg();
-  if (!c.key || !c.secret) return cb('LASTFM_KEY und LASTFM_SECRET fehlen in config.local.js');
+  if (!c.key || !c.secret) return cb('LASTFM_KEY und LASTFM_SECRET fehlen (keys.json im Datenordner)');
   call(c, 'auth.gettoken', {}, true, false, function(e, j){
     if (e || !j.token) return cb('Last.fm: ' + (e ? e.message : 'kein Token'));
     self.token = j.token;

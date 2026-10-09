@@ -109,7 +109,7 @@ Fortschritt der Stimmungs-Tags.
 |---|---|---|
 | `app.html` + `web/` | Oberfläche für Handy, iPad, Desktop (Wiedergabe, Queue, Suche lokal und bei Streamingdiensten, Lyrics, Infos, Tag-Editor, Stimmungs-Mix, Verlauf, Display-Layout für große Bildschirme) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
 | `kioskTV.html` | Seite für einen Kiosk-Bildschirm (Cover, Titel, Lyrics) | `/volumio/http/www/` |
-| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/INTERNAL/tags/` |
+| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/INTERNAL/tags/` (Daten: `/data/web-app/`) |
 | `rotel/rotel-bridge.js` | optional: HTTP-Dienst (Port 8765) für einen Rotel-Verstärker im Netz (Lautstärke, Ein/Aus, Eingang) | `/data/INTERNAL/rotel/` |
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt (nur unter Volumio 2 erprobt) | `/volumio/http/www3/tools/` |
 | `tools/mx-deploy.sh` | aktualisiert den Player aus diesem Repository (`mx-deploy`, auf Volumio 4 `volumio4-deploy`) | `/usr/local/bin/` |
@@ -120,8 +120,9 @@ Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`) oder Volumio 4 (Node und 
 (`tools/mx-deploy.sh`, siehe dort).
 
 Rotel-Verstärker und TIDAL-Wächter sind optional (siehe Einrichtung). 
-Eigene Einstellungen (z. B. ein Last.fm-Schlüssel für ähnliche Künstler, Stimmungs-Tags und Infotexte) gehören in `web/config.local.js`
-(Vorlage `web/config.local.js.example`); diese Datei ist nicht im Repository.
+Eigene Einstellungen (Sprache, Rotel, Dienste ein/aus) gehören in `web/config.local.js`
+(Vorlage `web/config.local.js.example`); diese Datei ist nicht im Repository. Der Last.fm-Zugang (für ähnliche Künstler,
+Stimmungs-Tags, Infotexte und Scrobbeln) liegt in `/data/web-app/keys.json` und wird nur vom Tag-Dienst gelesen.
 
 ## Tests
 `node tests/run-all.js` (Node 18 oder neuer, keine Abhängigkeiten; der Tag-Dienst-Test braucht zusätzlich Python).
