@@ -178,11 +178,13 @@ Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** ge
 den Titel ab bzw. öffnet Album oder Künstler.
 
 **Entdecken:** Solange in „Suchen & Entdecken“ nichts eingegeben ist, zeigt die Seite passend zum Reiter Künstler, Alben
-oder Titel mehrere Reihen zum Wischen: **Zufällige Entdeckungen** (bevorzugt, was lange nicht oder nie lief; der Würfel
-zieht neu), **Vor einem Jahr gehört** (um dieses Datum vor einem Jahr, sonst vor 2, 3 … Jahren), **Lange nicht gehört**
+oder Titel mehrere Reihen zum Wischen: **Zufällige Entdeckungen** (bevorzugt, was lange nicht oder nie lief; ↻ zieht
+neu), **Vor einem Jahr gehört** (um dieses Datum vor einem Jahr, sonst vor 2, 3 … Jahren), **Lange nicht gehört**
 (über ein halbes Jahr her), **Noch nie gehört** und **Früher oft gehört** (oft gehört, aber seit einem halben Jahr nicht
 mehr). Leere Reihen fallen weg. Künstler und Album tippen öffnet, Titel tippen spielt ab. Grundlage ist der Verlauf
-(siehe oben).
+(siehe oben). Der Würfel rechts an jeder Reihe spielt 25 Titel aus der ganzen Reihe (nicht nur den sichtbaren
+Kacheln), immer auf Titel-Ebene, egal welcher Reiter offen ist: bei „Noch nie gehört“ etwa nie gespielte Titel. Je
+Künstler höchstens drei, nie derselbe direkt hintereinander, ohne „mag ich nicht“.
 
 **Nach Stimmung, Energie, Stil und Jahrzehnt:** Unter den Reihen stehen Auswahlknöpfe. Stimmung (Entspannt, Verträumt,
 Melancholisch, Düster, Fröhlich, Intensiv, Episch; dieselben Namen wie im Stimmungs-Mix), Energie (Ruhig, Mittlere Energie, Energiegeladen) und Stil (Acoustic, Ambient,
@@ -211,7 +213,7 @@ Verglichen werden Genre, Stimmung, Stil und Energie aus den Stimmungs-Tags; Tite
 Titel-Reihe nicht vor. Ungehörte Alben und Titel von Lieblingskünstlern sind immer dabei. Unter jeder Kachel steht der
 Grund: „♥ Ungehört“ (Lieblingskünstler), „Wie …“ (klingt wie ein Lieblingskünstler) oder Stimmung · Genre. Nicht
 dabei: Titel mit „mag ich nicht“, Alben, deren Titel überwiegend „mag ich nicht“ tragen, schon bewertete Alben,
-Künstler mit Herz und Favoriten. Der Würfel zieht neu. Ohne Bewertungen zählt nur der Verlauf; gibt es auch keinen,
+Künstler mit Herz und Favoriten. ↻ zieht neu. Ohne Bewertungen zählt nur der Verlauf; gibt es auch keinen,
 fehlt die Reihe.
 
 **Mehr entdecken:** Unten auf der Künstlerseite (eigene Sammlung) führen Knöpfe weiter: ähnliche Künstler aus der
@@ -232,7 +234,7 @@ derselbe Künstler direkt hintereinander. Die Albenliste liest der Tag-Dienst au
 (Prüfung höchstens einmal pro Minute; nach Tag-Änderungen gut eine Minute nach dem Scan von selbst).
 
 **Genres:** Der vierte Suchreiter (nur mit Tag-Dienst) zeigt ohne Eingabe Kacheln aller Genres, mit Eingabe die passenden.
-Bei mehr als zwölf Genres steht darüber die Reihe „Zufällige Genres“; der Würfel zieht sie neu.
+Bei mehr als zwölf Genres steht darüber die Reihe „Zufällige Genres“; ↻ zieht sie neu.
 Ein Tipp öffnet die Genre-Seite: Gibt es [Audio-Analysen](#audio-analyse-mit-essentia-optional-auf-dem-mac), zuerst Kacheln
 der Stilrichtungen (Discogs-Unterstile, z. B. „Trip Hop“ unter Electronic) mit „Alle“ davor, sonst gleich alle Alben des
 Genres, nach Künstler sortiert. Je Album zählen bis zu drei Unterstile seines Genres, gemittelt über die analysierten Titel;

@@ -772,6 +772,9 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
          display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:1; }
 .dDice svg { width:58%; height:58%; fill:var(--fg); }
 .dDice.roll svg { animation:dRoll .45s ease-out; }
+.dHeadBtns { display:flex; gap:calc(2 * var(--vw)); }
+.dDice.dReroll.roll svg { animation:dSpin .5s ease-out; }
+@keyframes dSpin { from { transform:rotate(0); } to { transform:rotate(360deg); } }
 @keyframes dRoll { from { transform:rotate(-200deg) scale(.7); } to { transform:none; } }
 .dRand { display:flex; flex-direction:column; align-items:center; text-align:center; }
 .dBig { width:62vw; height:62vw; max-width:300px; max-height:300px; object-fit:cover; border-radius:calc(2 * var(--vw)); cursor:pointer;

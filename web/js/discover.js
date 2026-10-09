@@ -30,7 +30,7 @@ function discoverShow() {
   tagGetJson('/plays?view=ago&kind=' + cat.kind + histTz()).then(function(r){
     var a = r && r.ago;
     if (seq !== discoverSeq || !a || !a.items.length) return;
-    secs.ago.appendChild(browseHeading(T(cat.ago, {n: a.years})));
+    secs.ago.appendChild(discoverHead(T(cat.ago, {n: a.years}), 'ago'));
     var row = histEl('div', 'dRow');
     a.items.forEach(function(it){ row.appendChild(discoverTile(cat.kind, it)); });
     secs.ago.appendChild(row);
@@ -48,7 +48,7 @@ function discoverGems(seq, cat, sec) {
     if (seq !== discoverSeq || !r || !r.ok) return;
     discoverClear(sec);
     if (!r.items.length) return;
-    var head = discoverDiceHead(T('disc.shelf.gems'), function(){ discoverGems(discoverSeq, cat, sec); });
+    var head = discoverHead(T('disc.shelf.gems'), 'gems', function(){ discoverGems(discoverSeq, cat, sec); });
     sec.appendChild(head);
     var row = histEl('div', 'dRow');
     r.items.forEach(function(it){ row.appendChild(discoverShelfTile(cat.kind, 'gems', it)); });
@@ -66,18 +66,31 @@ function discoverWhy(it) {
   return [m ? m.charAt(0).toUpperCase() + m.slice(1) : '', w.ge || ''].filter(Boolean).join(' · ');
 }
 
-/* Überschrift mit Würfel (Zufallsreihe, Perlen) */
-function discoverDiceHead(title, roll) {
+/* Überschrift einer Reihe: rechts der Würfel (25 Titel aus der ganzen Reihe, Tag-Dienst POST /randommix {shelf}),
+   bei Zufallsreihe und Perlen davor ↻ (neue Kacheln ziehen) */
+var REROLL_SVG = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
+function discoverHead(title, shelf, roll) {
   var head = browseHeading(title);
   head.classList.add('dHead');
-  var dice = histEl('div', 'dDice');
-  dice.title = T('disc.reroll');
-  dice.innerHTML = DICE_SVG;
-  dice.addEventListener('click', function(){
-    dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
-    roll();
+  var btns = histEl('div', 'dHeadBtns');
+  function btn(svg, tip, fn) {
+    var b = histEl('div', 'dDice');
+    b.title = tip;
+    b.innerHTML = svg;
+    b.addEventListener('click', function(){
+      b.classList.remove('roll'); void b.offsetWidth; b.classList.add('roll');
+      fn();
+    });
+    btns.appendChild(b);
+    return b;
+  }
+  if (roll) btn(REROLL_SVG, T('disc.reroll'), roll).classList.add('dReroll');
+  btn(DICE_SVG, T('disc.mix'), function(){
+    var q = {shelf: shelf}, tz = histTz().match(/tzw=(-?\d+)&tzs=(-?\d+)/);
+    if (tz) { q.tzw = +tz[1]; q.tzs = +tz[2]; }
+    randomMixPlay(q);
   });
-  head.appendChild(dice);
+  head.appendChild(btns);
   return head;
 }
 
@@ -156,9 +169,8 @@ function discoverClear(el) { while (el.firstChild) el.removeChild(el.firstChild)
 function discoverShelf(sec, sh, cat, secs) {
   discoverClear(sec);
   if (!sh.items.length && sh.id !== 'random') return;
-  sec.appendChild(sh.id === 'random'
-    ? discoverDiceHead(T('disc.shelf.random'), function(){ discoverLoad(discoverSeq, cat, secs, true); })
-    : browseHeading(T('disc.shelf.' + sh.id)));
+  sec.appendChild(discoverHead(T('disc.shelf.' + sh.id), sh.id,
+    sh.id === 'random' ? function(){ discoverLoad(discoverSeq, cat, secs, true); } : null));
   if (!sh.items.length) {
     sec.appendChild(browseNote(T('disc.none.' + cat.kind)));
     return;

@@ -728,7 +728,8 @@ function doRandom(query, cb) {
 
 /* ---------- Entdecken und Zufallsmix (discover.js) ---------- */
 /* GET /discover?kind=artist|album|track -> {ok, shelves: [{id: random|forgotten|never|oldfav, items}]}
-   POST /randommix {artist} oder {dirs: [...]} -> {ok, items: [{f, ar, ti, al, d}]} (25 Titel, Würfel neben „Alle abspielen“) */
+   POST /randommix {artist}, {artists: [...]}, {dirs: [...]} oder {shelf: random|gems|ago|forgotten|never|oldfav[, tzw, tzs]}
+   -> {ok, items: [{f, ar, ti, al, d}]} (25 Titel, Würfel neben „Alle abspielen“ bzw. an den Entdecken-Reihen) */
 var discover = require('./discover.js');
 var ratings  = require('./ratings.js');
 var discStats = null;
@@ -780,11 +781,11 @@ function volumioFavs(cb) {
   req.setTimeout(5000, function(){ req.abort(); });
   req.on('error', function(){ done(null); });
 }
-function doGems(query, cb) {
-  var kind = query.kind === 'artist' || query.kind === 'track' ? query.kind : 'album';
+/* vorbereiteter Geschmack für die Perlen (gems.prepare), neu nur bei geänderter Bibliothek, Verlauf, Bewertungen, Favoriten */
+function gemsReady(cb) {
   albumsEnsure(function(list){
     var tl = libTracksLoad();
-    if (!list || !list.length || !tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, items: []});
+    if (!list || !list.length || !tl || !tl.length) return cb(null);
     volumioFavs(function(fs_){
       var pl = playStore.load(), idx = moodmix.index(moodCollector);
       var stamp = [libTracks.m, list.length, pl.length, ratingStore.rev, fs_.rev].join(':');
@@ -796,8 +797,15 @@ function doGems(query, cb) {
           lib: tl, moodOf: function(f){ return moods[f] || null; }, albums: list, artists: artistList.list,
           rated: ratingStore.load(), favs: fs_.map, stats: discoverStats(pl)})};
       }
-      cb(200, {ok: true, items: gems.pick(gemState.g, kind)});
+      cb(gemState.g);
     });
+  });
+}
+function doGems(query, cb) {
+  var kind = query.kind === 'artist' || query.kind === 'track' ? query.kind : 'album';
+  gemsReady(function(g){
+    if (!g) return cb(200, {ok: false, building: albumBuilding, items: []});
+    cb(200, {ok: true, items: gems.pick(g, kind)});
   });
 }
 
@@ -817,20 +825,36 @@ function doRate(body, cb) {
   cb(200, {ok: true, v: v});
 }
 
+var SHELF_MIX = ['random', 'gems', 'ago', 'forgotten', 'never', 'oldfav'];
 function doRandomMix(body, cb) {
   var many = Array.isArray(body.artists) ? body.artists.slice(0, 50).map(String) : [];
-  if (!body.artist && !many.length && !(body.dirs && body.dirs.length)) return cb(400, {ok: false, error: 'artist, artists oder dirs fehlt'});
+  var shelf = SHELF_MIX.indexOf(body.shelf) >= 0 ? body.shelf : '';
+  if (!shelf && !body.artist && !many.length && !(body.dirs && body.dirs.length)) return cb(400, {ok: false, error: 'artist, artists, dirs oder shelf fehlt'});
   albumsEnsure(function(list){
     var tl = libTracksLoad();
     if (!tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, items: []});
     var n = Math.min(parseInt(body.n, 10) || 25, 100), bad = ratingStore.disliked();
     tl = tl.filter(function(t){ return !bad[t[2]]; });                 /* „mag ich nicht“ nie im Würfel */
+    function send(picked) {
+      cb(200, {ok: true, items: picked.map(function(t){ return {f: t[2], ar: t[0], ti: t[1], al: t[4] || '', d: t[3] || 0}; })});
+    }
+    if (shelf) {                                                        /* Entdecken-Reihe: Titel der ganzen Reihe */
+      var pl = playStore.load(), now = Math.floor(Date.now() / 1000), extra = {};
+      if (shelf === 'ago') {
+        var tz = {w: parseInt(body.tzw, 10) || 0, s: parseInt(body.tzs, 10) || 0};
+        extra.keys = {};
+        plays.ago(pl, now, tz, 500, 'track').items.forEach(function(it){ extra.keys[plays.norm(it.ar) + '|' + plays.norm(it.ti)] = true; });
+      }
+      if (shelf !== 'gems') return send(discover.mixCapped(discover.shelfPool(shelf, tl, discoverStats(pl), now, extra), n, 3));
+      return gemsReady(function(g){
+        if (!g) return cb(200, {ok: false, building: albumBuilding, items: []});
+        extra.files = {};
+        gems.pick(g, 'track', 100).forEach(function(it){ extra.files[it.f] = true; });
+        send(discover.mixCapped(discover.shelfPool('gems', tl, null, now, extra), n, 3));
+      });
+    }
     var pool = discover.mixPool(tl, list, {artist: body.artist, artists: many, dirs: [].concat(body.dirs || []).slice(0, 5000)});
-    var picked = many.length ? discover.mixBalanced(pool, n, list) : discover.mix(pool, n);   /* ähnliche Künstler: gleichmäßig */
-    var items = picked.map(function(t){
-      return {f: t[2], ar: t[0], ti: t[1], al: t[4] || '', d: t[3] || 0};
-    });
-    cb(200, {ok: true, items: items});
+    send(many.length ? discover.mixBalanced(pool, n, list) : discover.mix(pool, n));   /* ähnliche Künstler: gleichmäßig */
   });
 }
 

@@ -123,7 +123,7 @@ langRegister('de', 'Deutsch', {
   'gems.why.artist': '♥ Ungehört',
   'gems.why.artistRare': '♥ Kaum gehört',
   'gems.why.like': 'Wie {ar}',
-  'disc.reroll': 'Neu würfeln',
+  'disc.reroll': 'Neue Auswahl',
 
   'genre.all': 'Alle',
   'genre.allHead': 'ALLE GENRES',

@@ -53,14 +53,14 @@ function genreSearch() {
   });
 }
 
-/* Reihe „Zufällige Genres“ über der Übersicht, der Würfel zieht neu (nur bei mehr Genres, als in die Reihe passen) */
+/* Reihe „Zufällige Genres“ über der Übersicht, ↻ zieht neu (nur bei mehr Genres, als in die Reihe passen) */
 var GENRE_RANDOM = 12;
 function genreRandomShelf(list) {
   var sec = histEl('div', 'dSec'), head = browseHeading(T('disc.shelf.randomGenres')), row = histEl('div', 'dRow');
   head.classList.add('dHead');
-  var dice = histEl('div', 'dDice');
+  var dice = histEl('div', 'dDice dReroll');
   dice.title = T('disc.reroll');
-  dice.innerHTML = DICE_SVG;
+  dice.innerHTML = REROLL_SVG;
   function fill() {
     while (row.firstChild) row.removeChild(row.firstChild);
     var a = list.slice();
