@@ -45,6 +45,18 @@ function openMoodMix(mood) {
   plShowTab(0);
 }
 
+/* aus Suchen & Entdecken: Mix mit diesen Kriterien gleich erstellen und die Vorschau zeigen; c: {moods, styles, emin, emax}.
+   Genre und Tempo fallen weg, Länge, Entdeckungsgrad und Höchstlänge bleiben wie zuletzt gewählt. */
+function openMoodMixWith(c) {
+  mixCrit.moods = (c.moods || []).slice(); mixCrit.styles = (c.styles || []).slice(); mixCrit.match = 'any';
+  mixCrit.emin = c.emin || 1; mixCrit.emax = c.emax || 5; mixCrit.bmin = 0; mixCrit.bmax = 0; mixCrit.genres = [];
+  mixState.view = 'pick'; mixState.result = null;
+  closeAllOverlays();
+  overlayPlaylists.classList.add('on');
+  plShowTab(0);
+  mixBuild();
+}
+
 function mixRender() {
   mixClear();
   if (mixState.view === 'preview' && mixState.result) return mixPreview();
@@ -291,7 +303,8 @@ function mixBuild() {
 /* ---------- Vorschau ---------- */
 
 function mixSummary() {
-  var parts = mixCrit.moods.map(mixName);
+  var parts = mixCrit.moods.map(mixName), st = mixCrit.styles;
+  if (st.length) parts.push(st.length <= 2 ? st.map(function(s){ return s.charAt(0).toUpperCase() + s.slice(1); }).join(', ') : T('mix.sum.styles', {n: st.length}));
   if (!parts.length) parts.push(T('mix.sum.allMoods'));
   parts.push(mixCrit.emin === 1 && mixCrit.emax === 5 ? T('mix.sum.anyEnergy') : T('mix.sum.energy', {e: mixCrit.emin === mixCrit.emax ? mixCrit.emin : mixCrit.emin + '\u2060–\u2060' + mixCrit.emax}));
   if (mixCrit.bmin || mixCrit.bmax) parts.push(!mixCrit.bmax ? T('mix.sum.bpmMin', {a: mixCrit.bmin}) : !mixCrit.bmin ? T('mix.sum.bpmMax', {b: mixCrit.bmax}) :

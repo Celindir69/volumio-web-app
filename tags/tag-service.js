@@ -514,7 +514,7 @@ var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
 var ALBUMS_CHECK_MS = 60000;                             /* so oft höchstens bei MPD nachfragen, ob sich die Datenbank geändert hat */
 var ALBUMS_AFTER_SCAN_MS = 90000;                        /* nach eigenem Scan: Albenliste nachziehen, wenn MPD und Volumio fertig sind */
-var ALBUMS_VERSION = 5;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre */
+var ALBUMS_VERSION = 6;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre, 6: Alben mit Jahr */
 var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album, Genre des Albums], …] */
 
 function albumsEnsure(cb) {
@@ -562,6 +562,7 @@ var moodCollector = new moodtags.Collector({
 /* GET /genrelist[?q=] -> {ok, genres:[{g, n, dir, al, ar}], subs:[{g, s, n, dir, al, ar}] (nur mit q)};
    GET /genrealbums?g= -> {ok, albums:[{dir, al, ar, st:[Unterstile]}], subs:[{g, s, n, dir, al, ar}]};
    GET /albumgenre?q=[[uri, album, künstler], …] -> {ok, genres:[…]} (leer = unbekannt). building: Albenliste entsteht noch.
+   GET /decades -> {ok, decades:[{d, n, dir, al, ar}]}; GET /decadealbums?d=1990 -> {ok, albums:[{dir, al, ar, y}]} (Jahr aus dem Date-Tag).
    Unterstile kommen aus der Audio-Analyse (tools/essentia), je Album innerhalb seines Genres */
 function albumGenreFn() {
   var gi = albumIdx && albumIdx.list;
@@ -583,6 +584,8 @@ function doGenreLib(route, query, cb) {
       var q = String(query.q || '').trim();
       return cb(200, {ok: true, genres: albums.genreList(list, q), subs: q ? genres.subList(list, genreSubsIdx(list), '', q) : []});
     }
+    if (route === '/decades') return cb(200, {ok: true, decades: albums.decadeList(list)});
+    if (route === '/decadealbums') return cb(200, {ok: true, albums: albums.decadeAlbums(list, query.d)});
     if (route === '/genrealbums') {
       var idx = genreSubsIdx(list);
       var al = albums.genreAlbums(list, query.g);
@@ -642,6 +645,8 @@ var mixPlays = null;
 function doMoodmix(query, cb) {
   albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
   var c = moodmix.parse(query);
+  var bad = ratingStore.disliked();
+  c.skip = function(it){ return !!bad[ratings.trackKey(it.f)]; };
   if (query.count) { var r = moodmix.count(moodCollector, c); r.ok = true; return cb(200, r); }
   var pl = playStore.load();
   if (!mixPlays || mixPlays.n !== pl.length) mixPlays = {n: pl.length, pc: moodmix.playCounts(pl)};
@@ -701,7 +706,7 @@ function doDiscover(query, cb) {
       if (!artistList || artistList.src !== list) artistList = {src: list, list: albums.artists(list)};
       ents = artistList.list;
     }
-    if (kind === 'track') ents = libTracksLoad() || [];
+    if (kind === 'track') { var bad = ratingStore.disliked(); ents = (libTracksLoad() || []).filter(function(t){ return !bad[t[2]]; }); }
     if (!ents.length) return cb(200, {ok: false, building: albumBuilding});
     var now = Math.floor(Date.now() / 1000);
     cb(200, {ok: true, shelves: discover.shelves(kind, ents, discoverStats(playStore.load()), now)});
@@ -728,7 +733,8 @@ function doRandomMix(body, cb) {
   albumsEnsure(function(list){
     var tl = libTracksLoad();
     if (!tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, items: []});
-    var n = Math.min(parseInt(body.n, 10) || 25, 100);
+    var n = Math.min(parseInt(body.n, 10) || 25, 100), bad = ratingStore.disliked();
+    tl = tl.filter(function(t){ return !bad[t[2]]; });                 /* „mag ich nicht“ nie im Würfel */
     var items = discover.mix(discover.mixPool(tl, list, {artist: body.artist, dirs: [].concat(body.dirs || []).slice(0, 5000)}), n).map(function(t){
       return {f: t[2], ar: t[0], ti: t[1], al: t[4] || '', d: t[3] || 0};
     });
@@ -1023,7 +1029,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/scan')    return doScanGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
-  if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre'].indexOf(route) >= 0)
+  if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre', '/decades', '/decadealbums'].indexOf(route) >= 0)
     return doGenreLib(route, url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/genres')  return doGenres(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);
