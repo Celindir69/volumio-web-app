@@ -51,6 +51,13 @@ function menuRender() {
 
 /* Unten im Menü: Logo, Name, Leitsatz; Stand (web/version.json, schreibt xplorio-deploy), Copyright, Lizenz */
 var MENU_REPO = 'https://github.com/Celindir69/xplorio';
+/* fremde Bestandteile und Dienste: Name, Text (i18n) */
+var MENU_THIRD = [
+  ['mutagen', 'about.3.mutagen'],
+  ['Volumio, socket.io', 'about.3.volumio'],
+  ['Essentia', 'about.3.essentia'],
+  ['Last.fm, MusicBrainz, Cover Art Archive, Deezer, iTunes, LRCLIB, radio-browser.info', 'about.3.services']
+];
 var menuVersion = null;          /* einmal geladen: {branch, commit, date} oder {} */
 function menuAbout() {
   var box = document.createElement('div'); box.className = 'menuAbout';
@@ -61,7 +68,16 @@ function menuAbout() {
   var copy = document.createElement('div'); copy.className = 'menuFine'; copy.textContent = '© 2026 Celindir69';
   var lic = document.createElement('a'); lic.className = 'menuFine menuLink'; lic.href = MENU_REPO + '/blob/main/LICENSE';
   lic.target = '_blank'; lic.rel = 'noopener'; lic.textContent = T('about.license');
-  [logo, name, claim, ver, copy, lic].forEach(function(el){ box.appendChild(el); });
+  var more = document.createElement('div'); more.className = 'menuFine menuLink'; more.textContent = T('about.thirdParty');
+  var list = document.createElement('div'); list.className = 'menuThird';
+  MENU_THIRD.forEach(function(x){
+    var row = document.createElement('div');
+    var b = document.createElement('b'); b.textContent = x[0];
+    row.appendChild(b); row.appendChild(document.createTextNode(' · ' + T(x[1])));
+    list.appendChild(row);
+  });
+  more.addEventListener('click', function(){ box.classList.toggle('third'); });
+  [logo, name, claim, ver, copy, lic, more, list].forEach(function(el){ box.appendChild(el); });
   function show(v) {
     var parts = [];
     if (v.date) parts.push(langDate(Date.parse(v.date + 'T12:00:00')));

@@ -693,7 +693,10 @@ html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { d
 .menuName { font-size:calc(5.2 * var(--vw)); font-weight:700; letter-spacing:.02em; }
 .menuClaim { font-size:calc(3.4 * var(--vw)); opacity:.7; margin:calc(.8 * var(--vw)) 0 calc(4 * var(--vw)); }
 .menuFine { font-size:calc(2.9 * var(--vw)); opacity:.5; line-height:1.6; }
-.menuLink { color:inherit; text-decoration:underline; text-underline-offset:2px; }
+.menuThird { display:none; margin-top:calc(2 * var(--vw)); max-width:520px; text-align:left; font-size:calc(2.9 * var(--vw)); opacity:.6; line-height:1.5; }
+.menuThird div { margin-top:calc(1.2 * var(--vw)); }
+.menuAbout.third .menuThird { display:block; }
+.menuLink { cursor:pointer; color:inherit; text-decoration:underline; text-underline-offset:2px; }
 .menuRow { display:flex; align-items:center; gap:calc(4 * var(--vw)); padding:calc(3.5 * var(--vw)) 0;
   border-bottom:1px solid rgba(var(--fg-rgb),.15); cursor:pointer; }
 .menuRow:last-child { border-bottom:none; }
@@ -802,17 +805,19 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .dBadge { position:absolute; top:calc(1.5 * var(--vw)); left:calc(1.5 * var(--vw)); padding:2px calc(2 * var(--vw));
   border-radius:999px; font-size:calc(2.6 * var(--vw)); font-weight:700; background:rgba(0,0,0,.62); color:#fff; }
 .dJubilee .dBadge { background:var(--gold); color:var(--ink); }
-.dJubilee .sCover { box-shadow:0 0 0 3px var(--gold); }
+.dJubilee .sCover { outline:3px solid var(--gold); outline-offset:-3px; }   /* innen: die Reihe schneidet außen ab */
 
 /* Begrüßung (welcome.js): Karte in der Mitte über abgedunkeltem Hintergrund (Tipp darauf schließt); im Querformat mit
    breitem Rand und Album des Tages neben seinen Angaben. Darin Album des Tages, Reihen, Zufallsmix und Schalter */
 #overlayWelcome { position:fixed; inset:0; z-index:15; display:flex; align-items:center; justify-content:center;
   padding:max(env(safe-area-inset-top,0px), 12px) 12px max(env(safe-area-inset-bottom,0px), 12px);
-  background:rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:opacity .3s; }
+  background:rgba(0,0,0,.55); opacity:0; pointer-events:none; transition:opacity .3s; }
 #overlayWelcome.on { opacity:1; pointer-events:auto; }
 .wCard { width:100%; max-height:100%; display:flex; flex-direction:column; background:var(--sheet);
   -webkit-backdrop-filter:blur(30px); backdrop-filter:blur(30px); border-radius:calc(4 * var(--vw));
-  box-shadow:0 20px 60px rgba(0,0,0,.45); transform:scale(.96); transition:transform .3s cubic-bezier(.4,0,.2,1); }
+  border:1px solid rgba(var(--fg-rgb),.16); box-shadow:0 20px 60px rgba(0,0,0,.45);
+  transform:scale(.96); transition:transform .3s cubic-bezier(.4,0,.2,1); }
+html:not(.light) .wCard { background:rgba(40,40,46,.86); }   /* dunkel: heller als der abgedunkelte Hintergrund */
 #overlayWelcome.on .wCard { transform:none; }
 .wCard .dRow.fit { justify-content:flex-start; }   /* wenige Kacheln: links statt über die breite Karte verteilt */
 @media (orientation:landscape) {

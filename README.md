@@ -136,4 +136,8 @@ Stimmungs-Tags, Infotexte und Scrobbeln) liegt in `/data/xplorio/data/keys.json`
 ## Tests
 `node tests/run-all.js` (Node 18 oder neuer, keine Abhängigkeiten; der Tag-Dienst-Test braucht zusätzlich Python).
 
-Lizenz: MIT (siehe `LICENSE`), ausgenommen die mitgelieferte Bibliothek in `tags/vendor/mutagen/` (GPLv2, eigene `COPYING`).
+Lizenz: MIT (siehe `LICENSE`), ausgenommen die mitgelieferte Bibliothek in `tags/vendor/mutagen/` (GPLv2 oder neuer, eigene `COPYING`).
+Nicht enthalten, aber genutzt: Volumio (GPL-3.0) mit socket.io (MIT) auf dem Player, Essentia (AGPL-3.0) und dessen Modelle
+(CC BY-NC-SA 4.0, nur nicht-kommerziell) im Analyse-Werkzeug auf dem Mac. Daten, Cover, Lyrics und Senderlogos kommen von
+Last.fm, MusicBrainz, Cover Art Archive, Deezer, iTunes, LRCLIB und radio-browser.info und unterliegen deren Bedingungen.
+Das Menü zeigt das unter „Fremde Bestandteile und Lizenzen“.

@@ -127,7 +127,7 @@ The Tag Service performs the queries; the player therefore needs internet access
 
 ### Library Check
 
-In the menu (gear at the top right, only available while the Tag Service is running): finds albums without cover art, compilations without a consistent album artist, artists with multiple spellings, inconsistent album names/years, and tracks without track numbers; the pencil icon opens the appropriate editor.
+In the menu (gear at the top right, only available while the Tag Service is running): finds albums without cover art, compilations without a consistent album artist, artists with multiple spellings, inconsistent album names/years, albums whose Date tag differs from the first release according to MusicBrainz (from the birthday lookup; the pencil suggests the MusicBrainz date), and tracks without track numbers; the pencil icon opens the appropriate editor.
 
 The check reads the MPD database (`MPD_HOST`, `MPD_PORT`, default `localhost:6600`) and the folders, does not modify any files, and only runs when triggered manually. Result: `/data/xplorio/data/check.json`, retained until the next check. Entries whose pencil was used are recorded there and stay greyed out, also after closing, until the next check.
 

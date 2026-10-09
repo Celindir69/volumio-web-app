@@ -120,4 +120,22 @@ function birthdays(list, dateOf, day, limit) {
   return out;
 }
 
-module.exports = {Collector: Collector, birthdays: birthdays, pickDate: pickDate};
+/* Bibliotheks-Check: Alben, deren Date-Tag vom Erscheinungsdatum bei MusicBrainz abweicht (anderes Jahr, anderes volles
+   Datum oder gar keins). Nur ein Jahr im Tag, das zum Jahr bei MusicBrainz passt, gilt als stimmig.
+   albumList: albums.fromSongs(songs); songs: wie mpdWalk; mbOf(dir) -> 'JJJJ-MM-TT' oder ''; albumDir wie albums.albumDir
+   -> [{dir, name, artist, count, tag, mb, files: [{uri, title}]}] */
+function diffs(albumList, songs, mbOf, albumDir) {
+  var byDir = {};
+  songs.forEach(function(s){ var d = albumDir(s.file); (byDir[d] || (byDir[d] = [])).push(s); });
+  var out = [];
+  albumList.forEach(function(a){
+    var mb = mbOf(a.dir), tag = full(a.rd) || (a.y ? String(a.y) : '');
+    if (!mb || (tag && tag.slice(0, 4) === mb.slice(0, 4) && (tag.length === 4 || tag === mb))) return;
+    var list = byDir[a.dir] || [];
+    out.push({dir: a.dir, name: a.al, artist: a.ar, count: list.length, tag: tag, mb: mb,
+              files: list.map(function(s){ return {uri: s.file, title: s.title || s.file.replace(/^.*\//, '')}; })});
+  });
+  return out.sort(function(a, b){ return a.artist.localeCompare(b.artist) || a.name.localeCompare(b.name); });
+}
+
+module.exports = {Collector: Collector, birthdays: birthdays, pickDate: pickDate, diffs: diffs};

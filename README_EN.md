@@ -144,4 +144,8 @@ mood tags, information texts, and scrobbling) live in `/data/xplorio/data/keys.j
 
 `node tests/run-all.js` (Node 18 or newer, no dependencies; the Tag Service test additionally requires Python).
 
-License: MIT (see `LICENSE`), except for the bundled library in `tags/vendor/mutagen/` (GPLv2, separate `COPYING`).
+License: MIT (see `LICENSE`), except for the bundled library in `tags/vendor/mutagen/` (GPLv2 or later, separate `COPYING`).
+Not included but used: Volumio (GPL-3.0) with socket.io (MIT) on the player, Essentia (AGPL-3.0) and its models
+(CC BY-NC-SA 4.0, non-commercial only) in the analysis tool on the Mac. Data, covers, lyrics and station logos come from
+Last.fm, MusicBrainz, Cover Art Archive, Deezer, iTunes, LRCLIB and radio-browser.info and are subject to their terms.
+The menu shows this under "Third-party components and licenses".
