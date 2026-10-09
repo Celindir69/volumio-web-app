@@ -280,6 +280,10 @@ Checks every 10 minutes whether TIDAL responds and restarts Volumio if it does n
 
 If TIDAL is not logged in, do not set up the watchdog.
 
+## Endless play (AutoDJ)
+
+With the [autodj-plugin](https://github.com/Celindir69/autodj-plugin) (version 1.1 or later), the repeat button gets a fourth state: off → all → one → ∞. With ∞, repeat is off and AutoDJ is on; it appends similar tracks whenever the queue is about to run out. The next tap turns AutoDJ off again. If it is switched in Volumio, the button shows that too (within 30 seconds). Without the plugin, or without a Last.fm key in the plugin settings, the button keeps its three states.
+
 ## Volumio 4
 
 The interface also runs under Volumio 4 (tested on a test instance). Differences compared with Volumio 2:
