@@ -514,7 +514,7 @@ var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
 var ALBUMS_CHECK_MS = 60000;                             /* so oft höchstens bei MPD nachfragen, ob sich die Datenbank geändert hat */
 var ALBUMS_AFTER_SCAN_MS = 90000;                        /* nach eigenem Scan: Albenliste nachziehen, wenn MPD und Volumio fertig sind */
-var ALBUMS_VERSION = 7;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre, 6: Alben mit Jahr, 7: mit Änderungsdatum */
+var ALBUMS_VERSION = 8;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre, 6: Alben mit Jahr, 7: mit Änderungsdatum, 8: mit vollem Datum */
 var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album, Genre des Albums], …] */
 
 function albumsEnsure(cb) {
@@ -783,9 +783,12 @@ function doDiscover(query, cb) {
   });
 }
 /* ---------- Begrüßung ---------- */
-/* GET /welcome?day=2026-10-09 (Datum beim Hörer) -> {ok, day: {dir, al, ar, y, last}, recent: [{ti, ar, u, y, last}], fresh: [{dir, al, ar, y, m}]}.
+/* GET /welcome?day=2026-10-09 (Datum beim Hörer) -> {ok, day: {dir, al, ar, y, last}, recent: [{ti, ar, u, y, last}], fresh: [{dir, al, ar, y, m}],
+   birthdays: {today, week, month: [{dir, al, ar, y, date, years, mark}]}, dates: {albums, dated, fetched, running}}.
    Das Album des Tages bleibt den ganzen Tag dasselbe, auch wenn es inzwischen lief (welcome.json) */
 var WELCOME_FILE = path.join(DATA_DIR, 'welcome.json');
+var releasedates = require('./releasedates.js');          /* Erscheinungsdaten (Date-Tag, sonst MusicBrainz) für die Geburtstage */
+var releaseDates = new releasedates.Collector({file: path.join(DATA_DIR, 'releasedates.jsonl'), list: function(){ return albumIdx && albumIdx.list; }});
 var welcomeDay = null;
 function doWelcome(query, cb) {
   var day = /^\d{4}-\d\d-\d\d$/.test(query.day || '') ? query.day : new Date().toISOString().slice(0, 10);
@@ -804,7 +807,8 @@ function doWelcome(query, cb) {
     }
     var recent = plays.recentAlbums(pl, 8);
     recent.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; var y = yearOf({u: it.u, al: it.ti, ar: it.ar}); if (y) it.y = y; });
-    cb(200, {ok: true, day: pick, recent: recent, fresh: albums.freshAlbums(list, now, 8)});
+    cb(200, {ok: true, day: pick, recent: recent, fresh: albums.freshAlbums(list, now, 8),
+             birthdays: releasedates.birthdays(list, function(a){ return releaseDates.dateOf(a); }, day), dates: releaseDates.status()});
   });
 }
 
@@ -1243,6 +1247,7 @@ if (require.main === module) {
   server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
   if (process.env.HISTORY !== '0' && appConfig().HISTORY !== false) { recording = true; watchPlayer(); lfm.flush(); }
   setTimeout(function(){ albumsEnsure(); }, 90000);       /* Albenliste fürs Zufallsalbum vorbereiten */
+  if (process.env.RELEASEDATES !== '0' && appConfig().RELEASEDATES !== false) releaseDates.start();   /* Geburtstage: MusicBrainz */
   if (process.env.MOODTAGS !== '0' && appConfig().MOODTAGS !== false) {
     moodCollector.start();
     setInterval(function(){ albumsEnsure(); }, 3600000);  /* Titelliste aktuell halten (liest nur neu, wenn MPD sich geändert hat) */

@@ -14,10 +14,6 @@ function welcomeGreeting() {
   var h = new Date().getHours();
   return T(h < 5 ? 'welcome.night' : h < 11 ? 'welcome.morning' : h < 17 ? 'welcome.day' : h < 23 ? 'welcome.evening' : 'welcome.night');
 }
-function welcomeToday() {
-  var d = new Date();
-  return d.getFullYear() + '-' + histTwo(d.getMonth() + 1) + '-' + histTwo(d.getDate());
-}
 
 function welcomeAlbumOpen(it, art) {
   openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.al, uri: 'music-library/' + it.dir, albumart: art});
@@ -70,6 +66,8 @@ function welcomeRender(r) {
     box.appendChild(browseHeading(T('welcome.dayAlbum')));
     box.appendChild(welcomeDay(r.day));
   }
+  var bday = histEl('div', 'dSec');                 /* Geburtstage: heute und diese Woche, sonst dieser Monat */
+  if (bdayRows(bday, r.birthdays, ['today', 'week']) || bdayRows(bday, r.birthdays, ['month'])) box.appendChild(bday);
   var rows = [];
   if (r.recent.length) rows.push(welcomeRow(T('welcome.recent'), r.recent, function(it){ return welcomeYear(discoverTile('album', it), it.y); }));
   if (r.fresh.length) rows.push(welcomeRow(T('welcome.fresh'), r.fresh, function(it){ return welcomeYear(discoverShelfTile('album', 'never', it), it.y); }));
@@ -97,7 +95,7 @@ function openWelcome(auto) {
   var seq = ++welcomeSeq;
   document.getElementById('welcomeTitle').textContent = welcomeGreeting();
   if (!auto) { closeAllOverlays(); welcomeBody.textContent = ''; welcomeBody.appendChild(browseNote(T('browse.loading'))); overlayWelcome.classList.add('on'); }
-  tagGetJson('/welcome?day=' + welcomeToday()).then(function(r){
+  tagGetJson('/welcome?day=' + discoverToday()).then(function(r){
     if (seq !== welcomeSeq) return;
     if (!r || !r.ok || !(r.day || r.recent.length || r.fresh.length)) {
       if (!auto) { welcomeBody.textContent = ''; welcomeBody.appendChild(browseNote(T(r && r.building ? 'disc.building' : 'hist.offline'))); }

@@ -182,6 +182,16 @@ Es kommt höchstens alle 30 Minuten von selbst und nicht in der Bühnenansicht; 
 für dieses Gerät ab, im Menü unter „Begrüßung“ ist es jederzeit erreichbar. Nach dem Update liest der Tag-Dienst die
 Albenliste einmal neu, bis dahin fehlt „Neu in der Sammlung“.
 
+**Geburtstage:** Alben, die heute, in dieser Woche (Montag bis Sonntag) oder in diesem Monat Erscheinungstag haben. Die
+Begrüßung zeigt heute und diese Woche (sonst den Monat), Suchen & Entdecken im Reiter Alben alle drei, dazu „Zuletzt
+gehört“ und „Neu in der Sammlung“. Runde Geburtstage (10, 20, 30 … Jahre) tragen die Jahre als Abzeichen, Jubiläen
+(25, 50, 75 Jahre) zusätzlich einen goldenen Rand; sie stehen vorn. Das Datum kommt aus einem vollständigen Date-Tag
+(JJJJ-MM-TT, passend zum Jahr des Albums); fehlt es, schlägt der Tag-Dienst es einmal bei MusicBrainz nach (erstes
+Erscheinen der Release-Group, eine Anfrage je 1,5 Sekunden, Sampler ausgenommen) und merkt es sich in
+`/data/xplorio/data/releasedates.jsonl`; nicht Gefundenes fragt er nach 90 Tagen erneut. Bei einer großen Sammlung dauert
+das beim ersten Mal einige Stunden, solange zeigt Entdecken den Stand. Ausschalten: `RELEASEDATES: false` in
+`web/config.local.js`, dann den Tag-Dienst neu starten.
+
 ### Verlauf und Statistik
 Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag, Top-8-Genres; ein Genre antippen öffnet seine Alben) und **Rückblick**

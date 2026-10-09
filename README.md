@@ -99,7 +99,8 @@ Fortschritt der Stimmungs-Tags.
 </p>
 
 ### Weiteres
-- Begrüßung beim Öffnen: Album des Tages, zuletzt gehörte und neue Alben, Zufallsmix.
+- Begrüßung beim Öffnen: Album des Tages, Album-Geburtstage (runde und Jubiläen hervorgehoben), zuletzt gehörte und neue
+  Alben, Zufallsmix; Geburtstage, zuletzt gehört und neu auch unter Entdecken.
 - Menü hinter dem Zahnrad oben rechts: Begrüßung, Verlauf und Statistik, Bibliotheks-Check, Bibliothek aktualisieren und die
   originale Volumio-Oberfläche (Durchsuchen, Warteschlange, Einstellungen, Plugins); unten Logo, eingespielter Stand und Lizenz.
 - Hell und dunkel, nach der Einstellung des Geräts oder fest eingestellt.

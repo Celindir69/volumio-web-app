@@ -797,6 +797,13 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .dSub { font-size:calc(2.6 * var(--vw)); opacity:.45; margin-top:calc(.4 * var(--vw)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dTile .sCover.hRound, .dBig.hRound { border-radius:50%; }
 
+/* Geburtstage (discover.js): Abzeichen mit den Jahren bei runden Geburtstagen, Jubiläen zusätzlich mit goldenem Rand */
+.dRound, .dJubilee { position:relative; }
+.dBadge { position:absolute; top:calc(1.5 * var(--vw)); left:calc(1.5 * var(--vw)); padding:2px calc(2 * var(--vw));
+  border-radius:999px; font-size:calc(2.6 * var(--vw)); font-weight:700; background:rgba(0,0,0,.62); color:#fff; }
+.dJubilee .dBadge { background:var(--gold); color:var(--ink); }
+.dJubilee .sCover { box-shadow:0 0 0 3px var(--gold); }
+
 /* Begrüßung (welcome.js): Karte in der Mitte über abgedunkeltem Hintergrund (Tipp darauf schließt); im Querformat mit
    breitem Rand und Album des Tages neben seinen Angaben. Darin Album des Tages, Reihen, Zufallsmix und Schalter */
 #overlayWelcome { position:fixed; inset:0; z-index:15; display:flex; align-items:center; justify-content:center;
@@ -807,6 +814,7 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
   -webkit-backdrop-filter:blur(30px); backdrop-filter:blur(30px); border-radius:calc(4 * var(--vw));
   box-shadow:0 20px 60px rgba(0,0,0,.45); transform:scale(.96); transition:transform .3s cubic-bezier(.4,0,.2,1); }
 #overlayWelcome.on .wCard { transform:none; }
+.wCard .dRow.fit { justify-content:flex-start; }   /* wenige Kacheln: links statt über die breite Karte verteilt */
 @media (orientation:landscape) {
   #overlayWelcome { padding:8vh 12vw; }
   .wCard { --vw:min(1vw, 6px); max-width:1100px; border-radius:20px; }

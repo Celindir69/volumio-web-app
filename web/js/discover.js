@@ -11,7 +11,7 @@ var DISCOVER_KIND = {
   albums:  {kind: 'album',  ago: 'disc.ago.album'},
   songs:   {kind: 'track',  ago: 'disc.ago.track'}
 };
-var DISCOVER_SHELVES = ['random', 'gems', 'ago', 'forgotten', 'never', 'oldfav'];   /* Reihenfolge auf der Seite */
+var DISCOVER_SHELVES = ['random', 'bday', 'recent', 'fresh', 'gems', 'ago', 'forgotten', 'never', 'oldfav'];   /* Reihenfolge auf der Seite; bday, recent, fresh nur bei Alben */
 
 function discoverDate(t) { return langDate(t * 1000); }
 function discoverCat() { return DISCOVER_KIND[searchCat] || DISCOVER_KIND.albums; }
@@ -39,7 +39,65 @@ function discoverShow() {
 
   discoverLoad(seq, cat, secs, false);
   discoverGems(seq, cat, secs.gems);
+  if (cat.kind === 'album') discoverAlbumRows(seq, secs);
   return true;
+}
+
+/* Datum beim Hörer, 'JJJJ-MM-TT' (Album des Tages, Geburtstage) */
+function discoverToday() {
+  var d = new Date();
+  return d.getFullYear() + '-' + histTwo(d.getMonth() + 1) + '-' + histTwo(d.getDate());
+}
+
+/* Alben-Reiter: Geburtstage, zuletzt gehört, neu in der Sammlung (Tag-Dienst GET /welcome, wie die Begrüßung) */
+function discoverAlbumRows(seq, secs) {
+  tagGetJson('/welcome?day=' + discoverToday()).then(function(r){
+    if (seq !== discoverSeq || !r || !r.ok) return;
+    bdayRows(secs.bday, r.birthdays, ['today', 'week', 'month'], r.dates);
+    if (r.recent.length) discoverRow(secs.recent, T('disc.shelf.recent'), r.recent.map(function(it){ return discoverTile('album', it); }));
+    if (r.fresh.length) discoverRow(secs.fresh, T('disc.shelf.fresh'), r.fresh.map(function(it){ return discoverShelfTile('album', 'never', it); }));
+  }).catch(function(){});
+}
+function discoverRow(sec, title, tiles) {
+  discoverClear(sec);
+  sec.appendChild(browseHeading(title));
+  var row = histEl('div', 'dRow');
+  tiles.forEach(function(t){ row.appendChild(t); });
+  sec.appendChild(row);
+  discoverFit(row);
+}
+
+/* ---------- Geburtstage der Alben ---------- */
+/* b: {today, week, month} vom Tag-Dienst; which: welche Reihen; dates: Stand der Erscheinungsdaten (Hinweis, solange gesammelt wird).
+   Runde Geburtstage (10, 20 … Jahre) und Jubiläen (25, 50, 75) tragen ein Abzeichen, Jubiläen dazu einen goldenen Rand. */
+function bdayRows(sec, b, which, dates) {
+  discoverClear(sec);
+  var any = false;
+  which.forEach(function(k){
+    var items = (b && b[k]) || [];
+    if (!items.length) return;
+    any = true;
+    var title = k === 'month' ? T('bday.month', {m: langMonths('long')[new Date().getMonth()].toUpperCase()}) : T('bday.' + k);
+    var s = histEl('div', 'dSec');
+    discoverRow(s, title, items.map(bdayTile));
+    sec.appendChild(s);
+  });
+  if (!any && dates && dates.running && dates.dated < dates.albums / 2) {
+    sec.appendChild(browseHeading(T('bday.title')));
+    sec.appendChild(browseNote(T('bday.collecting', {n: dates.dated, total: dates.albums})));
+  }
+  return any;
+}
+function bdayTile(it) {
+  var tile = discoverShelfTile('album', 'never', it);
+  var p = it.date.split('-');
+  var date = langDate(new Date(+p[0], +p[1] - 1, +p[2]));
+  tile.appendChild(histEl('div', 'dSub', it.mark ? date : date + ' · ' + T('bday.years', {n: it.years})));
+  if (it.mark) {
+    tile.classList.add(it.mark === 'jubilee' ? 'dJubilee' : 'dRound');
+    tile.appendChild(histEl('div', 'dBadge', T('bday.years', {n: it.years})));
+  }
+  return tile;
 }
 
 /* Versteckte Perlen (Tag-Dienst GET /gems): eigene Reihe mit Würfel; ohne Geschmack (keine Bewertungen, kein Verlauf) leer */
