@@ -221,6 +221,8 @@ If the app is set to a different language than Volumio via `LANGUAGE` or `?lang=
 
 The source is shown below the text. There is no fallback for contributors.
 
+For the current track the app looks for a text of its own in the same order (Last.fm `track.getInfo`, then a Wikipedia article whose name is the song name, which describes itself as a song or single and names the artist). Additions such as "(Remastered 2011)" are ignored for this. Only if something is found does a "Track" tab appear after "Album". The browser remembers the result per track, including "nothing found" (the last 400).
+
 ### Lyrics Offset
 
 If synchronized lyrics consistently appear too early or too late (for example, because a different version of the track is being played), the "−" and "+" controls next to the "Lyrics" heading (stage view: round buttons at the top right) shift the lyrics by 0.5 seconds at a time.

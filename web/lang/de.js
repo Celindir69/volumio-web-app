@@ -224,6 +224,7 @@ langRegister('de', 'Deutsch', {
   'info.similar.searching': 'Suche ähnliche Künstler…',
   'info.similar.searchingAt': 'Suche bei {services}…',
   'info.tab.album': 'Album',
+  'info.tab.track': 'Titel',
   'info.tab.artist': 'Künstler',
   'info.tab.collection': 'In Sammlung',
   'info.tab.credits': 'Mitwirkende',

@@ -19,7 +19,31 @@ paintTime();
 }
 
 /* ---------- Info ---------- */
+/* Reiter "Titel" (Text zum einzelnen Lied): nur wenn etwas gefunden wurde, als zweiter Reiter (der erste bleibt
+   Album bzw. beim Radio Künstler, damit sich der Startreiter nicht je nach Fund ändert) */
+var trackInfo = null;            /* {key, item} des laufenden Titels */
+function withTrackInfo(list) {
+  if (!trackInfo || !trackInfo.item || !list.length) return list;
+  return list.slice(0, 1).concat([trackInfo.item], list.slice(1));
+}
+function setTrackInfo(key, title, data) {
+  var cur = infoItems[infoIdx];
+  var item = data ? {title: title, label: T('info.tab.track'), data: data, track: true} : null;
+  trackInfo = {key: key, item: item};
+  var at = -1;
+  infoItems.forEach(function(it, i){ if (it.track) at = i; });
+  if (!infoItems.length || (at < 0 && !item)) return;  /* Album/Künstler noch nicht da: kommt mit showInfo */
+  if (at >= 0) infoItems.splice(at, 1);
+  if (item) infoItems.splice(1, 0, item);
+  var idx = infoItems.indexOf(cur);                    /* auf dem gleichen Reiter bleiben */
+  infoIdx = idx >= 0 ? idx : 0;
+  btnInfo.className = 'actBtn' + (infoItems.length ? ' has-content' : '');
+  buildInfoTabs();
+  if (idx < 0) renderInfo(false);                      /* der alte Titel-Reiter war offen */
+}
+
 function showInfo(list) {
+  list = withTrackInfo(list);
   infoItems = list.filter(function(i){ return i && (i.data || i.always || i.lazy); });
   infoIdx = 0;
   btnInfo.className = 'actBtn' + (infoItems.length ? ' has-content' : '');
@@ -98,7 +122,7 @@ function renderInfo(dir) {
 
 if (!it.data || it.data.kind === 'story') {
   var img = document.createElement('img');
-  if (it.title === curAlbum) {
+  if (it.title === curAlbum || it.track) {
     img.src = lastArt || tinyart(curArtist, curAlbum);
     img.className = 'infoImg album';             /* im Querformat ausgeblendet: das Cover ist dort ohnehin zu sehen */
   } else {

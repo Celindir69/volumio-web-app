@@ -22,7 +22,8 @@ Lautstärke und die üblichen Knöpfe. Die Hintergrundfarbe und der Akzent komme
 (lrclib.net); passt der Text nicht genau zur Aufnahme, verschieben „−“ und „+“ ihn in Schritten von 0,5 s, und der Wert
 gilt dann für diesen Titel auf allen Geräten. Die Info-Seite zeigt Album, Künstler, Mitwirkende und was von diesem
 Künstler in der Sammlung liegt. Liefert Volumio keinen Album- oder Künstlertext (Volumio 4 nur mit Abo), holt die App
-ihn bei Last.fm bzw. Wikipedia.
+ihn bei Last.fm bzw. Wikipedia. Gibt es dort einen Text zum laufenden Titel (meist bei Singles), erscheint zusätzlich
+ein Reiter „Titel“.
 
 <p>
   <img src="docs/bilder/wiedergabe.jpg" width="200" alt="Wiedergabe">

@@ -223,6 +223,25 @@ function askOwn(payload) {                     /* Texte selbst holen (infotext.j
     .catch(function(){ return null; });
 }
 
+/* Text zum einzelnen Titel (infotext.js); Ergebnis je Titel gemerkt, auch "nichts gefunden" (localStorage) */
+var TRACKINFO_MAX = 400;
+function trackInfoCache() {
+  try { return JSON.parse(localStorage.getItem('trackInfo') || '{}'); } catch (e) { return {}; }
+}
+function askTrack(artist, title) {
+  if (typeof infoTrack !== 'function' || !artist || !title) return Promise.resolve(null);
+  var k = LANG + '|' + artist.toLowerCase() + '|' + title.toLowerCase(), c = trackInfoCache();
+  if (k in c) return Promise.resolve(c[k] ? {kind: 'story', value: c[k]} : null);
+  return withTimeout(infoTrack(fetch.bind(window), LASTFM_KEY, artist, title, LANG), 15000).then(function(res){
+    c = trackInfoCache();
+    c[k] = res ? res.value : 0;
+    var keys = Object.keys(c);                                 /* älteste zuerst weg (Einfügereihenfolge) */
+    keys.slice(0, Math.max(0, keys.length - TRACKINFO_MAX)).forEach(function(x){ delete c[x]; });
+    try { localStorage.setItem('trackInfo', JSON.stringify(c)); } catch (e) {}
+    return res;
+  }, function(){ return null; });                              /* Zeitüberschreitung: nicht merken, nächstes Mal neu */
+}
+
 function ask(payload) {
   var own = /^story/.test(payload.mode) && typeof infoFallback === 'function';
   if (own && volumioLang && volumioLang !== LANG)      /* Volumio liefert eine andere Sprache: zuerst selbst holen */
