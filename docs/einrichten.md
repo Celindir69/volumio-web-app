@@ -216,7 +216,8 @@ dabei: Titel mit „mag ich nicht“, Alben, deren Titel überwiegend „mag ich
 Künstler mit Herz und Favoriten. ↻ zieht neu. Ohne Bewertungen zählt nur der Verlauf; gibt es auch keinen,
 fehlt die Reihe.
 
-**Mehr entdecken:** Unten auf der Künstlerseite (eigene Sammlung) führen Knöpfe weiter: ähnliche Künstler aus der
+**Entdecken auf der Künstlerseite:** Die Künstlerseite (eigene Sammlung) hat unter „Alle abspielen“ zwei Reiter: „Alben &
+Titel“ und „Entdecken“ (der zuletzt gewählte bleibt beim Zurück offen). Im Reiter „Entdecken“ führen Knöpfe weiter: ähnliche Künstler aus der
 Sammlung (Last.fm), die Stimmungen und Stile, die mindestens ein Fünftel seiner eingeordneten Titel tragen, seine mittlere
 Energie und die Jahrzehnte seiner Alben. Jeder Knopf öffnet wie beim Entdecken den Künstler bzw. die passenden Alben; der
 bisherige Weg zählt dabei nicht als Filter. Der Würfel vor den ähnlichen Künstlern startet einen Zufallsmix, in dem
