@@ -24,6 +24,7 @@ function discoverShow() {
   while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
   var box = histEl('div', 'dBox'), secs = {};
   DISCOVER_SHELVES.forEach(function(id){ secs[id] = histEl('div', 'dSec'); box.appendChild(secs[id]); });
+  box.appendChild(discoverChips(seq));
   searchResults.appendChild(box);
 
   tagGetJson('/plays?view=ago&kind=' + cat.kind + histTz()).then(function(r){
@@ -57,6 +58,54 @@ function discoverLoad(seq, cat, secs, onlyRandom) {
       discoverShelf(secs[sh.id], sh, cat, secs);
     });
   }).catch(function(){});
+}
+
+/* Auswahlknöpfe unter den Reihen: Stimmung, Energie, Stil (je ein fertiger Stimmungs-Mix, moodmix.js) und Jahrzehnt (Alben, genre.js) */
+var DISCOVER_MOODS = [['relaxed'], ['dreamy'], ['melancholic'], ['dark'], ['happy'], ['intense'], ['epic']];   /* Namen wie im Stimmungs-Mix */
+var DISCOVER_ENERGY = [[1, 2, 'disc.energy.low'], [3, 3, 'disc.energy.mid'], [4, 5, 'disc.energy.high']];
+var DISCOVER_STYLES = [
+  ['Acoustic', ['acoustic', 'folk', 'singer-songwriter']],
+  ['Ambient', ['ambient', 'dark ambient', 'atmospheric']],
+  ['Electronic', ['electronic', 'downtempo', 'trip-hop', 'house', 'deep house', 'techno', 'minimal', 'trance', 'breakbeat', 'drum and bass', 'dubstep']],
+  ['Funky', ['funky', 'funk', 'groovy', 'disco']],
+  ['Soulful', ['soul', 'neo-soul', 'r&b']],
+  ['Experimental', ['experimental', 'avant-garde', 'noise', 'free jazz']]
+];
+function discoverChips(seq) {
+  var wrap = histEl('div', 'dChipBox');
+  function group(title) {
+    var sec = histEl('div', 'dSec');
+    sec.appendChild(browseHeading(title));
+    var chips = histEl('div', 'mxChips dChips');
+    sec.appendChild(chips);
+    wrap.appendChild(sec);
+    return chips;
+  }
+  function chip(box, label, onClick) {
+    var c = histEl('div', 'mxChip', label);
+    c.addEventListener('click', onClick);
+    box.appendChild(c);
+  }
+  if (typeof openMoodMixWith === 'function') {
+    var g = group(T('disc.chips.mood'));
+    DISCOVER_MOODS.forEach(function(m){
+      chip(g, mixName(m[0]), function(){ openMoodMixWith({moods: m}); });
+    });
+    g = group(T('disc.chips.energy'));
+    DISCOVER_ENERGY.forEach(function(e){ chip(g, T(e[2]), function(){ openMoodMixWith({emin: e[0], emax: e[1]}); }); });
+    g = group(T('disc.chips.style'));
+    DISCOVER_STYLES.forEach(function(s){ chip(g, s[0], function(){ openMoodMixWith({styles: s[1]}); }); });
+  }
+  var dec = group(T('disc.chips.decade'));
+  dec.parentNode.style.display = 'none';
+  tagGetJson('/decades').then(function(r){
+    if (seq !== discoverSeq || !r || !r.ok || !r.decades.length) return;
+    r.decades.forEach(function(d){
+      chip(dec, T('disc.decade', {d: d.d}), function(){ openBrowse({kind: 'decade', decade: d.d}); });
+    });
+    dec.parentNode.style.display = '';
+  }).catch(function(){});
+  return wrap;
 }
 
 function discoverClear(el) { while (el.firstChild) el.removeChild(el.firstChild); }

@@ -79,7 +79,11 @@ function lengthOk(it, c) {
 
 function candidates(all, c, level) {
   var out = [];
-  all.forEach(function(x){ var s = genreOk(x.it, c) && lengthOk(x.it, c) && fit(x.r, c, level); if (s) out.push({it: x.it, r: x.r, s: s}); });
+  all.forEach(function(x){
+    if (c.skip && c.skip(x.it)) return;                  /* z. B. „mag ich nicht“ */
+    var s = genreOk(x.it, c) && lengthOk(x.it, c) && fit(x.r, c, level);
+    if (s) out.push({it: x.it, r: x.r, s: s});
+  });
   return out;
 }
 

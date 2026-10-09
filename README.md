@@ -49,12 +49,12 @@ der Anlage, ohne Bedienung.
 Die Suche findet Künstler, Alben, Titel und Genres (je Genre die Stilrichtungen aus der Audio-Analyse und alle Alben) in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
 eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify (bisher ungetestet)), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
 eingegeben ist, zeigt sie passend zum Reiter Reihen zum Entdecken: zufällige Entdeckungen, vor einem Jahr gehört, lange
-nicht gehört, noch nie gehört und früher oft gehört. Neben „Alle abspielen“ startet ein Würfel einen Zufallsmix aus 25 Titeln.
+nicht gehört, noch nie gehört und früher oft gehört. Darunter führen Knöpfe nach Stimmung, Energie, Stil und Jahrzehnt weiter. Neben „Alle abspielen“ startet ein Würfel einen Zufallsmix aus 25 Titeln.
 Bewertungen: Herz für Künstler, ein bis fünf Sterne für Alben, Daumen hoch oder runter für Titel (Daumen hoch ist der Volumio-Favorit). Bei Webradio holt die App ein Cover
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 
 ### Stimmungs-Mix
-Eigener erster Reiter neben Playlisten und Radio (Playlisten-Taste). Stimmung wählen (mehrere möglich), Energie von ruhig bis kraftvoll eingrenzen, auf Genres beschränken und unter „Feinabstimmung“ Stile, Länge
+Eigener erster Reiter neben Playlisten und Radio (Playlisten-Taste). Stimmung wählen (mehrere möglich), Energie von ruhig bis energiegeladen eingrenzen, auf Genres beschränken und unter „Feinabstimmung“ Stile, Länge
 und Entdeckungsgrad festlegen: Favoriten, ausgewogen oder versteckte Perlen, je nach eigenem Verlauf. „Mix erstellen“
 zeigt erst eine Vorschau mit der Begründung je Titel; einzelne Titel lassen sich herausnehmen oder neu mischen. Erst
 „Mix abspielen“ ersetzt die Warteschlange. Grundlage sind Last.fm-Tags je Titel, die der Tag-Dienst sammelt, solange

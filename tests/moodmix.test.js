@@ -115,4 +115,12 @@ t('Titel nur mit Künstler-Tags zählen schwächer', function(){
   assert.ok(mm.fit({mood: ['dark'], energy: 5, style: [], src: 'artist'}, c, 0) < mm.fit({mood: ['dark'], energy: 5, style: [], src: 'track'}, c, 0));
 });
 
+t('„mag ich nicht“ (skip) kommt nie in den Mix', function(){
+  var c = mm.parse({moods: 'relaxed', n: 50});
+  c.skip = function(it){ return it.ar === 'A'; };
+  var m = mm.build(coll, {}, c, rnd);
+  assert.ok(m.tracks.length > 0);
+  assert.ok(m.tracks.every(function(x){ return x.ar !== 'A'; }));
+});
+
 console.log(n + ' Prüfungen bestanden');

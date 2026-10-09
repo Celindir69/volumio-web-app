@@ -52,14 +52,14 @@ automatically cycles through the available pages. Switch using the control at th
 Search finds artists, albums, tracks, and genres (per genre the styles from the audio analysis and all albums) in the local library and on the streaming services configured in Volumio
 (TIDAL, Qobuz, HIGHRESAUDIO, Spotify), each in separate sections with checkboxes for showing or hiding them. As long as
 nothing has been entered, the selected tab shows rows to discover: random discoveries, played a year ago, not heard in a
-while, never heard, and once played a lot. Next to "Play all", a dice starts a random mix of 25 tracks.
+while, never heard, and once played a lot. Below them, buttons lead on by mood, energy, style and decade. Next to "Play all", a dice starts a random mix of 25 tracks.
 Ratings: a heart for artists, one to five stars for albums, thumbs up or down for tracks (thumbs up is the Volumio favourite). For web radio, the app retrieves cover art for the currently playing
 track and displays station logos in the station list.
 
 ### Mood Mix
 
 A dedicated first tab next to Playlists and Radio (playlist button). Select one or more moods, narrow down the energy level
-from calm to powerful, limit it to genres, and under "Fine Tuning" choose styles, mix length, and discovery level: favorites, balanced, or
+from calm to high energy, limit it to genres, and under "Fine Tuning" choose styles, mix length, and discovery level: favorites, balanced, or
 hidden gems, based on your listening history. "Create Mix" first displays a preview with the reason for each track;
 individual tracks can be removed or the mix can be reshuffled. Only "Play Mix" replaces the queue.
 

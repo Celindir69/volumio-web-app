@@ -102,24 +102,45 @@ function browseGenre(e, seq) {
     if (list.length && subs.length && !e.sub && !e.all) return genreSubTiles(e, list, subs);
     if (e.sub) list = list.filter(function(a){ return (a.st || []).indexOf(e.sub) >= 0; });
     if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.noAlbums'))); return; }
-    browseBody.appendChild(genrePlayAllHead(list));
-    browseBody.appendChild(browseHeading(T('disc.albums', {n: list.length})));
-    list.forEach(function(a){
-      var uri = 'music-library/' + a.dir, art = histAlbumArt(a.ar, a.al, a.dir);
-      var row = histEl('div', 'sRow' + (a.al === curAlbum ? ' cur' : ''));
-      row.appendChild(histImg(art));
-      var meta = histEl('div', 'sMeta');
-      meta.appendChild(histEl('div', 'sTitle', a.al));
-      meta.appendChild(histEl('div', 'sSub', histArtistName(a.ar)));
-      row.appendChild(meta);
-      var pen = tagAlbumButton({uri: uri, title: a.al, service: 'mpd'});
-      if (pen) row.appendChild(pen);
-      row.addEventListener('click', function(){
-        browseStack.push({kind: 'album', artist: a.ar === 'Verschiedene' ? '' : a.ar, album: a.al, uri: uri, albumart: art});
-        browseRender();
-      });
-      browseBody.appendChild(row);
+    genreAlbumPage(list);
+  }).catch(function(){
+    if (seq !== browseSeq) return;
+    while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
+    browseBody.appendChild(browseNote(T('genre.offline')));
+  });
+}
+
+/* Alben aus der Albenliste des Tag-Dienstes ({dir, al, ar, y}) mit „Alle abspielen“ und Würfel darüber;
+   mit Jahr (Jahrzehnt-Seite) steht es klein hinter dem Künstler */
+function genreAlbumPage(list) {
+  browseBody.appendChild(genrePlayAllHead(list));
+  browseBody.appendChild(browseHeading(T('disc.albums', {n: list.length})));
+  list.forEach(function(a){
+    var uri = 'music-library/' + a.dir, art = histAlbumArt(a.ar, a.al, a.dir);
+    var row = histEl('div', 'sRow' + (a.al === curAlbum ? ' cur' : ''));
+    row.appendChild(histImg(art));
+    var meta = histEl('div', 'sMeta');
+    meta.appendChild(histEl('div', 'sTitle', a.al));
+    meta.appendChild(histEl('div', 'sSub', histArtistName(a.ar) + (a.y ? '  ·  ' + a.y : '')));
+    row.appendChild(meta);
+    var pen = tagAlbumButton({uri: uri, title: a.al, service: 'mpd'});
+    if (pen) row.appendChild(pen);
+    row.addEventListener('click', function(){
+      browseStack.push({kind: 'album', artist: a.ar === 'Verschiedene' ? '' : a.ar, album: a.al, uri: uri, albumart: art});
+      browseRender();
     });
+    browseBody.appendChild(row);
+  });
+}
+
+/* Jahrzehnt-Seite (browseStack-Eintrag {kind:'decade', decade: 1990}): Alben nach Jahr (Date-Tag) */
+function browseDecade(e, seq) {
+  tagGetJson('/decadealbums?d=' + e.decade).then(function(r){
+    if (seq !== browseSeq) return;
+    while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
+    var list = (r && r.albums) || [];
+    if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.noAlbums'))); return; }
+    genreAlbumPage(list);
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);

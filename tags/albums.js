@@ -7,23 +7,32 @@ var DAY = 86400;
 var DISC_RE = /^(cd|dis[ck]|disco|seite|side|vol(ume)?)[\s._-]*\d+\b/i;     /* Unterordner einer Mehrfach-CD */
 var RECENT_PICKS = 30;                                                     /* so viele zuletzt gezeigte nicht gleich wieder */
 
+/* Jahr aus dem Date-Tag ("1997", "1997-05-12", "05/1997"); 0 ohne oder unplausibel */
+function yearOf(d) {
+  var m = /(1[89]\d\d|20\d\d)/.exec(String(d || ''));
+  return m ? +m[1] : 0;
+}
+
 /* Ordner eines Titels; CD1/CD2-Unterordner zählen zum Album darüber */
 function albumDir(file) {
   var d = path.dirname(String(file || ''));
   return DISC_RE.test(path.basename(d)) ? path.dirname(d) : d;
 }
 
-/* songs wie libcheck.mpdWalk -> [{dir, al, ar, ge}]; ge: häufigstes Genre im Ordner (fehlt ohne Genre) */
+/* songs wie libcheck.mpdWalk -> [{dir, al, ar, ge, y}]; ge: häufigstes Genre im Ordner, y: häufigstes Jahr (Date-Tag);
+   beide fehlen, wenn kein Titel des Ordners eins hat */
 function fromSongs(songs) {
   var dirs = {}, order = [];
   songs.forEach(function(s){
     var d = albumDir(s.file);
-    if (!dirs[d]) { dirs[d] = {al: '', aa: '', artists: {}, genres: {}, n: 0}; order.push(d); }
+    if (!dirs[d]) { dirs[d] = {al: '', aa: '', artists: {}, genres: {}, years: {}, n: 0}; order.push(d); }
     var g = dirs[d];
     if (!g.al && s.album) g.al = s.album;
     if (!g.aa && s.albumartist) g.aa = s.albumartist;
     if (s.artist) g.artists[s.artist] = true;
     if (s.genre) g.genres[s.genre] = (g.genres[s.genre] || 0) + 1;
+    var y = yearOf(s.date);
+    if (y) g.years[y] = (g.years[y] || 0) + 1;
     g.n++;
   });
   return order.sort().map(function(d){
@@ -31,6 +40,8 @@ function fromSongs(songs) {
     var o = {dir: d, al: g.al || path.basename(d), ar: g.aa || (artists.length === 1 ? artists[0] : 'Verschiedene')};
     var ge = Object.keys(g.genres).sort(function(a, b){ return g.genres[b] - g.genres[a]; })[0];
     if (ge) o.ge = ge;
+    var y = Object.keys(g.years).sort(function(a, b){ return g.years[b] - g.years[a] || a - b; })[0];
+    if (y) o.y = +y;
     return o;
   });
 }
@@ -75,6 +86,27 @@ function genreAlbums(list, g) {
   return list.filter(function(a){ return a.ge && a.ge.toLowerCase() === g; })
     .map(function(a){ return {dir: a.dir, al: a.al, ar: a.ar}; })
     .sort(function(a, b){ return key(a).localeCompare(key(b)) || a.al.localeCompare(b.al); });
+}
+
+/* Jahrzehnte der Albenliste: [{d (z. B. 1990), n (Alben), dir, al, ar (Beispielalbum fürs Cover)}], nach Jahrzehnt */
+function decadeList(list) {
+  var by = {}, out = [];
+  list.forEach(function(a){
+    if (!a.y) return;
+    var d = a.y - a.y % 10, x = by[d];
+    if (!x) { x = by[d] = {d: d, n: 0, dir: a.dir, al: a.al, ar: a.ar}; out.push(x); }
+    x.n++;
+  });
+  return out.sort(function(a, b){ return a.d - b.d; });
+}
+
+/* Alben eines Jahrzehnts, nach Jahr, Künstler und Album */
+function decadeAlbums(list, d) {
+  d = parseInt(d, 10);
+  function key(a) { return a.ar.toLowerCase().replace(/^the\s+/, ''); }
+  return list.filter(function(a){ return a.y && a.y - a.y % 10 === d; })
+    .map(function(a){ return {dir: a.dir, al: a.al, ar: a.ar, y: a.y}; })
+    .sort(function(a, b){ return a.y - b.y || key(a).localeCompare(key(b)) || a.al.localeCompare(b.al); });
 }
 
 /* Verlauf -> wann zuletzt gelaufen: nach Ordner (lokal gespielt) und nach Album+Künstler (auch Last.fm) */
@@ -165,5 +197,5 @@ function pickTrack(tracks, last, now, picks, rnd) {
   return c && {ar: c.a[0], ti: c.a[1], f: c.a[2], d: c.a[3] || 0, al: c.a[4] || '', last: c.last};
 }
 
-module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, lastIndex: lastIndex, pick: pick, weight: weight,
+module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, decadeList: decadeList, decadeAlbums: decadeAlbums, yearOf: yearOf, lastIndex: lastIndex, pick: pick, weight: weight,
                   artists: artists, lastArtistIndex: lastArtistIndex, lastTrackIndex: lastTrackIndex, pickArtist: pickArtist, pickTrack: pickTrack};
