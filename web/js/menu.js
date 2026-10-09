@@ -30,6 +30,8 @@ function menuSvg(d, cls) {
 
 function menuRender() {
   while (menuBody.firstChild) menuBody.removeChild(menuBody.firstChild);
+  var listEl = document.createElement('div'); listEl.className = 'menuList';
+  menuBody.appendChild(listEl);
   MENU_ITEMS.forEach(function(it){
     if (it.needsTags && !menuTags) return;
     var row = document.createElement('div'); row.className = 'menuRow';
@@ -42,8 +44,35 @@ function menuRender() {
     if (!it.action) row.appendChild(menuSvg(MENU_CHEVRON, 'menuChev'));
     row.addEventListener('click', function(){ if (!row.classList.contains('busy')) it.open(); });
     if (it.id === 'update') libUpdWatch('menu', function(st){ sub.textContent = libUpdText(st); row.classList.toggle('busy', st === 'running'); });
-    menuBody.appendChild(row);
+    listEl.appendChild(row);
   });
+  menuBody.appendChild(menuAbout());
+}
+
+/* Unten im Menü: Logo, Name, Leitsatz; Stand (web/version.json, schreibt xplorio-deploy), Copyright, Lizenz */
+var MENU_REPO = 'https://github.com/Celindir69/xplorio';
+var menuVersion = null;          /* einmal geladen: {branch, commit, date} oder {} */
+function menuAbout() {
+  var box = document.createElement('div'); box.className = 'menuAbout';
+  var logo = document.createElement('img'); logo.className = 'menuLogo'; logo.src = 'web/icons/icon-180.png'; logo.alt = '';
+  var name = document.createElement('div'); name.className = 'menuName'; name.textContent = 'Xplorio';
+  var claim = document.createElement('div'); claim.className = 'menuClaim'; claim.textContent = T('about.claim');
+  var ver = document.createElement('div'); ver.className = 'menuFine';
+  var copy = document.createElement('div'); copy.className = 'menuFine'; copy.textContent = '© 2026 Celindir69';
+  var lic = document.createElement('a'); lic.className = 'menuFine menuLink'; lic.href = MENU_REPO + '/blob/main/LICENSE';
+  lic.target = '_blank'; lic.rel = 'noopener'; lic.textContent = T('about.license');
+  [logo, name, claim, ver, copy, lic].forEach(function(el){ box.appendChild(el); });
+  function show(v) {
+    var parts = [];
+    if (v.date) parts.push(langDate(Date.parse(v.date + 'T12:00:00')));
+    if (v.branch && v.branch !== 'main') parts.push(v.branch);
+    if (v.commit) parts.push(v.commit.slice(0, 7));
+    ver.textContent = parts.length ? T('about.version', {v: parts.join(' · ')}) : T('about.dev');
+  }
+  if (menuVersion) show(menuVersion);
+  else fetch('web/version.json?t=' + Date.now()).then(function(r){ return r.ok ? r.json() : {}; })
+    .catch(function(){ return {}; }).then(function(v){ menuVersion = v || {}; show(menuVersion); });
+  return box;
 }
 
 function openMenu() {
