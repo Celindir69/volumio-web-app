@@ -89,7 +89,7 @@ Edit tags for individual tracks, entire albums, or all tracks by an artist, with
 conversion, Undo, and cover art options (choose a file, search online, save embedded cover art as `folder.jpg`). The Library Check finds
 albums without cover art, missing or inconsistent album artists, artists with multiple spellings, inconsistent
 album names or years, and tracks without track numbers, and suggests one genre per album (Discogs top categories, from
-existing genre tags and the audio analysis); each entry opens the appropriate editor directly. It also shows the
+existing genre tags and the audio analysis); each entry opens the appropriate editor directly and then stays greyed out until the next check. It also shows the
 progress of the mood tags.
 
 <p>
