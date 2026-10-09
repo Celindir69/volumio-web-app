@@ -155,7 +155,9 @@ In the menu (gear at the top right) under "History and stats": **Recently Played
 
 Tapping plays the track or opens the album or artist.
 
-**Discover:** As long as nothing has been entered in the search field, it displays artists, albums, or tracks appropriate to the selected tab that were played around this date one year ago (otherwise 2, 3, etc. years ago), plus a **Random Artist**, **Random Album**, or **Random Track** (tap artist or album to open it, tap a track to play it, and tap the dice to select a new one). Items that have not been played for a long time or have never been played are preferred.
+**Discover:** As long as nothing has been entered in "Search & Discover", the page shows several swipeable rows of artists, albums, or tracks matching the selected tab: **Random Discoveries** (preferring music not played for a long time or never; the dice draws again), **Played a Year Ago** (around this date one year ago, otherwise 2, 3, etc. years ago), **Not Heard in a While** (more than six months ago), **Never Heard**, and **Once Played a Lot** (played often, but not in the last six months). Empty rows are hidden. Tap an artist or album to open it, tap a track to play it. All of this is based on the playback history (see above).
+
+**Random mix:** Next to "Play all" (artist page, genre lists), the dice starts 25 random tracks from that selection, never the same artist twice in a row.
 
 The Tag Service reads the album list from MPD and stores it in `/data/web-app/data/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
 

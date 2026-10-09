@@ -218,6 +218,9 @@ function withTimeout(p, ms) {
   });
 }
 
+/* Würfel (Zufallsreihe beim Entdecken, Zufallsmix neben „Alle abspielen“) */
+var DICE_SVG = '<svg viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm2.5 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM7.5 15a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm9 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>';
+
 function artUrl(a) {
   if (!a) return '';
   return (a.indexOf('http') === 0) ? a : (location.origin + a);

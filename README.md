@@ -43,11 +43,11 @@ der Anlage, ohne Bedienung.
   <img src="docs/bilder/kiosk.jpg" width="49%" alt="kioskTV.html">
 </p>
 
-### Suche und Entdecken
+### Suchen & Entdecken
 Die Suche findet Künstler, Alben, Titel und Genres (je Genre die Stilrichtungen aus der Audio-Analyse und alle Alben) in der eigenen Bibliothek und bei den Streamingdiensten, die in Volumio
 eingerichtet sind (TIDAL, Qobuz, HIGHRESAUDIO, Spotify (bisher ungetestet)), jeweils in eigenen Abschnitten mit Kästchen zum Ein- und Ausblenden. Solange nichts
-eingegeben ist, zeigt sie passend zum Reiter „Vor einem Jahr gehört“ (Künstler, Alben oder Titel, die um dieses Datum vor
-einem Jahr liefen) und einen Zufallskünstler, ein Zufallsalbum oder einen Zufallstitel, bevorzugt lange nicht oder nie Gehörtes. Bei Webradio holt die App ein Cover
+eingegeben ist, zeigt sie passend zum Reiter Reihen zum Entdecken: zufällige Entdeckungen, vor einem Jahr gehört, lange
+nicht gehört, noch nie gehört und früher oft gehört. Neben „Alle abspielen“ startet ein Würfel einen Zufallsmix aus 25 Titeln. Bei Webradio holt die App ein Cover
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 
 ### Stimmungs-Mix

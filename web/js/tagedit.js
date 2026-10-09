@@ -507,6 +507,11 @@ function tagSelect(list, value) {
 function tagGetJson(route) {
   return fetch(TAGS + route).then(function(r){ return r.json(); });
 }
+/* JSON an den Tag-Dienst (als text/plain: kein Vorab-Request des Browsers nötig) */
+function tagPostJson(route, body) {
+  return fetch(TAGS + route, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, body: JSON.stringify(body)})
+    .then(function(r){ return r.json(); });
+}
 
 /* Liste in Teilen nacheinander verarbeiten; fn(teil) -> Promise */
 function tagInChunks(list, size, fn) {

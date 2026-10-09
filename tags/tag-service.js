@@ -682,6 +682,43 @@ function doRandom(query, cb) {
   });
 }
 
+/* ---------- Entdecken und Zufallsmix (discover.js) ---------- */
+/* GET /discover?kind=artist|album|track -> {ok, shelves: [{id: random|forgotten|never|oldfav, items}]}
+   POST /randommix {artist} oder {dirs: [...]} -> {ok, items: [{f, ar, ti, al, d}]} (25 Titel, Würfel neben „Alle abspielen“) */
+var discover = require('./discover.js');
+var discStats = null;
+function discoverStats(pl) {
+  if (!discStats || discStats.n !== pl.length || discStats.first !== (pl[0] && pl[0].t)) discStats = {n: pl.length, first: pl[0] && pl[0].t, idx: discover.statIndex(pl)};
+  return discStats.idx;
+}
+function doDiscover(query, cb) {
+  var kind = query.kind === 'artist' || query.kind === 'track' ? query.kind : 'album';
+  albumsEnsure(function(list){
+    if (!list || !list.length) return cb(200, {ok: false, building: albumBuilding});
+    var ents = list;
+    if (kind === 'artist') {
+      if (!artistList || artistList.src !== list) artistList = {src: list, list: albums.artists(list)};
+      ents = artistList.list;
+    }
+    if (kind === 'track') ents = libTracksLoad() || [];
+    if (!ents.length) return cb(200, {ok: false, building: albumBuilding});
+    var now = Math.floor(Date.now() / 1000);
+    cb(200, {ok: true, shelves: discover.shelves(kind, ents, discoverStats(playStore.load()), now)});
+  });
+}
+function doRandomMix(body, cb) {
+  if (!body.artist && !(body.dirs && body.dirs.length)) return cb(400, {ok: false, error: 'artist oder dirs fehlt'});
+  albumsEnsure(function(list){
+    var tl = libTracksLoad();
+    if (!tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, items: []});
+    var n = Math.min(parseInt(body.n, 10) || 25, 100);
+    var items = discover.mix(discover.mixPool(tl, list, {artist: body.artist, dirs: [].concat(body.dirs || []).slice(0, 5000)}), n).map(function(t){
+      return {f: t[2], ar: t[0], ti: t[1], al: t[4] || '', d: t[3] || 0};
+    });
+    cb(200, {ok: true, items: items});
+  });
+}
+
 /* GET /plays/resolve?artist=…&title=…: lokale Datei zu einem Titel aus dem Verlauf (z. B. von Last.fm eingelesen) */
 function doResolve(query, cb) {
   var artist = String(query.artist || '').trim(), title = String(query.title || '').trim();
@@ -978,13 +1015,14 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodmix')  return doMoodmix(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/discover') return doDiscover(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays/resolve') return doResolve(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'POST' && route === '/essentia') return doEssentiaUpload(req, res);
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset', '/randommix'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -992,7 +1030,7 @@ var server = http.createServer(function(req, res){
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet, '/randommix': doRandomMix}[route];
     fn(body || {}, function(c, o){ send(res, c, o); });
   });
 });

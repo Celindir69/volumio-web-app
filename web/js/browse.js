@@ -217,6 +217,7 @@ function browseArtist(e, seq) {
       var lbl = document.createElement('div');
       lbl.className = 'bAlbum'; lbl.textContent = T('browse.playAll');
       head.appendChild(lbl);
+      head.appendChild(randomMixButton({artist: e.artist}));   /* 25 zufällige Titel des Künstlers (discover.js) */
       head.appendChild(tagArtistButton(e.artist));    /* Tags aller lokalen Titel des Künstlers bearbeiten */
       head.addEventListener('click', function(){
         browsePlay({uri:'artists://' + e.artist, service:'mpd', type:'folder', title:e.artist});

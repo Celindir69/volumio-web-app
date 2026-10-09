@@ -103,6 +103,7 @@ function genrePlayAllHead(list) {
   var lbl = histEl('div', 'sMeta');
   lbl.appendChild(histEl('div', 'sTitle bAlbum', T('browse.playAll')));
   head.appendChild(lbl);
+  head.appendChild(randomMixButton({dirs: list.map(function(a){ return a.dir; })}));   /* 25 zufällige Titel daraus (discover.js) */
   head.addEventListener('click', function(){
     var items = list.map(function(a){ return {uri: 'music-library/' + a.dir, service: 'mpd', type: 'folder', title: a.al, artist: a.ar}; });
     browseOrigin = null;
