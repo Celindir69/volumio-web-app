@@ -151,6 +151,10 @@ If a web radio station broadcasts "Artist - Title", the Tag Service searches iTu
 
 The radio list displays the station logos using the address provided by Volumio, otherwise by looking up the station name via radio-browser.info. The Tag Service stores both under `/data/xplorio/data/radio-covers/` and `/data/xplorio/data/stations/`.
 
+### Welcome screen
+
+When the page opens (only with the Tag Service), an overlay greets you by time of day: the **album of the day** (random, preferring albums not played for a long time or never; it stays the same all day) with "Play", **Recently played** (albums with at least two tracks played recently), **New in the collection** (albums whose files were added or changed in the last 180 days, by MPD's modification date) and a random mix. Tapping beside it closes it. It appears on its own at most every 30 minutes and not in the stage layout; "Show on opening" at the bottom turns it off for this device, and the menu entry "Welcome" opens it any time. After the update the Tag Service re-reads the album list once; until then "New in the collection" is missing.
+
 ### History and Statistics
 
 In the menu (gear at the top right) under "History and stats": **Recently Played** (by day), **Most Played** (tracks, albums, artists, or genres; 30 days, 12 months, or all time), **Statistics** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).

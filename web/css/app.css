@@ -790,6 +790,17 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .dSub { font-size:calc(2.6 * var(--vw)); opacity:.45; margin-top:calc(.4 * var(--vw)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dTile .sCover.hRound, .dBig.hRound { border-radius:50%; }
 
+/* Begrüßung (welcome.js): Album des Tages groß, darunter Reihen, Zufallsmix und Schalter */
+.wDay { margin-bottom:calc(5 * var(--vw)); }
+.wDay .dBig { width:56vw; height:56vw; max-width:260px; max-height:260px; }
+.wPlay { display:inline-flex; align-items:center; gap:calc(1.5 * var(--vw)); margin-top:calc(3 * var(--vw));
+  padding:calc(2 * var(--vw)) calc(5 * var(--vw)); border:0; border-radius:999px; cursor:pointer;
+  background:var(--fg); color:var(--ink); font:inherit; font-size:calc(3.4 * var(--vw)); font-weight:600; }
+.wPlay svg { width:1.2em; height:1.2em; fill:currentColor; }
+.wMix { display:flex; align-items:center; gap:calc(2.5 * var(--vw)); margin:calc(4 * var(--vw)) 0 calc(2 * var(--vw)); cursor:pointer; font-size:calc(3.4 * var(--vw)); }
+.wAuto { display:flex; align-items:center; gap:calc(2 * var(--vw)); margin:calc(4 * var(--vw)) 0 calc(6 * var(--vw)); font-size:calc(3 * var(--vw)); opacity:.6; cursor:pointer; }
+.wAuto input { width:1.1em; height:1.1em; accent-color:var(--fg); }
+
 /* Rückblick: Rubriken zum Aufklappen */
 .hFold { display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:calc(1.5 * var(--vw)) 0;
          border-bottom:1px solid rgba(var(--fg-rgb),.12); -webkit-user-select:none; user-select:none; }

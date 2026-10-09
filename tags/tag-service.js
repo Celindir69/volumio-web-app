@@ -514,7 +514,7 @@ var ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 var albumIdx = null, albumBuilding = false, albumChecked = 0, albumPicks = [], albumLast = null, albumGenre = null;
 var ALBUMS_CHECK_MS = 60000;                             /* so oft höchstens bei MPD nachfragen, ob sich die Datenbank geändert hat */
 var ALBUMS_AFTER_SCAN_MS = 90000;                        /* nach eigenem Scan: Albenliste nachziehen, wenn MPD und Volumio fertig sind */
-var ALBUMS_VERSION = 6;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre, 6: Alben mit Jahr */
+var ALBUMS_VERSION = 7;                                  /* 2: mit Genre, 3: dazu library-tracks.json, 4: mit Dauer und Album, 5: Titel mit Genre, 6: Alben mit Jahr, 7: mit Änderungsdatum */
 var TRACKS_FILE = path.join(DATA_DIR, 'library-tracks.json');   /* [[Künstler, Titel, Datei, Sekunden, Album, Genre des Albums], …] */
 
 function albumsEnsure(cb) {
@@ -782,6 +782,32 @@ function doDiscover(query, cb) {
     cb(200, {ok: true, shelves: discover.shelves(kind, ents, discoverStats(playStore.load()), now)});
   });
 }
+/* ---------- Begrüßung ---------- */
+/* GET /welcome?day=2026-10-09 (Datum beim Hörer) -> {ok, day: {dir, al, ar, y, last}, recent: [{ti, ar, u, y, last}], fresh: [{dir, al, ar, y, m}]}.
+   Das Album des Tages bleibt den ganzen Tag dasselbe, auch wenn es inzwischen lief (welcome.json) */
+var WELCOME_FILE = path.join(DATA_DIR, 'welcome.json');
+var welcomeDay = null;
+function doWelcome(query, cb) {
+  var day = /^\d{4}-\d\d-\d\d$/.test(query.day || '') ? query.day : new Date().toISOString().slice(0, 10);
+  albumsEnsure(function(list){
+    if (!list || !list.length) return cb(200, {ok: false, building: albumBuilding});
+    var pl = playStore.load(), now = Math.floor(Date.now() / 1000), yearOf = albums.yearIndex(list);
+    if (!welcomeDay) { try { welcomeDay = JSON.parse(fs.readFileSync(WELCOME_FILE, 'utf8')); } catch (e) { welcomeDay = {}; } }
+    var pick = null;
+    if (welcomeDay.day === day) list.some(function(a){ return a.dir === welcomeDay.dir && (pick = a); });
+    var last = albums.lastIndex(pl);
+    if (pick) pick = {dir: pick.dir, al: pick.al, ar: pick.ar, y: pick.y, last: last(pick)};
+    else {
+      pick = albums.dayAlbum(list, day, last, now);
+      welcomeDay = {day: day, dir: pick && pick.dir};
+      try { fs.writeFileSync(WELCOME_FILE, JSON.stringify(welcomeDay)); } catch (e) { /* dann eben neu gezogen */ }
+    }
+    var recent = plays.recentAlbums(pl, 8);
+    recent.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; var y = yearOf({u: it.u, al: it.ti, ar: it.ar}); if (y) it.y = y; });
+    cb(200, {ok: true, day: pick, recent: recent, fresh: albums.freshAlbums(list, now, 8)});
+  });
+}
+
 /* ---------- Versteckte Perlen (gems.js) ---------- */
 /* GET /gems?kind=artist|album|track -> {ok, items: [{…, why: {why: artist|like|tags, ar, mood, ge}}]} */
 var gems = require('./gems.js'), gemState = null, favState = {at: 0, map: {}, rev: 0, loading: false};
@@ -1192,6 +1218,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/artistprofile') return doArtistProfile(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/gems') return doGems(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/similar') return doSimilar(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/welcome') return doWelcome(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/discover') return doDiscover(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

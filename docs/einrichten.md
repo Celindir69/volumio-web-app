@@ -171,6 +171,15 @@ App und auf dem Kiosk-TV; ohne Titel oder ohne Treffer bleibt das Senderlogo. Di
 (Adresse aus Volumio, sonst über den Sendernamen von radio-browser.info). Beides speichert der Tag-Dienst unter
 `/data/xplorio/data/radio-covers/` und `/data/xplorio/data/stations/`.
 
+### Begrüßung
+Beim Öffnen der Seite (nur mit Tag-Dienst) erscheint ein Overlay mit Gruß nach Tageszeit: das **Album des Tages**
+(zufällig, bevorzugt lange nicht oder nie gehört; bleibt den ganzen Tag dasselbe) mit „Abspielen“, **Zuletzt gehört**
+(Alben, von denen zuletzt mindestens zwei Titel liefen), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
+180 Tagen dazukamen oder sich änderten, nach dem Änderungsdatum aus MPD) und ein Zufallsmix. Tippen daneben schließt es.
+Es kommt höchstens alle 30 Minuten von selbst und nicht in der Bühnenansicht; „Beim Öffnen zeigen“ unten schaltet es
+für dieses Gerät ab, im Menü unter „Begrüßung“ ist es jederzeit erreichbar. Nach dem Update liest der Tag-Dienst die
+Albenliste einmal neu, bis dahin fehlt „Neu in der Sammlung“.
+
 ### Verlauf und Statistik
 Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag, Top-8-Genres; ein Genre antippen öffnet seine Alben) und **Rückblick**
