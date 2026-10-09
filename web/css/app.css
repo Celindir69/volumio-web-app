@@ -149,10 +149,10 @@
     padding-bottom:4vh; }
 
   /* Info */
-  #infoTabs { display:flex; gap:calc(4 * var(--vw)); margin-bottom:calc(4 * var(--vw));
+  #infoTabs, .bTabs { display:flex; gap:calc(4 * var(--vw)); margin-bottom:calc(4 * var(--vw));
     border-bottom:1px solid rgba(var(--fg-rgb),.2); overflow-x:auto;
     scrollbar-width:none; -ms-overflow-style:none; }
-  #infoTabs::-webkit-scrollbar { display:none; }      /* Reiter lassen sich wischen, aber ohne System-Scrollleiste */
+  #infoTabs::-webkit-scrollbar, .bTabs::-webkit-scrollbar { display:none; }      /* Reiter lassen sich wischen, aber ohne System-Scrollleiste */
   .infoTab { flex:0 0 auto; padding:0 calc(1 * var(--vw)) calc(2.5 * var(--vw)) calc(1 * var(--vw)); cursor:pointer;
     font-size:calc(3.8 * var(--vw)); border-bottom:2px solid transparent;
     opacity:.5; transition:all .2s; white-space:nowrap; }

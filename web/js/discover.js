@@ -321,14 +321,15 @@ function browseSimilar(e, seq) {
   });
 }
 
-/* ---------- Mehr entdecken (Künstlerseite) ---------- */
+/* ---------- Entdecken (Reiter auf der Künstlerseite) ---------- */
 /* Ähnliche Künstler aus der Sammlung (mit Würfel: 25 Titel daraus, jeder Künstler etwa gleich oft) und
    Stimmungen, Energie, Stile und Jahrzehnte des Künstlers (Tag-Dienst GET /artistprofile); jeder Knopf öffnet
-   wie beim Entdecken die passenden Alben. Ohne Inhalt bleibt der Abschnitt leer. alive(): Seite noch dieselbe. */
-function discoverMore(artist, alive) {
-  var box = histEl('div', 'dMore'), head = null;
+   wie beim Entdecken die passenden Alben. alive(): Seite noch dieselbe; onContent(): erster Inhalt da; onDone(): alles geladen. */
+function discoverMore(artist, alive, onContent, onDone) {
+  var box = histEl('div', 'dMore'), pending = 2;
+  function done() { if (--pending === 0 && onDone) onDone(); }
   function group(label) {
-    if (!head) { head = browseHeading(T('more.title')); box.insertBefore(head, box.firstChild); }
+    if (onContent) onContent();
     var sec = histEl('div', 'dMoreSec');
     sec.appendChild(histEl('div', 'mxLabel', label));
     var chips = histEl('div', 'mxChips');
@@ -355,8 +356,8 @@ function discoverMore(artist, alive) {
     dice.title = T('disc.mix');
     names.forEach(function(n){ chip(g.chips, n, function(){ openBrowse({kind: 'artist', artist: n}); }); });
     simSec.appendChild(g.sec);
-  }).catch(function(){});
-  if (!discoverReady) return box;
+  }).catch(function(){}).then(done);
+  if (!discoverReady) { done(); return box; }
   tagGetJson('/artistprofile?artist=' + encodeURIComponent(artist)).then(function(r){
     if (!alive() || !r || !r.ok) return;
     var g;
@@ -383,7 +384,7 @@ function discoverMore(artist, alive) {
       r.decades.forEach(function(d){ chip(g.chips, T('disc.decade', {d: d}), function(){ openBrowse({kind: 'decade', decade: d}); }); });
       tagSec.appendChild(g.sec);
     }
-  }).catch(function(){});
+  }).catch(function(){}).then(done);
   return box;
 }
 

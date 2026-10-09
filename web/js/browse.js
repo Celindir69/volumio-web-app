@@ -238,10 +238,37 @@ function browseArtist(e, seq) {
       browseBody.appendChild(head);
     }
 
+    /* eigene Sammlung: Reiter „Alben & Titel“ und „Entdecken“ (discover.js); der gewählte bleibt beim Zurück (e.tab) */
+    var pane = browseBody, more = null;
+    if (!isStream) {
+      var tabs = histEl('div', 'bTabs'), panes = {albums: histEl('div'), more: histEl('div')};
+      var moreNote = browseNote(T('browse.loading'));
+      panes.more.appendChild(moreNote);
+      more = discoverMore(e.artist, function(){ return seq === browseSeq; }, function(){ if (moreNote.parentNode) moreNote.parentNode.removeChild(moreNote); },
+        function(){ if (!panes.more.querySelector('.dMoreSec')) { moreNote.textContent = T('more.empty'); panes.more.insertBefore(moreNote, more); } });
+      panes.more.appendChild(more);
+      [['albums', T('browse.tab.albums')], ['more', T('browse.tab.more')]].forEach(function(x){
+        var t = histEl('div', 'infoTab', x[1]);
+        t.addEventListener('click', function(){ e.tab = x[0]; show(); });
+        tabs.appendChild(t);
+      });
+      var show = function(){
+        var cur = e.tab === 'more' ? 'more' : 'albums';
+        Array.prototype.forEach.call(tabs.children, function(t, i){ t.classList.toggle('on', (i === 1) === (cur === 'more')); });
+        panes.albums.style.display = cur === 'albums' ? '' : 'none';
+        panes.more.style.display = cur === 'more' ? '' : 'none';
+      };
+      browseBody.appendChild(tabs);
+      browseBody.appendChild(panes.albums);
+      browseBody.appendChild(panes.more);
+      show();
+      pane = panes.albums;
+    }
+
     var albumHead = browseHeading(T('browse.albums'));
     albumHead.style.display = 'none';
-    browseBody.appendChild(albumHead);
-    if (!albums.length && !isStream) browseBody.appendChild(browseNote(T('browse.noAlbumsLocal')));
+    pane.appendChild(albumHead);
+    if (!albums.length && !isStream) pane.appendChild(browseNote(T('browse.noAlbumsLocal')));
     var genreRows = [];
 
     albums.forEach(function(al){
@@ -264,19 +291,16 @@ function browseArtist(e, seq) {
         browseStack.push({kind:'album', artist:e.artist, album:al.title, uri:al.uri, albumart:al.albumart, service:al.service});
         browseRender();
       });
-      browseBody.appendChild(row);
+      pane.appendChild(row);
       if (!isStream) genreRows.push({row: row, uri: al.uri, album: al.title, artist: al.artist || e.artist});
     });
     if (genreRows.length && typeof genreDecorate === 'function') genreDecorate(genreRows, seq);   /* Genre vor dem Stift */
 
-    /* „Mehr entdecken“ ganz unten (discover.js); Titel kommen davor */
-    var more = isStream ? null : discoverMore(e.artist, function(){ return seq === browseSeq; });
-    if (more) browseBody.appendChild(more);
     function addTitles(list, showAlbum) {
       if (!list.length || seq !== browseSeq) return;
       albumHead.style.display = '';                   /* "Alben" erst anzeigen, wenn darunter "Titel" folgt */
-      browseBody.insertBefore(browseHeading(T('browse.tracks')), more);
-      list.forEach(function(t){ browseBody.insertBefore(browseTrackRow(t, e, showAlbum), more); });
+      pane.appendChild(browseHeading(T('browse.tracks')));
+      list.forEach(function(t){ pane.appendChild(browseTrackRow(t, e, showAlbum)); });
     }
     if (isStream) addTitles(pageTracks, true);
     else localExtraTitles(e.artist, albums.map(function(a){ return a.title; })).then(function(list){ addTitles(list, true); });
