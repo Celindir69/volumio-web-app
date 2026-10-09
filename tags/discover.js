@@ -120,9 +120,10 @@ function mixPool(tracks, albumList, q) {
 }
 
 /* Mix über mehrere Künstler (ähnliche Künstler): jeder Künstler etwa gleich oft, egal wie viel von ihm da ist;
-   Künstler des Albums (Ordner) zählt, sonst der des Titels. Nie derselbe Künstler direkt hintereinander, solange
+   Künstler des Albums (Ordner) zählt, sonst der des Titels. Je Künstler zuerst nicht kürzlich Gehörtes (recent(t)),
+   über die Alben verteilt. Nie derselbe Künstler direkt hintereinander, solange
    ein anderer übrig ist; jede Datei höchstens einmal. */
-function mixBalanced(pool, k, albumList, rnd) {
+function mixBalanced(pool, k, albumList, rnd, recent) {
   rnd = rnd || Math.random;
   var dirArtist = {}, by = {}, seen = {};
   (albumList || []).forEach(function(a){ if (a.ar !== 'Verschiedene') dirArtist[a.dir] = plays.norm(a.ar); });
@@ -132,7 +133,15 @@ function mixBalanced(pool, k, albumList, rnd) {
     var a = dirArtist[albums.albumDir(t[2])] || plays.norm(t[0]);
     (by[a] || (by[a] = [])).push(t);
   });
-  Object.keys(by).forEach(function(a){ by[a] = sample(by[a], by[a].length, rnd); });
+  Object.keys(by).forEach(function(a){                  /* je Künstler: nicht kürzlich Gehörtes zuerst, quer durch die Alben */
+    var nth = {}, list = sample(by[a], by[a].length, rnd).map(function(t, i){
+      var al = albums.albumDir(t[2]);
+      nth[al] = (nth[al] || 0) + 1;
+      return {t: t, r: recent && recent(t) ? 1 : 0, n: nth[al], i: i};
+    });
+    list.sort(function(x, y){ return x.r - y.r || x.n - y.n || x.i - y.i; });
+    by[a] = list.map(function(x){ return x.t; });
+  });
   var out = [], used = {}, prev = null;
   while (out.length < k) {
     var left = Object.keys(by).filter(function(a){ return by[a].length; });
@@ -167,17 +176,33 @@ function shelfPool(shelf, tracks, stats, now, extra, rnd) {
   return [];
 }
 
-/* Zufallsmix mit Obergrenze je Künstler (Albumkünstler unberücksichtigt: Künstler des Titels); Reihenfolge wie mix() */
-function mixCapped(pool, k, maxPer, rnd) {
-  var per = {}, out = [], seen = {};
-  sample(pool, pool.length, rnd).forEach(function(t){
-    var a = plays.norm(t[0]);
-    if (out.length >= k || seen[t[2]] || (per[a] || 0) >= maxPer) return;
-    seen[t[2]] = true;
-    per[a] = (per[a] || 0) + 1;
-    out.push(t);
-  });
+/* Zufallsmix mit Regeln (Würfel): o.artist Titel je Künstler (Titel-Künstler), o.album je Album (Ordner),
+   o.recent(t): kürzlich gehört. Zuerst nicht kürzlich Gehörtes innerhalb der Grenzen, dann darüber hinaus, erst
+   zuletzt kürzlich Gehörtes; jede Datei einmal, Reihenfolge wie mix() (nie derselbe Künstler direkt hintereinander). */
+function mixCapped(pool, k, o, rnd) {
+  o = o || {};
+  var maxAr = o.artist || Infinity, maxAl = o.album || Infinity, recent = o.recent || function(){ return false; };
+  var seen = {}, list = sample(pool.filter(function(t){ return seen[t[2]] ? false : (seen[t[2]] = true); }), pool.length, rnd);
+  var per = {}, perAl = {}, out = [], taken = {};
+  function pass(old, capped) {                        /* old: kürzlich Gehörtes an der Reihe */
+    list.forEach(function(t){
+      if (out.length >= k || taken[t[2]] || !!recent(t) !== old) return;
+      var a = plays.norm(t[0]), al = albums.albumDir(t[2]);
+      if (capped && ((per[a] || 0) >= maxAr || (perAl[al] || 0) >= maxAl)) return;
+      per[a] = (per[a] || 0) + 1; perAl[al] = (perAl[al] || 0) + 1;
+      taken[t[2]] = true;
+      out.push(t);
+    });
+  }
+  pass(false, true); pass(false, false); pass(true, true); pass(true, false);
   return mix(out, k, rnd);
 }
 
-module.exports = {statIndex: statIndex, shelves: shelves, mix: mix, mixPool: mixPool, mixBalanced: mixBalanced, shelfPool: shelfPool, mixCapped: mixCapped, sample: sample, ROW: ROW};
+/* kürzlich gehört (Würfel stellt es hinten an): Titel seit days Tagen gespielt */
+var RECENT_DAYS = 14;
+function recentFn(stats, now, days) {
+  var since = now - (days || RECENT_DAYS) * DAY;
+  return function(t){ return stats.track(t).last > since; };
+}
+
+module.exports = {statIndex: statIndex, shelves: shelves, mix: mix, mixPool: mixPool, mixBalanced: mixBalanced, shelfPool: shelfPool, mixCapped: mixCapped, recentFn: recentFn, sample: sample, ROW: ROW};

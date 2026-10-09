@@ -106,7 +106,7 @@ t('Würfel der Reihen: Titel nach den Regeln der Reihe', function(){
 });
 
 t('Würfel der Reihen: höchstens 3 je Künstler, jede Datei einmal, kein Künstler direkt hintereinander', function(){
-  var m = d.mixCapped(tracks.concat(tracks), 25, 3, rnd), per = {}, files = {};
+  var m = d.mixCapped(tracks.concat(tracks), 25, {artist: 3}, rnd), per = {}, files = {};
   assert.strictEqual(m.length, 25);
   m.forEach(function(x, i){
     per[x[0]] = (per[x[0]] || 0) + 1;
@@ -114,7 +114,23 @@ t('Würfel der Reihen: höchstens 3 je Künstler, jede Datei einmal, kein Künst
     if (i) assert.notStrictEqual(x[0], m[i - 1][0]);
   });
   assert.ok(Object.keys(per).every(function(a){ return per[a] <= 3; }));
-  assert.strictEqual(d.mixCapped(tracks.slice(0, 8), 25, 3, rnd).length, 6);   /* A0 und A1 je 4 Titel: je 3 */
+  assert.strictEqual(d.mixCapped(tracks.slice(0, 8), 25, {artist: 3}, rnd).length, 8);   /* zu wenig: über die Grenze aufgefüllt */
+});
+
+t('Würfel-Regeln: höchstens 2 je Album, kürzlich Gehörtes nur zum Auffüllen, Grenzen vor „kürzlich“ gelockert', function(){
+  var m = d.mixCapped(tracks, 25, {artist: 3, album: 2}, rnd), perAl = {};
+  m.forEach(function(x){ perAl[x[4]] = (perAl[x[4]] || 0) + 1; });
+  assert.strictEqual(m.length, 25);
+  assert.ok(Object.keys(perAl).every(function(a){ return perAl[a] <= 2; }), JSON.stringify(perAl));
+  var recent = d.recentFn(st, NOW);
+  assert.ok(recent(['A1', 'Titel 1-0']) && !recent(['A0', 'Titel 0-0']));
+  var small = tracks.slice(4, 8);                                   /* Album 1: Titel 1-0 gestern gehört */
+  var r = d.mixCapped(small, 3, {album: 2, recent: recent}, rnd).map(function(x){ return x[1]; });
+  assert.strictEqual(r.length, 3);
+  assert.ok(r.indexOf('Titel 1-0') < 0, r);                        /* drei frische, auch über die Albumgrenze */
+  assert.strictEqual(d.mixCapped(small, 4, {album: 2, recent: recent}, rnd).length, 4);
+  var bal = d.mixBalanced(tracks.slice(4, 8).concat(tracks.slice(44, 48)), 2, albumList, rnd, recent).map(function(x){ return x[1]; });
+  assert.ok(bal.indexOf('Titel 1-0') < 0, bal);
 });
 
 console.log(n + ' Prüfungen');
