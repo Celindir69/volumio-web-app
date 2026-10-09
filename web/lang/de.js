@@ -424,6 +424,8 @@ langRegister('de', 'Deutsch', {
   'tag.serviceDown': 'Tag-Dienst nicht erreichbar',
   'tag.serviceDownPort': 'Tag-Dienst nicht erreichbar (Port {port})',
   'tag.textFn': 'Textfunktion anwenden',
+  'tag.genreTop': 'Hauptgenre',
+  'tag.genreTopHint': 'Discogs-Hauptgenre übernehmen (eigene Werte bleiben möglich)',
   'tag.textFnAll': 'Textfunktion auf alle Titel anwenden',
   'tag.titleAndNumber': 'Titel und Nummer',
   'tag.tracks': 'Titel',

@@ -123,7 +123,7 @@ Non-Music, Children's, Brass & Military).
   to a top category, as well as the Discogs sub-styles from the audio analysis. For ambiguous names ("Indie": Rock or Pop)
   the audio analysis decides. Identical changes are shown in one row.
 
-The pencil opens the batch editor with the suggestion; nothing is written until you save, and Undo works as usual. The
+The pencil opens the batch editor with the suggestion; nothing is written until you save, and Undo works as usual. Next to every genre field in the Tag Editor a "Main genre" menu offers the 15 top categories; custom values can still be typed. The
 sub-styles ("Trip Hop", "Downtempo") are not written to the files but stay in the Tag Service: `GET /genres?dir=<folder>`
 returns the top category and sub-styles of an album (as of the last check), without `dir` all albums.
 The model is weaker at recognising classical music, soundtracks and radio plays.

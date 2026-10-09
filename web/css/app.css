@@ -320,6 +320,7 @@
     outline:none; -webkit-appearance:none; appearance:none; cursor:pointer; }
   .tagAa { flex:0 0 auto; width:calc(14 * var(--vw)); max-width:64px; text-align:center; text-align-last:center; font-weight:700; }
   .tagSel { width:100%; }
+  .tagGenre { width:auto; max-width:calc(34 * var(--vw)); font-weight:400; text-overflow:ellipsis; }
   .tagAa option, .tagSel option { color:#111; }
   .tagSectionAa { display:flex; align-items:center; justify-content:space-between; opacity:1; }
   .tagSectionAa > span { opacity:.5; }
