@@ -99,7 +99,7 @@ Fortschritt der Stimmungs-Tags.
   (siehe [Einrichten](docs/einrichten.md#sprache)).
 - Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
 - TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt. 
-  (Was auf meinem MX-Streamaufgrund eines Session-Timeouts etwa nach 4 Stundenohne Tidal-Nutzung auftritt)
+  (Was auf meinem MX-Stream, aufgrund eines Session-Timeouts, etwa nach 4 Stunden ohne Tidal-Nutzung auftritt.)
 - `mx-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`; auf Volumio 4
   dasselbe Skript als `volumio4-deploy`.
 
