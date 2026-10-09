@@ -1,46 +1,5 @@
-/* Grundlagen: App-Icon, Elemente, Zustand, Zeitanzeige, Abfragen (Plugin, Diskografie, Last.fm)
+/* Grundlagen: Elemente, Zustand, Zeitanzeige, Abfragen (Plugin, Diskografie, Last.fm)
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
-/* App-Icon (Home-Bildschirm, Favicon): Schallplatte mit Kompassnadeln, die ein X bilden – Xplorio, der Entdecker */
-function appIconDraw(c) {
-  var S = c.width, x = c.getContext('2d'), m = S / 2;
-  var bg = x.createLinearGradient(0, 0, S, S);           /* Nachtblau bis Pflaume wie die Beispiel-Cover */
-  bg.addColorStop(0, '#1b2140'); bg.addColorStop(1, '#4a2a4f');
-  x.fillStyle = bg; x.fillRect(0, 0, S, S);
-  var glow = x.createRadialGradient(m, m, S * 0.05, m, m, S * 0.62);
-  glow.addColorStop(0, 'rgba(232,120,92,.35)'); glow.addColorStop(1, 'rgba(232,120,92,0)');
-  x.fillStyle = glow; x.fillRect(0, 0, S, S);
-  /* Platte mit Rillen */
-  x.fillStyle = '#121427';
-  x.beginPath(); x.arc(m, m, S * 0.39, 0, Math.PI * 2); x.fill();
-  x.strokeStyle = 'rgba(255,236,214,.12)'; x.lineWidth = Math.max(1, S / 180);
-  for (var r = 0.17; r < 0.38; r += 0.035) { x.beginPath(); x.arc(m, m, S * r, 0, Math.PI * 2); x.stroke(); }
-  x.strokeStyle = 'rgba(255,236,214,.35)'; x.lineWidth = S / 90;    /* Kompassring */
-  x.beginPath(); x.arc(m, m, S * 0.39, 0, Math.PI * 2); x.stroke();
-  /* zwei Nadeln über Kreuz: lange in Koralle (Nordost), kurze in Creme (Nordwest) */
-  function needle(ang, len, wid, col1, col2) {
-    x.save(); x.translate(m, m); x.rotate(ang);
-    x.fillStyle = col1;
-    x.beginPath(); x.moveTo(0, -S * len); x.lineTo(S * wid, 0); x.lineTo(-S * wid, 0); x.closePath(); x.fill();
-    x.fillStyle = col2;
-    x.beginPath(); x.moveTo(0, S * len); x.lineTo(S * wid, 0); x.lineTo(-S * wid, 0); x.closePath(); x.fill();
-    x.restore();
-  }
-  needle(-Math.PI / 4, 0.35, 0.06, '#fbd9b4', 'rgba(251,217,180,.6)');
-  needle(Math.PI / 4, 0.36, 0.065, '#ee7a5c', '#9c4a45');
-  x.fillStyle = '#fbd9b4';                                /* Mitte (Etikett) */
-  x.beginPath(); x.arc(m, m, S * 0.045, 0, Math.PI * 2); x.fill();
-  x.fillStyle = '#121427';
-  x.beginPath(); x.arc(m, m, S * 0.015, 0, Math.PI * 2); x.fill();
-}
-(function(){
-  var c = document.createElement('canvas');
-  c.width = c.height = 180;
-  appIconDraw(c);
-  document.getElementById('appIcon').href = c.toDataURL();
-  var fav = document.getElementById('appFavicon');
-  if (fav) { var f = document.createElement('canvas'); f.width = f.height = 64; appIconDraw(f); fav.href = f.toDataURL(); }
-})();
-
 /* Bilder, die nicht laden (Cover fehlt, Server weg), bleiben leer statt des Fragezeichen-Symbols.
    error/load steigen nicht auf, daher in der Capture-Phase am Dokument; Platz in der Zeile bleibt erhalten. */
 function imgCheck(img) {
