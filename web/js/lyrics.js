@@ -1,5 +1,5 @@
 /* Lyrics-Quelle (LRCLIB) und Darstellung der synchronisierten Zeilen
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ===================================================================
    HIER DEINE VIERTE INFO EINSETZEN:
      var EXTRA_TITLE = ...

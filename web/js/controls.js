@@ -1,5 +1,5 @@
 /* Repeat/Random und Lautstärke (Rotel-Dienst oder, mit APP_CONFIG.ROTEL = false, Volumio)
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Repeat / Random ---------- */
 function updateCtrlUI() {
   var shown = repeatShown(stRepeatMode, autodj);                 /* ∞ = AutoDJ (autodj.js) */

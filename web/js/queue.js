@@ -1,5 +1,5 @@
 /* Queue (Liste, Verschieben, Entfernen)
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Queue ---------- */
 var DELETE_W = 20;
 var lastTouchAt = 0;          /* Zeitpunkt der letzten Touch-Eingabe: danach folgende "click"-Ereignisse nicht doppelt auswerten */

@@ -3,7 +3,7 @@
    (inklusive Teilabrufen). Wir lesen nur die Kopf-Boxen (ftyp, ggf. mdat überspringen, moov) und darin den
    Sample-Eintrag ("alac" oder "mp4a"); bei ALAC steht dort auch die echte Bit-Tiefe.
    Reine Teile (mp4Audio, mp4Candidates) sind mit tests/mp4probe.test.js prüfbar.
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 
 var MP4_BASE = '';                 /* Vorsatz für Adressen; leer = gleiche Herkunft wie die Seite */
 var MP4_WINDOW = 65536;            /* so viel wird pro Schritt vom Dateianfang bzw. nach mdat gelesen */

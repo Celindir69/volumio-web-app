@@ -7,7 +7,7 @@
 #   sudo xplorio-deploy -y [branch]        ohne Rückfrage
 #   sudo xplorio-deploy --rollback         letzte Sicherung wiederherstellen (alt: --zurueck)
 #
-# Die Oberfläche (app.html, kioskTV.html, web/, tools/) kommt in jeden vorhandenen Ordner /volumio/http/www*/: Welchen Volumio
+# Die Oberfläche (xplorio.html, app.html als Weiterleitung, kioskTV.html, web/, tools/) kommt in jeden vorhandenen Ordner /volumio/http/www*/: Welchen Volumio
 # ausliefert, hängt von Version und gewählter Oberfläche ab (Volumio 3: www3, Volumio 4: www4). Neue Ordner legt das
 # Skript nicht an; gibt es keinen, bricht es ab.
 # Alles Übrige liegt in /data/xplorio (bleibt bei Volumio-Updates erhalten; zum Sichern genügt dieser Ordner):
@@ -46,7 +46,7 @@ target() {
     tools/xplorio-deploy.sh) echo "$ROOT/usr/local/bin/$PROG"; for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;   # auch für die Verweise
     tools/web-app-deploy.sh) [ -e "$ROOT/usr/local/bin/web-app-deploy" ] && echo "$ROOT/usr/local/bin/web-app-deploy"; true ;;   # nur vorhandene alte Namen
     tools/mx-deploy.sh)      for p in mx-deploy volumio4-deploy; do [ -e "$ROOT/usr/local/bin/$p" ] && echo "$ROOT/usr/local/bin/$p"; done; true ;;
-    app.html|kioskTV.html|web/*|tools/*)  for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;
+    xplorio.html|app.html|kioskTV.html|web/*|tools/*)  for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;
   esac
 }
 TAB=$'\t'                                           # Einträge der Listen: Repo-Pfad TAB Ziel
@@ -125,7 +125,7 @@ else
 fi
 mkdir "$TMP/src"
 tar xzf "$TMP/src.tar.gz" -C "$TMP/src" --strip-components=1 || die "Archiv nicht lesbar"
-[ -f "$TMP/src/app.html" ] || die "im Archiv fehlt app.html"
+[ -f "$TMP/src/xplorio.html" ] || [ -f "$TMP/src/app.html" ] || die "im Archiv fehlt xplorio.html"
 
 # ---------- Vergleichen ----------
 CHANGED=""; NEW=""; n=0

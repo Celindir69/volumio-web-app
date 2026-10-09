@@ -1,5 +1,5 @@
 /* Lyrics-Overlay und Info-Overlay mit Reitern und Wischgesten
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Lyrics ---------- */
 function showLyrics(data) {
   lyricLines = [];

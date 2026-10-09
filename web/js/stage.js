@@ -16,7 +16,7 @@ var stagePlain = null;           /* lange Lyrics ohne Zeitmarken: {offs:[…], s
 function stagePref() {
   try {
     var m = /[?&]layout=(stage|classic)\b/.exec(location.search);
-    if (m) localStorage.setItem(STAGE_KEY, m[1]);           /* z. B. app.html?layout=stage für das iPad an der Anlage */
+    if (m) localStorage.setItem(STAGE_KEY, m[1]);           /* z. B. xplorio.html?layout=stage für das iPad an der Anlage */
     return localStorage.getItem(STAGE_KEY) === 'stage';
   } catch (e) { return false; }
 }

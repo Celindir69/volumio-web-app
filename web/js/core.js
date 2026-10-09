@@ -1,5 +1,5 @@
 /* Grundlagen: App-Icon, Elemente, Zustand, Zeitanzeige, Abfragen (Plugin, Diskografie, Last.fm)
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* App-Icon (Home-Bildschirm, Favicon): Schallplatte mit Kompassnadeln, die ein X bilden – Xplorio, der Entdecker */
 function appIconDraw(c) {
   var S = c.width, x = c.getContext('2d'), m = S / 2;

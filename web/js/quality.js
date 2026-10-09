@@ -1,7 +1,7 @@
 /* Qualitätsanzeige: ordnet den Titel aus getState ein (Hi-Res, Lossless, DSD, Lossy, Radio)
    und liefert die Technikzeile. Reine Funktion ohne Zugriff auf die Seite, damit sie sich mit
    tests/quality.test.js prüfen lässt.
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 
 /* Dateitypen (trackType bzw. fileFormat), in Kleinbuchstaben */
 var Q_LOSSLESS = ['flac', 'wav', 'aiff', 'aif', 'alac', 'ape', 'wv', 'tta', 'tak'];

@@ -122,7 +122,7 @@ progress of the mood tags.
 
 | File / Folder | Contents | Location on the Player |
 |---|---|---|
-| `app.html` + `web/` | Interface for phone, iPad, and desktop (playback, queue, local and streaming-service search, lyrics, information, Tag Editor, Mood Mix, history, display layout for large screens) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
+| `xplorio.html` + `web/` | Interface for phone, iPad, and desktop (playback, queue, local and streaming-service search, lyrics, information, Tag Editor, Mood Mix, history, display layout for large screens) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
 | `kioskTV.html` | Page for a kiosk display (cover art, track information, lyrics) | `/volumio/http/www*/` |
 | `tags/` | Tag Service (port 8766): Tag Editor, Library Check, history, mood tags, cover art; Python 2.7 or 3 with bundled mutagen library (GPLv2, see `tags/vendor/mutagen/COPYING`) | `/data/xplorio/tags/` (data: `/data/xplorio/data/`) |
 | `rotel/rotel-bridge.js` | optional: HTTP service (port 8765) for a network-connected Rotel amplifier (volume, power, input) | `/data/xplorio/rotel/` |

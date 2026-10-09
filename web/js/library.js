@@ -1,5 +1,5 @@
 /* Playlisten, Web-Radio und Suche
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Playlisten / Radio ---------- */
 function renderPlList(items, container, clickFn, tiles) {   /* tiles: Playlisten mit Künstler-Kachel */
   while (container.firstChild) container.removeChild(container.firstChild);

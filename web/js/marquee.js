@@ -1,5 +1,5 @@
 /* Langer Titel: läuft einmal durch, steht dann 30 Sekunden gekürzt (…), läuft wieder durch
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html.
    Das Element hat overflow:hidden; der Text wird über scrollLeft bewegt (keine Zusatzelemente nötig). */
 var MARQUEE_SPEED = 45;       /* Pixel pro Sekunde */
 var MARQUEE_EDGE_MS = 1500;   /* Pause am Anfang und am Ende */
