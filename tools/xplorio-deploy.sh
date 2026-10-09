@@ -126,6 +126,11 @@ fi
 mkdir "$TMP/src"
 tar xzf "$TMP/src.tar.gz" -C "$TMP/src" --strip-components=1 || die "Archiv nicht lesbar"
 [ -f "$TMP/src/xplorio.html" ] || [ -f "$TMP/src/app.html" ] || die "im Archiv fehlt xplorio.html"
+# Stand fürs Menü (web/version.json): Branch, Commit (steht bei GitHub-Archiven im Kopf) und dessen Datum (Zeitstempel der Dateien)
+commit=$(gzip -dc "$TMP/src.tar.gz" 2>/dev/null | head -c 2048 | grep -ao 'comment=[0-9a-f]\{40\}' | head -n 1 | cut -d= -f2 || true)
+stamp=$(date -r "$TMP/src/xplorio.html" +%Y-%m-%d 2>/dev/null || true)
+mkdir -p "$TMP/src/web"
+printf '{"branch":"%s","commit":"%s","date":"%s"}\n' "$BRANCH" "$commit" "$stamp" > "$TMP/src/web/version.json"
 
 # ---------- Vergleichen ----------
 CHANGED=""; NEW=""; n=0

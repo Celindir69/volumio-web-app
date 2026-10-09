@@ -686,7 +686,14 @@ html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { d
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 
 /* ---------- Menü (Zahnrad) ---------- */
-#menuBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); }
+#menuBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); display:flex; flex-direction:column; }
+.menuAbout { margin-top:auto; padding-top:calc(10 * var(--vw)); display:flex; flex-direction:column; align-items:center; text-align:center; }
+.menuLogo { width:calc(18 * var(--vw)); height:calc(18 * var(--vw)); max-width:80px; max-height:80px; border-radius:22%;
+  box-shadow:0 6px 20px rgba(0,0,0,.35); margin-bottom:calc(3 * var(--vw)); }
+.menuName { font-size:calc(5.2 * var(--vw)); font-weight:700; letter-spacing:.02em; }
+.menuClaim { font-size:calc(3.4 * var(--vw)); opacity:.7; margin:calc(.8 * var(--vw)) 0 calc(4 * var(--vw)); }
+.menuFine { font-size:calc(2.9 * var(--vw)); opacity:.5; line-height:1.6; }
+.menuLink { color:inherit; text-decoration:underline; text-underline-offset:2px; }
 .menuRow { display:flex; align-items:center; gap:calc(4 * var(--vw)); padding:calc(3.5 * var(--vw)) 0;
   border-bottom:1px solid rgba(var(--fg-rgb),.15); cursor:pointer; }
 .menuRow:last-child { border-bottom:none; }

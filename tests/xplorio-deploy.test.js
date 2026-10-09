@@ -39,6 +39,19 @@ t('Dienst von /data/INTERNAL auf /data/xplorio umgestellt, alte Datei gesichert'
   assert.ok(/Dienst tag-service läuft jetzt aus \/data\/xplorio\/tags/.test(out), out);
   assert.ok(/tag-service neu starten/.test(out));
 });
+t('Stand fürs Menü: web/version.json mit Branch und Datum (eigenes Archiv ohne Commit)', function(){
+  var v = JSON.parse(fs.readFileSync(path.join(R, 'volumio/http/www3/web/version.json'), 'utf8'));
+  assert.strictEqual(v.branch, 'main'); assert.strictEqual(v.commit, ''); assert.ok(/^\d{4}-\d\d-\d\d$/.test(v.date), v.date);
+});
+t('Stand fürs Menü: Commit aus einem Archiv wie bei GitHub (git archive)', function(){
+  var ga = path.join(T, 'ga.tar.gz'), sha = cp.execSync('git rev-parse HEAD', {cwd: repo, encoding: 'utf8'}).trim();
+  cp.execSync('git archive --format=tar.gz --prefix=xplorio-x/ -o ' + ga + ' HEAD', {cwd: repo});
+  var o = sh('MX_SOURCE=' + ga + ' bash tools/xplorio-deploy.sh -n');
+  assert.ok(/version.json/.test(o), o);
+  var RG = path.join(T, 'rootg'); fs.mkdirSync(path.join(RG, 'volumio/http/www3'), {recursive: true});
+  cp.execSync('bash tools/xplorio-deploy.sh -y', {cwd: repo, env: Object.assign({}, process.env, {MX_ROOT: RG, MX_SOURCE: ga}), encoding: 'utf8'});
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(RG, 'volumio/http/www3/web/version.json'), 'utf8')).commit, sha);
+});
 t('zweiter Lauf: nichts zu tun', function(){ assert.ok(/nichts zu tun/.test(sh('MX_SOURCE=' + v1 + ' bash tools/xplorio-deploy.sh -y'))); });
 fs.appendFileSync(path.join(app, 'tags/tag-service.js'), '\n// X\n');
 var v2 = pack('v2.tar.gz');

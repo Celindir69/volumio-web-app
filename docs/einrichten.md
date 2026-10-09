@@ -52,7 +52,8 @@ Ziele: `xplorio.html`, `app.html` (Weiterleitung), `kioskTV.html`, `web/` und `t
 Welchen der Ordner Volumio ausliefert, hängt von Version und gewählter Oberfläche ab (z. B. klassisch `www`, Volumio 3
 `www3`, Volumio 4 `www4`); deshalb bekommen alle vorhandenen die Oberfläche. Neue Ordner legt das Skript nicht an, ohne
 einen bricht es ab; `DEPLOY_WWW=<ordner>` wählt einen bestimmten. `web/config.local.js` liegt je Ordner: Wer die
-Oberfläche wechselt, kopiert sie mit.
+Oberfläche wechselt, kopiert sie mit. Dazu schreibt das Skript `web/version.json` (Branch, Commit und dessen Datum);
+den Stand zeigt das Menü unten unter Logo und Namen, ohne die Datei steht dort „Entwicklungsstand“.
 
 `tag-service` bzw. `rotel-bridge` werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen
 sichert das Skript die betroffenen Dateien nach `/data/xplorio/backup/` (die letzten 5). Gelöscht wird nichts; eigene
