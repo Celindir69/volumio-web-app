@@ -91,7 +91,7 @@ function bdayRows(sec, b, which, dates) {
 function bdayTile(it) {
   var tile = discoverShelfTile('album', 'never', it);
   var p = it.date.split('-');
-  var date = langDate(new Date(+p[0], +p[1] - 1, +p[2]));
+  var date = langDate(new Date(+p[0], +p[1] - 1, +p[2]), {day: 'numeric', month: 'numeric'});   /* Jahr steckt in den Jahren */
   tile.appendChild(histEl('div', 'dSub', it.mark ? date : date + ' · ' + T('bday.years', {n: it.years})));
   if (it.mark) {
     tile.classList.add(it.mark === 'jubilee' ? 'dJubilee' : 'dRound');
