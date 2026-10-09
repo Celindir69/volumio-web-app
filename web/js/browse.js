@@ -108,7 +108,7 @@ function browseRender() {
   var e = browseStack[browseStack.length - 1];
   var seq = ++browseSeq;
   browseBack.style.display = (browseStack.length > 1 || browseOrigin) ? '' : 'none';
-  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.kind === 'decade' ? T('disc.decade', {d: e.decade}) : e.album;
+  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.kind === 'decade' ? T('disc.decade', {d: e.decade}) : e.kind === 'moodset' ? e.title : e.album;
   browseBody.scrollTop = 0;
   while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
   browseBody.appendChild(browseNote(T('browse.loading')));
@@ -116,6 +116,7 @@ function browseRender() {
   else if (e.kind === 'playlist') browsePlaylist(e, seq);
   else if (e.kind === 'genre') browseGenre(e, seq);                 /* genre.js */
   else if (e.kind === 'decade') browseDecade(e, seq);               /* genre.js */
+  else if (e.kind === 'moodset') browseMoodSet(e, seq);             /* genre.js */
   else browseAlbum(e, seq);
 }
 

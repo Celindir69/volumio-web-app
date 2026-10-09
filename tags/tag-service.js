@@ -642,6 +642,19 @@ function doEssentiaUpload(req, res) {
    mit count=1 nur {ok, count, rated, styles, genres} (Trefferanzeige, Stil- und Genre-Chips) */
 var moodmix = require('./moodmix.js');
 var mixPlays = null;
+/* GET /moodalbums?moods=a,b | styles=a,b | emin=&emax= -> {ok, albums:[{dir, al, ar, y}]}: Alben, deren eingeordnete Titel
+   überwiegend diese Stimmung bzw. diesen Stil tragen oder deren mittlere Energie im Bereich liegt (moodalbums.js) */
+var moodalbums = require('./moodalbums.js'), moodAlbumSums = null;
+function doMoodAlbums(query, cb) {
+  albumsEnsure(function(list){
+    if (!list || !list.length) return cb(200, {ok: false, building: albumBuilding});
+    var c = moodmix.parse(query), idx = moodmix.index(moodCollector);
+    if (!moodAlbumSums || moodAlbumSums.idx !== idx) moodAlbumSums = {idx: idx, sums: moodalbums.summarize(idx)};
+    var q = {moods: c.moods, styles: c.styles, emin: query.emin ? c.emin : 0, emax: query.emax ? c.emax : 0};
+    cb(200, {ok: true, albums: moodalbums.list(moodAlbumSums.sums, list, q)});
+  });
+}
+
 function doMoodmix(query, cb) {
   albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
   var c = moodmix.parse(query);
@@ -1036,6 +1049,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/moodalbums') return doMoodAlbums(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodmix')  return doMoodmix(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/discover') return doDiscover(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
