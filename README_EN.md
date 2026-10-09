@@ -4,7 +4,7 @@
 
 Custom web interface for Volumio 2 (built for a Musical Fidelity MX-Stream, Raspberry Pi CM3), running directly in the browser without a build step.
 It also runs on Volumio 4 (for differences, see [Setup](docs/setup.md#volumio-4)). In addition to the files that run on the player, the repository only contains tests (`tests/`) and the setup documentation;
-`mx-deploy` deploys only the runtime files.
+`web-app-deploy` deploys only the runtime files.
 
 <p align="center">
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="display-layout on iPad: cover, albuminfo and synced Lyrics">
@@ -109,8 +109,8 @@ progress of the mood tags.
   (see [Setup](docs/setup.md#language)).
 - Optional: control a network-connected Rotel amplifier (power, volume, input) via `rotel/rotel-bridge.js`.
 - TIDAL Watchdog: reconnects TIDAL or restarts Volumio if the TIDAL plugin becomes unresponsive.
-- `mx-deploy`: updates the player directly from this repository, with backups and `--zurueck`; on Volumio 4
-  the same script is used as `volumio4-deploy`.
+- `web-app-deploy`: updates the player directly from this repository, with backups and `--rollback`; the same on
+  Volumio 3 and 4.
 
 ## Structure
 
@@ -118,15 +118,15 @@ progress of the mood tags.
 |---|---|---|
 | `app.html` + `web/` | Interface for phone, iPad, and desktop (playback, queue, local and streaming-service search, lyrics, information, Tag Editor, Mood Mix, history, display layout for large screens) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
 | `kioskTV.html` | Page for a kiosk display (cover art, track information, lyrics) | `/volumio/http/www/` |
-| `tags/` | Tag Service (port 8766): Tag Editor, Library Check, history, mood tags, cover art; Python 2.7 or 3 with bundled mutagen library (GPLv2, see `tags/vendor/mutagen/COPYING`) | `/data/INTERNAL/tags/` (data: `/data/web-app/data/`) |
-| `rotel/rotel-bridge.js` | optional: HTTP service (port 8765) for a network-connected Rotel amplifier (volume, power, input) | `/data/INTERNAL/rotel/` |
+| `tags/` | Tag Service (port 8766): Tag Editor, Library Check, history, mood tags, cover art; Python 2.7 or 3 with bundled mutagen library (GPLv2, see `tags/vendor/mutagen/COPYING`) | `/data/web-app/tags/` (data: `/data/web-app/data/`) |
+| `rotel/rotel-bridge.js` | optional: HTTP service (port 8765) for a network-connected Rotel amplifier (volume, power, input) | `/data/web-app/rotel/` |
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | restarts Volumio or reconnects TIDAL if the TIDAL plugin becomes unresponsive (tested only on Volumio 2) | `/volumio/http/www3/tools/` |
-| `tools/mx-deploy.sh` | updates the player from this repository (`mx-deploy`, on Volumio 4 `volumio4-deploy`) | `/usr/local/bin/` |
+| `tools/web-app-deploy.sh` | updates the player from this repository (`web-app-deploy`) | `/usr/local/bin/` |
 | `tools/essentia/` | optional audio analysis on the Mac; results are uploaded to the Tag Service | not on the player |
 
 Requirements: Volumio 2 (Node 8, Python 2.7, `mpc`) or Volumio 4 (Node and Python 3 are included). Setup:
-[docs/setup.md](docs/setup.md). Update directly on the player: `sudo mx-deploy` or `sudo volumio4-deploy`
-(`tools/mx-deploy.sh`, see there).
+[docs/setup.md](docs/setup.md). Update directly on the player: `sudo web-app-deploy`
+(`tools/web-app-deploy.sh`, see there).
 
 The Rotel amplifier integration and TIDAL are optional (see setup). Custom settings (language, Rotel, services on/off) belong in `web/config.local.js`
 (template `web/config.local.js.example`); this file is not included in the repository. The Last.fm credentials (for similar artists,
