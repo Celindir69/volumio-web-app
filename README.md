@@ -1,8 +1,10 @@
-# volumio-web-app
+# Xplorio
+
+**Explorer für Volumio**: die eigene Musiksammlung (wieder) entdecken.
 
 [English version](README_EN.md)
 
-Eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
+Xplorio ist eine eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
 direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Auf Volumio 3 vermutlich auch, wurde aber nicht getestet. 
 Zusätzlich zu den Dateien, die auf dem Player laufen, enthält diese Repository nur Tests (`tests/`) und die Einrichtungs-Doku;
 `web-app-deploy` spielt nur die Laufzeitdateien ein.
