@@ -66,6 +66,31 @@ function genreIndex(list) {
   };
 }
 
+/* Jahr eines Albums (Date-Tag) wie genreIndex: über den Ordner, sonst Album+Künstler -> Jahr oder 0 */
+function yearIndex(list) {
+  var byDir = {}, byKey = {};
+  list.forEach(function(a){
+    if (!a.y) return;
+    byDir[a.dir] = a.y; byKey[plays.norm(a.al) + '|' + plays.norm(a.ar)] = a.y;
+  });
+  return function(e) {
+    if (e.u && !/^([a-z]+:\/\/|(tidal|qobuz|hra|highresaudio|hi_res_audio)\/|spotify:)/i.test(e.u)) {
+      var y = byDir[albumDir(e.u.replace(/^\/+/, '').replace(/^music-library\//, '').replace(/^mnt\//, ''))];
+      if (y) return y;
+    }
+    return e.al ? byKey[plays.norm(e.al) + '|' + plays.norm(e.ar)] || 0 : 0;
+  };
+}
+
+/* Alben eines Jahres, nach Künstler */
+function yearAlbums(list, y) {
+  y = parseInt(y, 10);
+  function key(a) { return a.ar.toLowerCase().replace(/^the\s+/, ''); }
+  return list.filter(function(a){ return a.y === y; })
+    .map(function(a){ return {dir: a.dir, al: a.al, ar: a.ar, y: a.y}; })
+    .sort(function(a, b){ return key(a).localeCompare(key(b)) || a.al.localeCompare(b.al); });
+}
+
 /* Genres der Albenliste: [{g, n (Alben), dir, al, ar (Beispielalbum fürs Cover)}], die größten zuerst; q filtert (Teilwort) */
 function genreList(list, q) {
   var by = {}, out = [];
@@ -197,5 +222,5 @@ function pickTrack(tracks, last, now, picks, rnd) {
   return c && {ar: c.a[0], ti: c.a[1], f: c.a[2], d: c.a[3] || 0, al: c.a[4] || '', last: c.last};
 }
 
-module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, decadeList: decadeList, decadeAlbums: decadeAlbums, yearOf: yearOf, lastIndex: lastIndex, pick: pick, weight: weight,
+module.exports = {albumDir: albumDir, fromSongs: fromSongs, genreIndex: genreIndex, genreList: genreList, genreAlbums: genreAlbums, decadeList: decadeList, decadeAlbums: decadeAlbums, yearIndex: yearIndex, yearAlbums: yearAlbums, yearOf: yearOf, lastIndex: lastIndex, pick: pick, weight: weight,
                   artists: artists, lastArtistIndex: lastArtistIndex, lastTrackIndex: lastTrackIndex, pickArtist: pickArtist, pickTrack: pickTrack};

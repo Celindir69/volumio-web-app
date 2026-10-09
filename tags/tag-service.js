@@ -561,9 +561,12 @@ var moodCollector = new moodtags.Collector({
 /* ---------- Genres der Bibliothek (Genre-Tag, je Album das häufigste) ---------- */
 /* GET /genrelist[?q=] -> {ok, genres:[{g, n, dir, al, ar}], subs:[{g, s, n, dir, al, ar}] (nur mit q)};
    GET /genrealbums?g= -> {ok, albums:[{dir, al, ar, st:[Unterstile]}], subs:[{g, s, n, dir, al, ar}]};
-   GET /albumgenre?q=[[uri, album, künstler], …] -> {ok, genres:[…]} (leer = unbekannt). building: Albenliste entsteht noch.
+   GET /albumgenre?q=[[uri, album, künstler], …] -> {ok, genres:[…], years:[…]} (leer = unbekannt). building: Albenliste entsteht noch.
    GET /decades -> {ok, decades:[{d, n, dir, al, ar}]}; GET /decadealbums?d=1990 -> {ok, albums:[{dir, al, ar, y}]} (Jahr aus dem Date-Tag).
+   GET /yearalbums?y=1984 -> {ok, albums}; GET /decadeprofile?d=1980 -> {ok, n, artists, moods, styles, decades} (Entdecken).
+   /albumgenre liefert dazu years:[…] (0 = unbekannt).
    Unterstile kommen aus der Audio-Analyse (tools/essentia), je Album innerhalb seines Genres */
+var albumYear = null;
 function albumGenreFn() {
   var gi = albumIdx && albumIdx.list;
   if (gi && (!albumGenre || albumGenre.list !== gi)) albumGenre = {list: gi, fn: albums.genreIndex(gi)};
@@ -586,6 +589,14 @@ function doGenreLib(route, query, cb) {
     }
     if (route === '/decades') return cb(200, {ok: true, decades: albums.decadeList(list)});
     if (route === '/decadealbums') return cb(200, {ok: true, albums: albums.decadeAlbums(list, query.d)});
+    if (route === '/yearalbums') return cb(200, {ok: true, albums: albums.yearAlbums(list, query.y)});
+    if (route === '/decadeprofile') {
+      var d = parseInt(query.d, 10);
+      if (!(d >= 1900 && d < 2100) || d % 10) return cb(400, {ok: false, error: 'd ungültig'});
+      var pr = moodalbums.decadeProfile(moodmix.index(moodCollector), list, d, albums.albumDir);
+      pr.ok = true;
+      return cb(200, pr);
+    }
     if (route === '/genrealbums') {
       var idx = genreSubsIdx(list);
       var al = albums.genreAlbums(list, query.g);
@@ -596,10 +607,9 @@ function doGenreLib(route, query, cb) {
     try { q = JSON.parse(String(query.q || '[]')); } catch (e) { return cb(400, {ok: false, error: 'q ungültig'}); }
     if (!Array.isArray(q) || q.length > 500) return cb(400, {ok: false, error: 'q ungültig'});
     var fn = albumGenreFn();
-    cb(200, {ok: true, genres: q.map(function(x){
-      x = Array.isArray(x) ? x : [];
-      return fn({u: String(x[0] || ''), al: String(x[1] || ''), ar: String(x[2] || '')});
-    })});
+    if (!albumYear || albumYear.list !== list) albumYear = {list: list, fn: albums.yearIndex(list)};
+    var es = q.map(function(x){ x = Array.isArray(x) ? x : []; return {u: String(x[0] || ''), al: String(x[1] || ''), ar: String(x[2] || '')}; });
+    cb(200, {ok: true, genres: es.map(fn), years: es.map(albumYear.fn)});
   });
 }
 
@@ -1167,7 +1177,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/scan')    return doScanGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
-  if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre', '/decades', '/decadealbums'].indexOf(route) >= 0)
+  if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre', '/decades', '/decadealbums', '/yearalbums', '/decadeprofile'].indexOf(route) >= 0)
     return doGenreLib(route, url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/genres')  return doGenres(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);

@@ -110,18 +110,21 @@ function browseGenre(e, seq) {
   });
 }
 
-/* Alben aus der Albenliste des Tag-Dienstes ({dir, al, ar, y}) mit „Alle abspielen“ und Würfel darüber;
-   mit Jahr (Jahrzehnt-Seite) steht es klein hinter dem Künstler */
-function genreAlbumPage(list) {
-  browseBody.appendChild(genrePlayAllHead(list));
-  browseBody.appendChild(browseHeading(T('disc.albums', {n: list.length})));
+/* Alben aus der Albenliste des Tag-Dienstes ({dir, al, ar, y}) mit „Alle abspielen“ und Würfel darüber, Jahr hinter
+   dem Titel; into: Ziel (sonst browseBody), noHead: ohne „Alle abspielen“ (steht dann schon über den Reitern) */
+function genreAlbumPage(list, into, noHead) {
+  var browseBody_ = into || browseBody;
+  if (!noHead) browseBody_.appendChild(genrePlayAllHead(list));
+  browseBody_.appendChild(browseHeading(T('disc.albums', {n: list.length})));
   list.forEach(function(a){
     var uri = 'music-library/' + a.dir, art = histAlbumArt(a.ar, a.al, a.dir);
     var row = histEl('div', 'sRow' + (a.al === curAlbum ? ' cur' : ''));
     row.appendChild(histImg(art));
     var meta = histEl('div', 'sMeta');
-    meta.appendChild(histEl('div', 'sTitle', a.al));
-    meta.appendChild(histEl('div', 'sSub', histArtistName(a.ar) + (a.y ? '  ·  ' + a.y : '')));
+    var ti = histEl('div', 'sTitle', a.al);
+    if (a.y) ti.appendChild(yearSpan(a.y));
+    meta.appendChild(ti);
+    meta.appendChild(histEl('div', 'sSub', histArtistName(a.ar)));
     row.appendChild(meta);
     var pen = tagAlbumButton({uri: uri, title: a.al, service: 'mpd'});
     if (pen) row.appendChild(pen);
@@ -129,23 +132,70 @@ function genreAlbumPage(list) {
       browseStack.push({kind: 'album', artist: a.ar === 'Verschiedene' ? '' : a.ar, album: a.al, uri: uri, albumart: art});
       browseRender();
     });
-    browseBody.appendChild(row);
+    browseBody_.appendChild(row);
   });
 }
 
 /* Jahrzehnt-Seite (browseStack-Eintrag {kind:'decade', decade: 1990}): Alben nach Jahr (Date-Tag) */
-function browseDecade(e, seq) {
-  tagGetJson('/decadealbums?d=' + e.decade).then(function(r){
+function browseDecade(e, seq) { browseYears(e, seq, '/decadealbums?d=' + e.decade, e.decade); }
+
+/* Jahres-Seite (browseStack-Eintrag {kind:'year', year: 1984}): Alben des Jahres */
+function browseYear(e, seq) { browseYears(e, seq, '/yearalbums?y=' + e.year, e.year - e.year % 10); }
+
+/* Jahres- und Jahrzehnt-Seite: „Alle abspielen“ mit Würfel, darunter Reiter „Alben“ und „Entdecken“ (Jahrzehnt d) */
+function browseYears(e, seq, url, d) {
+  tagGetJson(url).then(function(r){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     var list = (r && r.albums) || [];
     if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('genre.noAlbums'))); return; }
-    genreAlbumPage(list);
+    browseBody.appendChild(genrePlayAllHead(list));
+    var panes = browseTabs(e, [['albums', T('browse.tab.albumsOnly')], ['more', T('browse.tab.more')]]);
+    genreAlbumPage(list, panes.albums, true);
+    panes.more.appendChild(decadeMore(d, e.kind === 'year' ? 0 : d, function(){ return seq === browseSeq; }));
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     browseBody.appendChild(browseNote(T('genre.offline')));
   });
+}
+
+/* Entdecken zum Jahrzehnt d (Tag-Dienst GET /decadeprofile): Künstler mit Alben darin, häufige Stimmungen und Stile,
+   Nachbar-Jahrzehnte (auf der Jahres-Seite auch das eigene; self: Jahrzehnt der Seite, fällt weg) */
+function decadeMore(d, self, alive) {
+  var box = histEl('div', 'dMore'), note = browseNote(T('browse.loading'));
+  box.appendChild(note);
+  function group(label, items, open) {
+    if (!items.length) return;
+    var sec = histEl('div', 'dMoreSec');
+    sec.appendChild(histEl('div', 'mxLabel', label));
+    var chips = histEl('div', 'mxChips');
+    items.forEach(function(x){
+      var c = histEl('div', 'mxChip', x[0]);
+      c.addEventListener('click', function(ev){ ev.stopPropagation(); open(x[1]); });
+      chips.appendChild(c);
+    });
+    sec.appendChild(chips);
+    box.appendChild(sec);
+  }
+  function push(entry) { browseStack.push(entry); browseRender(); }
+  tagGetJson('/decadeprofile?d=' + d).then(function(r){
+    if (!alive()) return;
+    if (note.parentNode) box.removeChild(note);
+    if (!r || !r.ok) { box.appendChild(browseNote(T('genre.offline'))); return; }
+    var dec = T('disc.decade', {d: d});
+    group(T('dec.artists', {d: dec}), r.artists.map(function(a){ return [a, a]; }), function(a){ push({kind: 'artist', artist: a}); });
+    group(T('dec.moods', {d: dec}), r.moods.map(function(m){ return [mixName(m), m]; }), function(m){
+      push({kind: 'moodset', title: mixName(m), q: 'moods=' + encodeURIComponent(m)});
+    });
+    group(T('dec.styles', {d: dec}), r.styles.map(function(s){ return [s.charAt(0).toUpperCase() + s.slice(1), s]; }), function(s){
+      push({kind: 'moodset', title: s.charAt(0).toUpperCase() + s.slice(1), q: 'styles=' + encodeURIComponent(s)});
+    });
+    group(T('dec.decades'), r.decades.filter(function(x){ return x !== self; }).map(function(x){ return [T('disc.decade', {d: x}), x]; }),
+      function(x){ push({kind: 'decade', decade: x}); });
+    if (!box.querySelector('.dMoreSec')) box.appendChild(browseNote(T('more.empty')));
+  }).catch(function(){ if (alive() && note.parentNode) note.textContent = T('genre.offline'); });
+  return box;
 }
 
 /* Alben nach Stimmung, Energie oder Stil (browseStack-Eintrag {kind:'moodset', title, q}): q geht an GET /moodalbums */
@@ -207,24 +257,52 @@ function genreOpen(g) {
   browseRender();
 }
 
-/* Genres zu Alben nachschlagen: items [{uri, album, artist}] -> Promise [Genre oder ''] (lokal; sonst leer) */
-function genreLookup(items) {
-  if (!genreReady || !items.length) return Promise.resolve(items.map(function(){ return ''; }));
+/* Genre und Jahr zu Alben nachschlagen: items [{uri, album, artist}] -> Promise {genres: [...], years: [...]} ('' bzw. 0 = unbekannt) */
+function albumInfoLookup(items) {
+  var none = {genres: items.map(function(){ return ''; }), years: items.map(function(){ return 0; })};
+  if (!genreReady || !items.length) return Promise.resolve(none);
   var q = items.map(function(it){ return [it.uri || '', it.album || '', it.artist || '']; });
   return tagGetJson('/albumgenre?q=' + encodeURIComponent(JSON.stringify(q))).then(function(r){
-    return (r && r.genres) || [];
-  }).catch(function(){ return []; });
+    return {genres: (r && r.genres) || none.genres, years: (r && r.years) || none.years};
+  }).catch(function(){ return none; });
+}
+function genreLookup(items) { return albumInfoLookup(items).then(function(r){ return r.genres; }); }
+
+/* „(1984)“ hinter einem Albumtitel; ein Tipp öffnet die Alben dieses Jahres (Klick geht nicht an die Zeile) */
+function yearSpan(y) {
+  var el = histEl('span', 'bYear', '\u00a0(' + y + ')');
+  el.addEventListener('click', function(ev){ ev.stopPropagation(); yearFromAnywhere(y); });
+  return el;
+}
+function yearFromAnywhere(y) {
+  if (overlayBrowse.classList.contains('on')) { browseStack.push({kind: 'year', year: y}); browseRender(); }
+  else openBrowse({kind: 'year', year: y});
 }
 
-/* Genre klein rechts in Albumzeilen (vor dem Stift); ein Tipp öffnet die Genre-Seite. rows: [{row, uri, album, artist}] */
+/* Wiedergabe: Jahr hinter dem Album (lokal); key verhindert, dass ein spätes Ergebnis beim nächsten Titel landet */
+var playerYearKey = '';
+function playerYear(uri, album, artist) {
+  var key = playerYearKey = uri + '|' + album + '|' + artist;
+  if (!album || !uri || streamOf(uri)) return;
+  albumInfoLookup([{uri: uri, album: album, artist: artist}]).then(function(r){
+    if (key !== playerYearKey || !r.years[0]) return;
+    mAlbum.appendChild(yearSpan(r.years[0]));
+  });
+}
+
+/* Genre klein rechts in Albumzeilen (vor dem Stift), Jahr hinter dem Titel; ein Tipp öffnet Genre- bzw. Jahres-Seite.
+   rows: [{row, uri, album, artist}] */
 function genreDecorate(rows, seq) {
   rows = rows.filter(function(x){ return x.uri && !streamOf(x.uri); });
   for (var i = 0; i < rows.length; i += 200) (function(part){
-    genreLookup(part).then(function(gs){
+    albumInfoLookup(part).then(function(info){
       if (seq !== undefined && seq !== browseSeq) return;
       part.forEach(function(x, k){
-        var g = gs[k];
-        if (!g || !x.row.parentNode) return;
+        var g = info.genres[k], y = info.years[k];
+        if (!x.row.parentNode) return;
+        var ti = x.row.querySelector('.sTitle');
+        if (y && ti) ti.appendChild(yearSpan(y));          /* Jahr hinter dem Albumtitel */
+        if (!g) return;
         var el = histEl('div', 'bGenre', g);
         el.addEventListener('click', function(ev){ ev.stopPropagation(); genreFromAnywhere(g); });
         x.row.insertBefore(el, x.row.querySelector('.tagEditMini'));
@@ -242,5 +320,6 @@ function genreFromAnywhere(g) {
 tagGetJson('/health').then(function(r){
   if (!r || !r.ok) return;
   genreReady = true;
+  if (curAlbumTitle && !mAlbum.querySelector('.bYear')) playerYear(curAlbumUri || '', curAlbumTitle, mArtist.textContent);   /* erster Titel kam vor dem Tag-Dienst */
   if (genreTab) genreTab.style.display = '';
 }).catch(function(){});

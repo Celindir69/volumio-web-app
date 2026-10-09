@@ -28,6 +28,17 @@ t('Alben eines Jahrzehnts nach Jahr', function(){
   assert.deepStrictEqual(albums.decadeAlbums(list, 1970), []);
 });
 
+t('Jahr je Album nachschlagen (Ordner, sonst Album+Künstler) und Alben eines Jahres', function(){
+  var fn = albums.yearIndex(list);
+  assert.strictEqual(fn({u: 'music-library/USB/B/Zwei/CD2/1.flac'}), 1989);
+  assert.strictEqual(fn({u: 'mnt/USB/A/Eins/2.flac'}), 1994);
+  assert.strictEqual(fn({al: 'drei', ar: 'C'}), 1999);
+  assert.strictEqual(fn({u: 'USB/D/Vier/1.flac', al: 'Vier', ar: 'A'}), 0);
+  assert.strictEqual(fn({u: 'tidal://album/1', al: 'Nix', ar: 'X'}), 0);
+  assert.deepStrictEqual(albums.yearAlbums(list, '1994').map(function(a){ return a.al; }), ['Eins']);
+  assert.deepStrictEqual(albums.yearAlbums(list, 2000), []);
+});
+
 t('„mag ich nicht“-Liste der Bewertungen', function(){
   var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dec-')), s = new ratings.Store(path.join(dir, 'r.json'));
   s.set({kind: 'track', uri: 'music-library/USB/A/Eins/2.flac', v: -1});

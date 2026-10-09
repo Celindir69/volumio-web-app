@@ -76,7 +76,11 @@ updateSyncedLyrics();
 
     marqueeSet(mTitle, title);
     mArtist.textContent = artist;
-    mAlbum.textContent  = radio ? '' : album;
+    if ((radio ? '' : album) !== curAlbumTitle || st.uri !== curAlbumUri) {   /* nur bei Wechsel: das Jahr kommt verzögert dazu */
+      curAlbumTitle = radio ? '' : album; curAlbumUri = st.uri;
+      mAlbum.textContent = curAlbumTitle;
+      if (typeof playerYear === 'function') playerYear(st.uri || '', curAlbumTitle, artist);
+    }
     mArtist.classList.toggle('link', !radio && !!artist);      /* Klick öffnet Alben bzw. Titel (browse.js) */
     mAlbum.classList.toggle('link',  !radio && !!album);
     paintQuality(st);
