@@ -5,7 +5,7 @@
 Eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
 direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Auf Volumio 3 vermutlich auch, wurde aber nicht getestet. 
 Zusätzlich zu den Dateien, die auf dem Player laufen, enthält diese Repository nur Tests (`tests/`) und die Einrichtungs-Doku;
-`mx-deploy` bzw. `volumio4-deploy` spielt nur die Laufzeitdateien ein.
+`web-app-deploy` spielt nur die Laufzeitdateien ein.
 
 <p align="center">
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
@@ -100,8 +100,8 @@ Fortschritt der Stimmungs-Tags.
 - Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
 - TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt. 
   (Was auf meinem MX-Stream, aufgrund eines Session-Timeouts, etwa nach 4 Stunden ohne Tidal-Nutzung auftritt.)
-- `mx-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`; auf Volumio 4
-  dasselbe Skript als `volumio4-deploy`.
+- `web-app-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--zurueck`; gleich auf
+  Volumio 3 und 4.
 
 ## Aufbau
 
@@ -112,12 +112,12 @@ Fortschritt der Stimmungs-Tags.
 | `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/INTERNAL/tags/` (Daten: `/data/web-app/`) |
 | `rotel/rotel-bridge.js` | optional: HTTP-Dienst (Port 8765) für einen Rotel-Verstärker im Netz (Lautstärke, Ein/Aus, Eingang) | `/data/INTERNAL/rotel/` |
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt (nur unter Volumio 2 erprobt) | `/volumio/http/www3/tools/` |
-| `tools/mx-deploy.sh` | aktualisiert den Player aus diesem Repository (`mx-deploy`, auf Volumio 4 `volumio4-deploy`) | `/usr/local/bin/` |
+| `tools/web-app-deploy.sh` | aktualisiert den Player aus diesem Repository (`web-app-deploy`) | `/usr/local/bin/` |
 | `tools/essentia/` | optionale Audio-Analyse auf dem Mac, Ergebnis wird zum Tag-Dienst hochgeladen | nicht auf dem Player |
 
 Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`) oder Volumio 4 (Node und Python 3 sind dabei). Einrichtung:
-[docs/einrichten.md](docs/einrichten.md). Aktualisieren direkt auf dem Player: `sudo mx-deploy` bzw. `sudo volumio4-deploy`
-(`tools/mx-deploy.sh`, siehe dort).
+[docs/einrichten.md](docs/einrichten.md). Aktualisieren direkt auf dem Player: `sudo web-app-deploy`
+(`tools/web-app-deploy.sh`, siehe dort).
 
 Rotel-Verstärker und TIDAL-Wächter sind optional (siehe Einrichtung). 
 Eigene Einstellungen (Sprache, Rotel, Dienste ein/aus) gehören in `web/config.local.js`

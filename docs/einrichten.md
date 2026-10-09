@@ -26,38 +26,37 @@ auch `http://<player>/app.html?lang=en`.
 Weitere Sprache: `web/lang/en.js` kopieren, z. B. als `web/lang/fr.js`, in der letzten Zeile Code, Namen und Locale
 anpassen (`langRegister('fr', 'Français', {…}, 'fr-FR')`) und die Texte übersetzen; `{name}` sind Platzhalter und bleiben
 stehen, `{one: …, other: …}` sind Einzahl und Mehrzahl. Dann in `web/config.local.js` eintragen:
-`LANGUAGES: ['de', 'en', 'fr']`. Fehlt in der Datei ein Text, erscheint er englisch. `mx-deploy` lässt eigene
+`LANGUAGES: ['de', 'en', 'fr']`. Fehlt in der Datei ein Text, erscheint er englisch. `web-app-deploy` lässt eigene
 Sprachdateien in `web/lang/` stehen. Datum, Zahlen, Monats- und Wochentagsnamen kommen vom Browser in der gewählten Sprache.
 
 Nicht übersetzt werden Texte, die Volumio selbst liefert (z. B. Menünamen beim Durchsuchen), und Fehlermeldungen des
 Tag-Dienstes; die bleiben deutsch.
 
-## Aktualisieren mit mx-deploy
+## Aktualisieren mit web-app-deploy
 Einmal einrichten:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/mx-deploy >/dev/null
-sudo chmod +x /usr/local/bin/mx-deploy
+curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/web-app-deploy.sh | sudo tee /usr/local/bin/web-app-deploy >/dev/null
+sudo chmod +x /usr/local/bin/web-app-deploy
 ```
 Danach auf dem Player:
 | Aufruf | Wirkung |
 |---|---|
-| `sudo mx-deploy` | `main` aus volumio-web-app laden, geänderte und neue Dateien zeigen, nach Rückfrage einspielen |
-| `sudo mx-deploy <branch>` | einen anderen Branch, z. B. zum Testen vor dem Merge |
-| `sudo mx-deploy -n <branch>` | nur zeigen, was sich ändern würde |
-| `sudo mx-deploy -y <branch>` | ohne Rückfrage |
-| `sudo mx-deploy --zurueck` | letzte Sicherung wiederherstellen (mehrmals: Schritt für Schritt weiter zurück) |
+| `sudo web-app-deploy` | `main` aus volumio-web-app laden, geänderte und neue Dateien zeigen, nach Rückfrage einspielen |
+| `sudo web-app-deploy <branch>` | einen anderen Branch, z. B. zum Testen vor dem Merge |
+| `sudo web-app-deploy -n <branch>` | nur zeigen, was sich ändern würde |
+| `sudo web-app-deploy -y <branch>` | ohne Rückfrage |
+| `sudo web-app-deploy --zurueck` | letzte Sicherung wiederherstellen (mehrmals: Schritt für Schritt weiter zurück) |
 
-Ziele: `app.html`, `web/`, `tools/` nach `/volumio/http/www3/`, `kioskTV.html` nach `/volumio/http/www/`, `tags/` und
-`rotel/rotel-bridge.js` nach `/data/INTERNAL/`; das Skript aktualisiert sich selbst. `tag-service` bzw. `rotel-bridge`
-werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen sichert es die betroffenen Dateien nach
-`/data/INTERNAL/mx-deploy/` (die letzten 5). Gelöscht wird nichts; eigene Dateien wie `web/config.local.js` bleiben.
+Ziele: `app.html`, `web/` und `tools/` in jeden vorhandenen Ordner `/volumio/http/www*/`, `kioskTV.html` nach
+`/volumio/http/www/`, `tags/` und `rotel/rotel-bridge.js` nach `/data/INTERNAL/`; das Skript aktualisiert sich selbst.
+Welchen der Ordner Volumio ausliefert, hängt von Version und gewählter Oberfläche ab (z. B. klassisch `www`, Volumio 3
+`www3`, Volumio 4 `www4`); deshalb bekommen alle vorhandenen die Oberfläche. Neue Ordner legt das Skript nicht an, ohne
+einen bricht es ab; `DEPLOY_WWW=<ordner>` wählt einen bestimmten. `web/config.local.js` liegt je Ordner: Wer die
+Oberfläche wechselt, kopiert sie mit.
 
-Welchen Ordner Volumio ausliefert, hängt von der in Volumio gewählten Oberfläche ab (z. B. klassisch `www`, sonst `www3`).
-Deshalb kommen `app.html`, `web/` und `tools/` zusätzlich in jeden anderen vorhandenen Ordner `/volumio/http/www*/`;
-neue Ordner legt das Skript nicht an. `web/config.local.js` liegt je Ordner: Wer eine andere Oberfläche nutzt, kopiert
-sie dorthin mit.
-
-Auf Volumio 4 dasselbe Skript unter dem Namen `volumio4-deploy`, siehe [Volumio 4](#volumio-4).
+`tag-service` bzw. `rotel-bridge` werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen
+sichert das Skript die betroffenen Dateien nach `/data/web-app-deploy/` (die letzten 5). Gelöscht wird nichts; eigene
+Dateien wie `web/config.local.js` bleiben.
 
 ## Tag-Dienst (für den Tag-Editor)
 ```bash
@@ -310,17 +309,9 @@ Die Oberfläche läuft auch unter Volumio 4 (auf einer Testinstanz erprobt). Unt
 
 - **Ordner:** Volumio 4 liefert die Oberfläche aus `/volumio/http/www4/` statt `www3/`. Aufruf weiter
   `http://<player>/app.html`; `web/config.local.js` gehört nach `/volumio/http/www4/web/`.
-- **Aktualisieren:** dasselbe Skript wie mx-deploy, aber unter dem Namen `volumio4-deploy` eingerichtet. So spielt es
-  `app.html`, `web/` und `tools/` nach `www4/` und sichert nach `/data/INTERNAL/volumio4-deploy/`:
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null
-  sudo chmod +x /usr/local/bin/volumio4-deploy
-  sudo volumio4-deploy -n          # erst ansehen: „geändert“ hieße, eine Datei von Volumio würde ersetzt
-  sudo volumio4-deploy             # einspielen; Aufrufe sonst wie bei mx-deploy (<branch>, -n, -y, --zurueck)
-  ```
-  Am Ende muss „Eingespielt nach /volumio/http/www4“ stehen (danach ggf. weitere vorhandene `www*`-Ordner). Meldet es „zurück mit: sudo mx-deploy“, ist unter dem Namen
-  noch ein altes mx-deploy eingerichtet: die beiden Zeilen oben noch einmal ausführen. Einen anderen Ordner wählt
-  `MX_WWW=<ordner>` (dann nur diesen).
+- **Aktualisieren:** wie oben mit [web-app-deploy](#aktualisieren-mit-web-app-deploy); es findet `www4/` selbst. Beim
+  ersten Mal erst ansehen: `sudo web-app-deploy -n` („geändert“ hieße, eine Datei von Volumio würde ersetzt). In der
+  Meldung „Eingespielt nach …“ muss `www4` stehen.
 - **Tag-Dienst:** Die Dienstdatei oben startet Node über `/usr/bin/env node` und läuft damit auf beiden Versionen. Eine
   ältere Dienstdatei mit `/usr/local/bin/node` scheitert unter Volumio 4 mit `status=203/EXEC`; dann:
   `sudo sed -i 's|^ExecStart=/usr/local/bin/node|ExecStart=/usr/bin/env node|' /etc/systemd/system/tag-service.service && sudo systemctl daemon-reload && sudo systemctl restart tag-service`.

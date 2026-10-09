@@ -29,38 +29,34 @@ applies, otherwise English. To fix the language, set `LANGUAGE: 'de'` or `'en'` 
 Adding a language: copy `web/lang/en.js`, e.g. to `web/lang/fr.js`, adjust code, name and locale in the last line
 (`langRegister('fr', 'Français', {…}, 'fr-FR')`) and translate the texts; `{name}` are placeholders and stay as they are,
 `{one: …, other: …}` are singular and plural. Then add it in `web/config.local.js`: `LANGUAGES: ['de', 'en', 'fr']`.
-Texts missing from the file are shown in English. `mx-deploy` leaves your own language files in `web/lang/` in place.
+Texts missing from the file are shown in English. `web-app-deploy` leaves your own language files in `web/lang/` in place.
 Dates, numbers, month and weekday names come from the browser in the selected language.
 
 Not translated: texts that Volumio itself delivers (e.g. menu names when browsing) and error messages from the tag
 service; these stay German.
 
-## Updating with mx-deploy
+## Updating with web-app-deploy
 
 Set it up once:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/mx-deploy >/dev/null
-sudo chmod +x /usr/local/bin/mx-deploy
+curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/web-app-deploy.sh | sudo tee /usr/local/bin/web-app-deploy >/dev/null
+sudo chmod +x /usr/local/bin/web-app-deploy
 ```
 
 Then on the player:
 
 | Command | Effect |
 |---|---|
-| `sudo mx-deploy` | fetch `main` from volumio-web-app, show changed and new files, and deploy them after confirmation |
-| `sudo mx-deploy <branch>` | use a different branch, e.g. for testing before merging |
-| `sudo mx-deploy -n <branch>` | only show what would change |
-| `sudo mx-deploy -y <branch>` | deploy without confirmation |
-| `sudo mx-deploy --zurueck` | restore the latest backup (repeat to go back step by step) |
+| `sudo web-app-deploy` | fetch `main` from volumio-web-app, show changed and new files, and deploy them after confirmation |
+| `sudo web-app-deploy <branch>` | use a different branch, e.g. for testing before merging |
+| `sudo web-app-deploy -n <branch>` | only show what would change |
+| `sudo web-app-deploy -y <branch>` | deploy without confirmation |
+| `sudo web-app-deploy --zurueck` | restore the latest backup (repeat to go back step by step) |
 
-Targets: `app.html`, `web/`, and `tools/` go to `/volumio/http/www3/`, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/INTERNAL/`; the script also updates itself. `tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/INTERNAL/mx-deploy/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
+Targets: `app.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/INTERNAL/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
 
-Which folder Volumio serves depends on the interface selected in Volumio (e.g. classic `www`, otherwise `www3`). That is
-why `app.html`, `web/`, and `tools/` are also deployed to every other existing `/volumio/http/www*/` folder; the script
-does not create new folders. `web/config.local.js` is per folder: if you use a different interface, copy it there as well.
-
-On Volumio 4, use the same script under the name `volumio4-deploy`; see #volumio-4.
+`tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/web-app-deploy/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
 
 ## Tag Service (for the Tag Editor)
 
@@ -288,16 +284,7 @@ The interface also runs under Volumio 4 (tested on a test instance). Differences
 
 - **Folders:** Volumio 4 serves the interface from `/volumio/http/www4/` instead of `www3/`. It is still accessed via `http://<player>/app.html`; `web/config.local.js` belongs in `/volumio/http/www4/web/`.
 
-- **Updating:** use the same script as mx-deploy, but install it under the name `volumio4-deploy`. This deploys `app.html`, `web/`, and `tools/` to `www4/` and stores backups under `/data/INTERNAL/volumio4-deploy/`:
-
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/mx-deploy.sh | sudo tee /usr/local/bin/volumio4-deploy >/dev/null
-  sudo chmod +x /usr/local/bin/volumio4-deploy
-  sudo volumio4-deploy -n          # inspect first: "changed" would mean that a Volumio file would be replaced
-  sudo volumio4-deploy             # deploy; other commands work as with mx-deploy (<branch>, -n, -y, --zurueck)
-  ```
-
-  At the end, it must say "Eingespielt nach /volumio/http/www4" (possibly followed by other existing `www*` folders). If it says "zurück mit: sudo mx-deploy", an old mx-deploy version is still installed under that name: run the two lines above again. Use `MX_WWW=<folder>` to select a different folder (then only that one).
+- **Updating:** as above with [web-app-deploy](#updating-with-web-app-deploy); it finds `www4/` by itself. The first time, inspect first: `sudo web-app-deploy -n` ("changed" would mean that a Volumio file would be replaced). The message "Eingespielt nach …" must include `www4`.
 
 - **Tag Service:** The service file above starts Node via `/usr/bin/env node` and therefore works on both versions. An older service file using `/usr/local/bin/node` fails under Volumio 4 with `status=203/EXEC`; in that case:
 
