@@ -661,6 +661,8 @@ function doMoodAlbums(query, cb) {
     var c = moodmix.parse(query), idx = moodmix.index(moodCollector);
     if (!moodAlbumSums || moodAlbumSums.idx !== idx) moodAlbumSums = {idx: idx, sums: moodalbums.summarize(idx)};
     var q = {moods: c.moods, styles: c.styles, emin: query.emin ? c.emin : 0, emax: query.emax ? c.emax : 0};
+    var d = parseInt(query.d, 10);                       /* nur Alben dieses Jahrzehnts (Entdecken auf Jahres-/Jahrzehntseite) */
+    if (d >= 1900 && d <= 2090 && d % 10 === 0) list = list.filter(function(a){ return a.y && a.y - a.y % 10 === d; });
     cb(200, {ok: true, albums: moodalbums.list(moodAlbumSums.sums, list, q)});
   });
 }

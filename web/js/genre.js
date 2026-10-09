@@ -185,11 +185,12 @@ function decadeMore(d, self, alive) {
     if (!r || !r.ok) { box.appendChild(browseNote(T('genre.offline'))); return; }
     var dec = T('disc.decade', {d: d});
     group(T('dec.artists', {d: dec}), r.artists.map(function(a){ return [a, a]; }), function(a){ push({kind: 'artist', artist: a}); });
+    function moodset(name, q) { push({kind: 'moodset', title: name + ' · ' + dec, q: q + '&d=' + d, all: {title: name, q: q}}); }   /* nur im Jahrzehnt */
     group(T('dec.moods', {d: dec}), r.moods.map(function(m){ return [mixName(m), m]; }), function(m){
-      push({kind: 'moodset', title: mixName(m), q: 'moods=' + encodeURIComponent(m)});
+      moodset(mixName(m), 'moods=' + encodeURIComponent(m));
     });
     group(T('dec.styles', {d: dec}), r.styles.map(function(s){ return [s.charAt(0).toUpperCase() + s.slice(1), s]; }), function(s){
-      push({kind: 'moodset', title: s.charAt(0).toUpperCase() + s.slice(1), q: 'styles=' + encodeURIComponent(s)});
+      moodset(s.charAt(0).toUpperCase() + s.slice(1), 'styles=' + encodeURIComponent(s));
     });
     group(T('dec.decades'), r.decades.filter(function(x){ return x !== self; }).map(function(x){ return [T('disc.decade', {d: x}), x]; }),
       function(x){ push({kind: 'decade', decade: x}); });
@@ -198,11 +199,23 @@ function decadeMore(d, self, alive) {
   return box;
 }
 
-/* Alben nach Stimmung, Energie oder Stil (browseStack-Eintrag {kind:'moodset', title, q}): q geht an GET /moodalbums */
+/* Alben nach Stimmung, Energie oder Stil (browseStack-Eintrag {kind:'moodset', title, q}): q geht an GET /moodalbums;
+   e.all ({title, q}): Seite ist auf ein Jahrzehnt beschränkt, der Knopf „Alle Jahrzehnte“ ersetzt sie durch die ungefilterte */
+function moodSetAll(e) {
+  var c = histEl('div', 'mxChip bAllDec', T('dec.allDecades'));
+  c.addEventListener('click', function(){
+    browseStack[browseStack.length - 1] = {kind: 'moodset', title: e.all.title, q: e.all.q};
+    browseRender();
+  });
+  var row = histEl('div', 'mxChips bAllDecRow');
+  row.appendChild(c);
+  return row;
+}
 function browseMoodSet(e, seq) {
   tagGetJson('/moodalbums?' + e.q).then(function(r){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
+    if (e.all) browseBody.appendChild(moodSetAll(e));
     var list = (r && r.albums) || [];
     if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('disc.moodNone'))); return; }
     genreAlbumPage(list);

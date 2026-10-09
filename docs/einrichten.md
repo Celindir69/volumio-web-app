@@ -210,6 +210,7 @@ der Tag-Dienst die Albenliste einmal neu, bis dahin fehlen die Jahrzehnte.
 Albenlisten der Künstlerseite, bei Genre, Jahrzehnt und Stimmung und bei Alben in der Suche. Ein Tipp auf das Jahr
 öffnet die Alben dieses Jahres. Jahres- und Jahrzehntseite haben zwei Reiter: „Alben“ und „Entdecken“. „Entdecken“ zeigt
 Künstler mit Alben aus dem Jahrzehnt, die dort häufigsten Stimmungen und Stile und die angrenzenden Jahrzehnte.
+Stimmung und Stil zeigen dort nur Alben dieses Jahrzehnts (z. B. „Melancholisch · 1980er“); „Alle Jahrzehnte“ hebt das auf.
 
 **Bewertungen** (nur mit Tag-Dienst): Auf der Künstlerseite markiert ein Herz Lieblingskünstler, im Albumkopf gibt es
 ein bis fünf Sterne (den gleichen Stern noch einmal tippen nimmt die Bewertung zurück). Titel haben einen Daumen, in der

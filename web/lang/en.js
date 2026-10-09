@@ -18,6 +18,7 @@ langRegister('en', 'English', {
   'dec.artists': 'Artists of the {d}',
   'dec.moods': 'Moods of the {d}',
   'dec.styles': 'Styles of the {d}',
+  'dec.allDecades': 'All decades',
   'dec.decades': 'Decades',
   'more.empty': 'Nothing to discover for this artist yet. Similar artists come from Last.fm, moods and styles from the mood tags.',
   'browse.playPlaylist': 'Play playlist',
