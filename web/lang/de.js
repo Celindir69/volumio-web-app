@@ -69,7 +69,7 @@ langRegister('de', 'Deutsch', {
   'check.nothingFound': 'Nichts gefunden.',
   'check.recheck': 'Neu prüfen',
   'check.db.button': 'Bibliothek aktualisieren',
-  'check.db.hint': 'Neue und geänderte Dateien in die Datenbank einlesen (wie im Volumio-Menü).',
+  'check.db.hint': 'Neue und geänderte Dateien in die Datenbank einlesen.',
   'check.db.confirm': 'Ganze Bibliothek neu einlesen? Der Player ist danach einige Minuten stärker ausgelastet.',
   'check.db.running': 'Bibliothek wird eingelesen …',
   'check.db.done': 'Bibliothek eingelesen. Die Albenliste wird gleich neu aufgebaut.',

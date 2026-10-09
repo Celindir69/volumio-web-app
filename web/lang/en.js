@@ -71,7 +71,7 @@ langRegister('en', 'English', {
   'check.nothingFound': 'Nothing found.',
   'check.recheck': 'Check again',
   'check.db.button': 'Update library',
-  'check.db.hint': 'Read new and changed files into the database (as in the Volumio menu).',
+  'check.db.hint': 'Read new and changed files into the database.',
   'check.db.confirm': 'Re-read the whole library? The player will be busier for a few minutes afterwards.',
   'check.db.running': 'Reading library …',
   'check.db.done': 'Library read. The album list will be rebuilt shortly.',
