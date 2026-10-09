@@ -108,6 +108,7 @@ langRegister('en', 'English', {
   'disc.moodNone': 'No albums mostly classified like this. This depends on the mood tags (library check).',
   'disc.never': 'never played',
   'disc.plays': {one: 'played once', other: 'played {n}×'},
+  'disc.shelf.gems': 'HIDDEN GEMS',
   'disc.shelf.forgotten': 'NOT HEARD IN A WHILE',
   'disc.shelf.never': 'NEVER HEARD',
   'disc.shelf.oldfav': 'ONCE PLAYED A LOT',
@@ -116,6 +117,9 @@ langRegister('en', 'English', {
   'disc.none.album': 'No albums found.',
   'disc.none.artist': 'No artists found.',
   'disc.none.track': 'No tracks found.',
+  'gems.why.artist': '♥ Unheard',
+  'gems.why.artistRare': '♥ Barely heard',
+  'gems.why.like': 'Like {ar}',
   'disc.reroll': 'Roll again',
 
   'genre.all': 'All',

@@ -725,6 +725,56 @@ function doDiscover(query, cb) {
     cb(200, {ok: true, shelves: discover.shelves(kind, ents, discoverStats(playStore.load()), now)});
   });
 }
+/* ---------- Versteckte Perlen (gems.js) ---------- */
+/* GET /gems?kind=artist|album|track -> {ok, items: [{…, why: {why: artist|like|tags, ar, mood, ge}}]} */
+var gems = require('./gems.js'), gemState = null, favState = {at: 0, map: {}, rev: 0, loading: false};
+/* Volumio-Favoriten (Daumen hoch) -> {Datei: true}; höchstens einmal je Minute gefragt, bei Fehlern der letzte Stand */
+function volumioFavs(cb) {
+  if (Date.now() - favState.at < 60000 || favState.loading) return cb(favState);
+  favState.loading = true;
+  function done(map) {
+    favState.loading = false; favState.at = Date.now();
+    if (map && Object.keys(map).sort().join('\n') !== Object.keys(favState.map).sort().join('\n')) { favState.map = map; favState.rev++; }
+    cb(favState);
+  }
+  var req = http.get(VOLUMIO_URL + '/api/v1/browse?uri=favourites', function(res){
+    var data = '';
+    res.setEncoding('utf8');
+    res.on('data', function(d){ data += d; });
+    res.on('end', function(){
+      var map = {};
+      try {
+        ((JSON.parse(data).navigation || {}).lists || []).forEach(function(l){
+          (l.items || []).forEach(function(it){ var f = relUri(it.uri); if (f) map[f] = true; });
+        });
+      } catch (e) { return done(null); }
+      done(map);
+    });
+  });
+  req.setTimeout(5000, function(){ req.abort(); });
+  req.on('error', function(){ done(null); });
+}
+function doGems(query, cb) {
+  var kind = query.kind === 'artist' || query.kind === 'track' ? query.kind : 'album';
+  albumsEnsure(function(list){
+    var tl = libTracksLoad();
+    if (!list || !list.length || !tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, items: []});
+    volumioFavs(function(fs_){
+      var pl = playStore.load(), idx = moodmix.index(moodCollector);
+      var stamp = [libTracks.m, list.length, pl.length, ratingStore.rev, fs_.rev].join(':');
+      if (!gemState || gemState.stamp !== stamp || gemState.idx !== idx || gemState.list !== list) {
+        var moods = {};
+        idx.forEach(function(x){ moods[x.it.f] = x.r; });
+        if (!artistList || artistList.src !== list) artistList = {src: list, list: albums.artists(list)};
+        gemState = {stamp: stamp, idx: idx, list: list, g: gems.prepare({
+          lib: tl, moodOf: function(f){ return moods[f] || null; }, albums: list, artists: artistList.list,
+          rated: ratingStore.load(), favs: fs_.map, stats: discoverStats(pl)})};
+      }
+      cb(200, {ok: true, items: gems.pick(gemState.g, kind)});
+    });
+  });
+}
+
 /* ---------- Bewertungen (ratings.js) ---------- */
 /* POST /ratings {artist, album, tracks: [uri, …]} -> {ok, artist, album, tracks}; POST /rate {kind, v, name | uri, ar, al, ti} */
 var ratingStore = new ratings.Store(path.join(DATA_DIR, 'ratings.json'));
@@ -1052,6 +1102,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/moodalbums') return doMoodAlbums(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodmix')  return doMoodmix(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/gems') return doGems(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/discover') return doDiscover(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

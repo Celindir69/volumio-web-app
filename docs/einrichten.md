@@ -202,6 +202,17 @@ Der Daumen legt den Titel in die Volumio-Favoriten, und vorhandene Favoriten zei
 „mag ich nicht“ speichert der Tag-Dienst in `/data/xplorio/data/ratings.json`. Titel mit „mag ich nicht“ lassen
 Würfel, Stimmungs-Mix und die Titel-Reihen beim Entdecken aus.
 
+**Versteckte Perlen** (nur mit Tag-Dienst): Beim Entdecken zeigt die Reihe unter den Zufälligen Entdeckungen Künstler,
+Alben oder Titel aus der Mediathek, die nie oder kaum gelaufen sind (Künstler und Alben höchstens zweimal, Titel
+höchstens einmal) und zum eigenen Geschmack passen. Den Geschmack bilden Künstler mit Herz, Alben mit 4 oder 5 Sternen,
+die Volumio-Favoriten (der Tag-Dienst fragt sie höchstens einmal je Minute bei Volumio ab) und, schwächer, der Verlauf.
+Verglichen werden Genre, Stimmung, Stil und Energie aus den Stimmungs-Tags; Titel ohne Stimmungs-Tags kommen in der
+Titel-Reihe nicht vor. Ungehörte Alben und Titel von Lieblingskünstlern sind immer dabei. Unter jeder Kachel steht der
+Grund: „♥ Ungehört“ (Lieblingskünstler), „Wie …“ (klingt wie ein Lieblingskünstler) oder Stimmung · Genre. Nicht
+dabei: Titel mit „mag ich nicht“, Alben, deren Titel überwiegend „mag ich nicht“ tragen, schon bewertete Alben,
+Künstler mit Herz und Favoriten. Der Würfel zieht neu. Ohne Bewertungen zählt nur der Verlauf; gibt es auch keinen,
+fehlt die Reihe.
+
 **Zufallsmix:** Neben „Alle abspielen“ (Künstlerseite, Genre-Listen) startet der Würfel 25 zufällige Titel daraus, nie
 derselbe Künstler direkt hintereinander. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
 `/data/xplorio/data/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert

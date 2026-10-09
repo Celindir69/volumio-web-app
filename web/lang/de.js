@@ -106,6 +106,7 @@ langRegister('de', 'Deutsch', {
   'disc.moodNone': 'Keine Alben, die überwiegend so eingeordnet sind. Das hängt von den Stimmungs-Tags ab (Bibliotheks-Check).',
   'disc.never': 'nie gehört',
   'disc.plays': {one: '1× gehört', other: '{n}× gehört'},
+  'disc.shelf.gems': 'VERSTECKTE PERLEN',
   'disc.shelf.forgotten': 'LANGE NICHT GEHÖRT',
   'disc.shelf.never': 'NOCH NIE GEHÖRT',
   'disc.shelf.oldfav': 'FRÜHER OFT GEHÖRT',
@@ -114,6 +115,9 @@ langRegister('de', 'Deutsch', {
   'disc.none.album': 'Keine Alben gefunden.',
   'disc.none.artist': 'Keine Künstler gefunden.',
   'disc.none.track': 'Keine Titel gefunden.',
+  'gems.why.artist': '♥ Ungehört',
+  'gems.why.artistRare': '♥ Kaum gehört',
+  'gems.why.like': 'Wie {ar}',
   'disc.reroll': 'Neu würfeln',
 
   'genre.all': 'Alle',

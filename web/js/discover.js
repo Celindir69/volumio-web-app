@@ -11,7 +11,7 @@ var DISCOVER_KIND = {
   albums:  {kind: 'album',  ago: 'disc.ago.album'},
   songs:   {kind: 'track',  ago: 'disc.ago.track'}
 };
-var DISCOVER_SHELVES = ['random', 'ago', 'forgotten', 'never', 'oldfav'];   /* Reihenfolge auf der Seite */
+var DISCOVER_SHELVES = ['random', 'gems', 'ago', 'forgotten', 'never', 'oldfav'];   /* Reihenfolge auf der Seite */
 
 function discoverDate(t) { return langDate(t * 1000); }
 function discoverCat() { return DISCOVER_KIND[searchCat] || DISCOVER_KIND.albums; }
@@ -38,7 +38,47 @@ function discoverShow() {
   }).catch(function(){});
 
   discoverLoad(seq, cat, secs, false);
+  discoverGems(seq, cat, secs.gems);
   return true;
+}
+
+/* Versteckte Perlen (Tag-Dienst GET /gems): eigene Reihe mit Würfel; ohne Geschmack (keine Bewertungen, kein Verlauf) leer */
+function discoverGems(seq, cat, sec) {
+  tagGetJson('/gems?kind=' + cat.kind).then(function(r){
+    if (seq !== discoverSeq || !r || !r.ok) return;
+    discoverClear(sec);
+    if (!r.items.length) return;
+    var head = discoverDiceHead(T('disc.shelf.gems'), function(){ discoverGems(discoverSeq, cat, sec); });
+    sec.appendChild(head);
+    var row = histEl('div', 'dRow');
+    r.items.forEach(function(it){ row.appendChild(discoverShelfTile(cat.kind, 'gems', it)); });
+    sec.appendChild(row);
+    discoverFit(row);
+  }).catch(function(){});
+}
+
+/* Grund einer Perle: ungehört von einem Lieblingskünstler, wie ein Lieblingskünstler, sonst Stimmung · Genre */
+function discoverWhy(it) {
+  var w = it.why || {};
+  if (w.why === 'artist') return T(it.plays ? 'gems.why.artistRare' : 'gems.why.artist');   /* Künstler steht schon darüber */
+  if (w.why === 'like') return T('gems.why.like', {ar: histArtistName(w.ar)});
+  var m = w.mood ? T('mood.' + w.mood) : '';
+  return [m ? m.charAt(0).toUpperCase() + m.slice(1) : '', w.ge || ''].filter(Boolean).join(' · ');
+}
+
+/* Überschrift mit Würfel (Zufallsreihe, Perlen) */
+function discoverDiceHead(title, roll) {
+  var head = browseHeading(title);
+  head.classList.add('dHead');
+  var dice = histEl('div', 'dDice');
+  dice.title = T('disc.reroll');
+  dice.innerHTML = DICE_SVG;
+  dice.addEventListener('click', function(){
+    dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
+    roll();
+  });
+  head.appendChild(dice);
+  return head;
 }
 
 /* Reihen vom Tag-Dienst; onlyRandom: nur die Zufallsreihe neu (Würfel) */
@@ -116,19 +156,9 @@ function discoverClear(el) { while (el.firstChild) el.removeChild(el.firstChild)
 function discoverShelf(sec, sh, cat, secs) {
   discoverClear(sec);
   if (!sh.items.length && sh.id !== 'random') return;
-  var head = browseHeading(T('disc.shelf.' + sh.id));
-  if (sh.id === 'random') {
-    head.classList.add('dHead');
-    var dice = histEl('div', 'dDice');
-    dice.title = T('disc.reroll');
-    dice.innerHTML = DICE_SVG;
-    dice.addEventListener('click', function(){
-      dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
-      discoverLoad(discoverSeq, cat, secs, true);
-    });
-    head.appendChild(dice);
-  }
-  sec.appendChild(head);
+  sec.appendChild(sh.id === 'random'
+    ? discoverDiceHead(T('disc.shelf.random'), function(){ discoverLoad(discoverSeq, cat, secs, true); })
+    : browseHeading(T('disc.shelf.' + sh.id)));
   if (!sh.items.length) {
     sec.appendChild(browseNote(T('disc.none.' + cat.kind)));
     return;
@@ -149,7 +179,8 @@ function discoverShelfTile(kind, shelf, it) {
   tile.appendChild(img);
   tile.appendChild(histEl('div', 'dTi', kind === 'artist' ? it.ar : kind === 'track' ? it.ti : it.al));
   tile.appendChild(histEl('div', 'dAr', kind === 'artist' ? T('disc.albums', {n: it.n}) : histArtistName(it.ar)));
-  var info = shelf === 'oldfav' ? T('disc.plays', {n: it.plays})
+  var info = shelf === 'gems' ? discoverWhy(it)
+           : shelf === 'oldfav' ? T('disc.plays', {n: it.plays})
            : shelf === 'never' ? '' : it.last ? T('disc.last', {date: discoverDate(it.last)}) : T('disc.never');
   if (info) tile.appendChild(histEl('div', 'dSub', info));
   tile.addEventListener('click', function(){
