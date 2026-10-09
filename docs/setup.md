@@ -10,7 +10,7 @@ Copy `kioskTV.html` to `/volumio/http/www/` (the Volumio kiosk gets its files fr
 
 After an update, perform a hard reload in the browser. An existing `web/config.local.js` is preserved.
 
-Custom settings (Rotel, enabling/disabling services, language) go into `web/config.local.js`; use `web/config.local.js.example` as the template. The Last.fm credentials do not belong there but in `/data/web-app/keys.json` (see [Last.fm credentials](#lastfm-credentials)).
+Custom settings (Rotel, enabling/disabling services, language) go into `web/config.local.js`; use `web/config.local.js.example` as the template. The Last.fm credentials do not belong there but in `/data/web-app/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)).
 
 ### Light and Dark
 
@@ -63,7 +63,7 @@ Targets: `app.html`, `web/`, and `tools/` go to every existing `/volumio/http/ww
 ```bash
 sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
 sudo chown -R volumio:volumio /data/INTERNAL/tags
-sudo mkdir -m 700 -p /data/web-app && sudo chown volumio:volumio /data/web-app
+sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data
 sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
 [Unit]
 Description=Tag-Dienst fuer app.html
@@ -91,27 +91,27 @@ If it does not work, uncomment `Environment=USE_SUDO=1` (then only `tags.py` run
 
 After an update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
 
-Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (data folder, default `/data/web-app`).
+Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (data folder, default `/data/web-app/data`).
 
-**Data folder:** The program lives in `/data/INTERNAL/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/web-app/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
-`sudo mkdir -m 700 /data/web-app && sudo chown volumio:volumio /data/web-app && sudo systemctl restart tag-service`.
+**Data folder:** The program lives in `/data/INTERNAL/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/web-app/data/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
+`sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data && sudo systemctl restart tag-service`.
 
 ### Last.fm credentials
 
-The API key and "Shared secret" from https://www.last.fm/api/accounts are stored in `/data/web-app/keys.json`; only the Tag Service reads them, and the app queries Last.fm through the service:
+The API key and "Shared secret" from https://www.last.fm/api/accounts are stored in `/data/web-app/data/keys.json`; only the Tag Service reads them, and the app queries Last.fm through the service:
 
 ```bash
-sudo -u volumio tee /data/web-app/keys.json > /dev/null << 'KEYS'
+sudo -u volumio tee /data/web-app/data/keys.json > /dev/null << 'KEYS'
 { "LASTFM_KEY": "YOUR_LASTFM_KEY", "LASTFM_SECRET": "YOUR_SHARED_SECRET" }
 KEYS
-sudo chmod 600 /data/web-app/keys.json && sudo systemctl restart tag-service
+sudo chmod 600 /data/web-app/data/keys.json && sudo systemctl restart tag-service
 ```
 
 The key is enough for similar artists, information texts, cover search, and mood tags; the secret is only needed for scrobbling. If `LASTFM_KEY`/`LASTFM_SECRET` are still in `web/config.local.js` (earlier versions), the service copies them to `keys.json` on start; afterwards delete those two lines from `web/config.local.js`, because any browser on the network can load that file. `curl -s localhost:8766/health` shows `"keysInWeb":true` as long as they are still there.
 
 `tags.py` runs with Python 2.7 and 3 and includes mutagen itself; if there is no `python` command, the service uses `python3`.
 
-Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/web-app/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. While the library check is open, changes are only collected and read in once when it is closed (at the latest 10 minutes after the last change). This only works if MPD does not watch the files itself: with `auto_update "yes"` in `/etc/mpd.conf`, MPD scans every changed file immediately, and Volumio then rebuilds its album list each time (about a minute of load per album, up to a hang when editing many albums in a row). Recommendation: `auto_update "no"` (also in the template under `/volumio/app/plugins/music_service/mpd/`, if present) and `sudo systemctl restart mpd`; read in new music as usual with "Update library" (in the Volumio menu "Update", not "Rescan", or with the button at the top of the library check, which also covers changes still being collected). The service is accessible on the local network without authentication.
+Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/web-app/data/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. While the library check is open, changes are only collected and read in once when it is closed (at the latest 10 minutes after the last change). This only works if MPD does not watch the files itself: with `auto_update "yes"` in `/etc/mpd.conf`, MPD scans every changed file immediately, and Volumio then rebuilds its album list each time (about a minute of load per album, up to a hang when editing many albums in a row). Recommendation: `auto_update "no"` (also in the template under `/volumio/app/plugins/music_service/mpd/`, if present) and `sudo systemctl restart mpd`; read in new music as usual with "Update library" (in the Volumio menu "Update", not "Rescan", or with the button at the top of the library check, which also covers changes still being collected). The service is accessible on the local network without authentication.
 
 ### Search for Cover Art Online
 
@@ -125,7 +125,7 @@ The Tag Service performs the queries; the player therefore needs internet access
 
 In the menu (gear at the top right, only available while the Tag Service is running): finds albums without cover art, compilations without a consistent album artist, artists with multiple spellings, inconsistent album names/years, and tracks without track numbers; the pencil icon opens the appropriate editor.
 
-The check reads the MPD database (`MPD_HOST`, `MPD_PORT`, default `localhost:6600`) and the folders, does not modify any files, and only runs when triggered manually. Result: `/data/web-app/check.json`, retained until the next check. Entries whose pencil was used are recorded there and stay greyed out, also after closing, until the next check.
+The check reads the MPD database (`MPD_HOST`, `MPD_PORT`, default `localhost:6600`) and the folders, does not modify any files, and only runs when triggered manually. Result: `/data/web-app/data/check.json`, retained until the next check. Entries whose pencil was used are recorded there and stay greyed out, also after closing, until the next check.
 
 **Genres:** Two further categories suggest exactly one genre per album from the 15 Discogs top categories (Electronic,
 Rock, Jazz, Classical, Pop, Hip Hop, Funk / Soul, Folk, World, & Country, Latin, Reggae, Blues, Stage & Screen,
@@ -145,7 +145,7 @@ The model is weaker at recognising classical music, soundtracks and radio plays.
 
 If a web radio station broadcasts "Artist - Title", the Tag Service searches iTunes for the corresponding cover art (falling back to Deezer) and displays it in the app and on the kiosk TV; if no title is available or no match is found, the station logo remains.
 
-The radio list displays the station logos using the address provided by Volumio, otherwise by looking up the station name via radio-browser.info. The Tag Service stores both under `/data/web-app/radio-covers/` and `/data/web-app/stations/`.
+The radio list displays the station logos using the address provided by Volumio, otherwise by looking up the station name via radio-browser.info. The Tag Service stores both under `/data/web-app/data/radio-covers/` and `/data/web-app/data/stations/`.
 
 ### History and Statistics
 
@@ -155,28 +155,28 @@ Tapping plays the track or opens the album or artist.
 
 **Discover:** As long as nothing has been entered in the search field, it displays artists, albums, or tracks appropriate to the selected tab that were played around this date one year ago (otherwise 2, 3, etc. years ago), plus a **Random Artist**, **Random Album**, or **Random Track** (tap artist or album to open it, tap a track to play it, and tap the dice to select a new one). Items that have not been played for a long time or have never been played are preferred.
 
-The Tag Service reads the album list from MPD and stores it in `/data/web-app/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
+The Tag Service reads the album list from MPD and stores it in `/data/web-app/data/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
 
 **Genres:** The fourth search tab (only with the Tag Service) shows tiles of all genres when nothing is entered, and the matching genres otherwise. Tapping one opens the genre page: if there are [audio analyses](#audio-analysis-with-essentia-optional-on-the-mac), it first shows tiles of the styles (Discogs sub-styles, e.g. "Trip Hop" under Electronic) with "All" in front, otherwise all albums of the genre right away, sorted by artist. Each album counts up to three sub-styles of its genre, averaged over the analysed tracks; albums without an analysis appear only under "All". Search also finds sub-styles. An album's genre is its most frequent genre tag (from the album list). The album page shows artist, album and genre one below the other; artist and genre open their pages. In album lists the genre is shown small before the pencil. The [library check](#library-check) helps to unify and fill in genre tags.
 
-The Tag Service fetches artist images once from Deezer and stores them under `/data/web-app/artists/` (Last.fm no longer provides them); if no image is available, Volumio's artist icon is shown.
+The Tag Service fetches artist images once from Deezer and stores them under `/data/web-app/data/artists/` (Last.fm no longer provides them); if no image is available, Volumio's artist icon is shown.
 
 The Tag Service checks Volumio every 5 seconds (every 15 seconds while paused/stopped) for playback status (`VOLUMIO_URL`, default `http://localhost:3000`). A track counts if it is longer than 30 seconds and has been played either halfway through or for 4 minutes; web radio does not count.
 
-Each play is stored as one line in `/data/web-app/plays.jsonl`. To disable it: set `HISTORY: false` in `web/config.local.js`, then restart the Tag Service.
+Each play is stored as one line in `/data/web-app/data/plays.jsonl`. To disable it: set `HISTORY: false` in `web/config.local.js`, then restart the Tag Service.
 
-**Last.fm:** For scrobbling, the service needs not only `LASTFM_KEY` but also `LASTFM_SECRET` in `/data/web-app/keys.json` (see [Last.fm credentials](#lastfm-credentials)). Then, under Statistics, select "Connect to Last.fm", choose "Allow" on Last.fm, and then return to the app and select "Done". After that:
+**Last.fm:** For scrobbling, the service needs not only `LASTFM_KEY` but also `LASTFM_SECRET` in `/data/web-app/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)). Then, under Statistics, select "Connect to Last.fm", choose "Allow" on Last.fm, and then return to the app and select "Done". After that:
 
 - new plays are scrobbled (including "now playing"); without an internet connection, they wait in a queue (Last.fm still accepts them up to 14 days later),
 - the existing Last.fm history is imported once; "Sync with Last.fm" only fetches new entries later. Anything already in the history (same track within 5 minutes) is not added twice.
 
-The session key is stored in `/data/web-app/lastfm.json` and remains on the player. If another Last.fm plugin in Volumio is also scrobbling, disable one of them, otherwise every track will be submitted to Last.fm twice.
+The session key is stored in `/data/web-app/data/lastfm.json` and remains on the player. If another Last.fm plugin in Volumio is also scrobbling, disable one of them, otherwise every track will be submitted to Last.fm twice.
 
 ### Mood Tags
 
 With `LASTFM_KEY`, the Tag Service retrieves the Last.fm tags for every track in the library (`track.getTopTags`, falling back to the artist's tags if no useful track tags are available) and maps them to mood, energy (1–5), and style according to `tags/mood/lastfm_mapping.json` and `tags/mood/classification_rules.json`.
 
-Queries are only made while nothing is playing (stopped or paused; checked every 5 seconds), at around 4 requests per second. The music files remain unchanged; the raw tags are stored in `/data/web-app/moodtags/`, and the associated track list is stored in `/data/web-app/library-tracks.json` (generated together with the album list).
+Queries are only made while nothing is playing (stopped or paused; checked every 5 seconds), at around 4 requests per second. The music files remain unchanged; the raw tags are stored in `/data/web-app/data/moodtags/`, and the associated track list is stored in `/data/web-app/data/library-tracks.json` (generated together with the album list).
 
 Progress and distribution are shown in the Library Check under "Mood Tags (Last.fm)".
 
@@ -225,7 +225,7 @@ python3 analyse.py --upload http://<player>:8766
 - An intermediate upload can be performed at any time; the Tag Service then uses the results available so far.
 - If the analysis crashes on a file (macOS then reports "Python quit unexpectedly"), the script continues and records the file as an error; `--retry-errors` retries such files later. Files longer than 30 minutes (recordings, DJ mixes) are skipped because they are loaded entirely into memory (`--max-minutes`, 0 = all); they are counted as "skipped", not as errors.
 - With ffmpeg (`brew install ffmpeg`) the script reads files that Essentia fails on: after a read error, an almost empty result, or a crash (the file is then retried on its own, directly with ffmpeg). The script looks for ffmpeg itself (PATH, `/opt/homebrew/bin`, `/usr/local/bin`) and shows at startup which one it uses; `--ffmpeg <path>` selects another, `--ffmpeg aus` turns it off. `--retry-errors` catches up on files that failed before. Tracks read with ffmpeg carry `"dec":"ffmpeg"` in `essentia.jsonl`.
-- The result file `essentia.jsonl` is located on the player under `/data/web-app/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood Tags" how many tracks have been matched.
+- The result file `essentia.jsonl` is located on the player under `/data/web-app/data/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood Tags" how many tracks have been matched.
 
 ### Artist and Album Information
 
@@ -240,7 +240,7 @@ For the current track the app looks for a text of its own in the same order (Las
 
 If synchronized lyrics consistently appear too early or too late (for example, because a different version of the track is being played), the "−" and "+" controls next to the "Lyrics" heading (stage view: round buttons at the top right) shift the lyrics by 0.5 seconds at a time.
 
-The value applies to that track on all devices (`/data/web-app/lyrics-offsets.json`); tapping the value resets it to 0.
+The value applies to that track on all devices (`/data/web-app/data/lyrics-offsets.json`); tapping the value resets it to 0.
 
 ## Rotel Bridge (Optional)
 
@@ -292,6 +292,6 @@ The interface also runs under Volumio 4 (tested on a test instance). Differences
 
   Python 3 is included, and the Tag Service includes mutagen.
 
-- **Information texts:** Volumio 4 only provides artist and album information with a subscription; the app therefore retrieves it from Last.fm and Wikipedia (see #artist-and-album-information). With `LASTFM_KEY` in `/data/web-app/keys.json`, album information is also available.
+- **Information texts:** Volumio 4 only provides artist and album information with a subscription; the app therefore retrieves it from Last.fm and Wikipedia (see #artist-and-album-information). With `LASTFM_KEY` in `/data/web-app/data/keys.json`, album information is also available.
 
 - **Not tested under Volumio 4:** `kioskTV.html` (kiosk folder), Rotel Bridge, and TIDAL Watchdog (the watchdog is located under `/volumio/http/www4/tools/` there; adjust the path in the cron entry accordingly).

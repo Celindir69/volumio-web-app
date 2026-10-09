@@ -14,10 +14,11 @@ var PYTHON      = process.env.PYTHON      || (['/usr/bin/python', '/usr/local/bi
   try { return fs.statSync(p).isFile(); } catch (e) { return false; } }) ? 'python' : 'python3');
 var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
 var MPC         = process.env.MPC         || 'mpc';
-/* Datenordner /data/web-app (früher /data/INTERNAL/tags, wird beim ersten Start verschoben; siehe appdata.js) */
+/* Datenordner /data/web-app/data (früher /data/INTERNAL/tags, wird beim ersten Start verschoben; siehe appdata.js) */
 var appdata     = require('./appdata.js');
-var DATA_DIR    = process.env.TAGS_LOG ? path.dirname(process.env.TAGS_LOG)
-  : appdata.prepare(process.env.TAGS_DATA || '/data/web-app', process.env.TAGS_OLD_DATA || '/data/INTERNAL/tags', console.log).dir;
+var DATA_PREP   = process.env.TAGS_LOG ? {dir: path.dirname(process.env.TAGS_LOG)}
+  : appdata.prepare(process.env.TAGS_DATA || '/data/web-app/data', process.env.TAGS_OLD_DATA || '/data/INTERNAL/tags', console.log);
+var DATA_DIR    = DATA_PREP.dir;
 var LOG_FILE    = process.env.TAGS_LOG    || path.join(DATA_DIR, 'changes.jsonl');
 var MPD_HOST    = process.env.MPD_HOST    || 'localhost';
 var MPD_PORT    = parseInt(process.env.MPD_PORT || '6600', 10);
@@ -427,7 +428,8 @@ var lastfm = require('./lastfm.js');
 var VOLUMIO_URL = process.env.VOLUMIO_URL || 'http://localhost:3000';
 var playStore = new plays.Store(path.join(DATA_DIR, 'plays.jsonl'));
 var keys = new appdata.Keys(DATA_DIR, appConfig, console.log);   /* Last.fm-Key und -Secret (keys.json) */
-keys.migrate();
+/* nur in den eigenen Datenordner übernehmen, nie in den alten (liegt evtl. in einer Netzwerkfreigabe) */
+if (!DATA_PREP.error) keys.migrate();
 var lfm = new lastfm.Sync(path.join(DATA_DIR, 'lastfm.json'), playStore, function(){ return keys.lastfm(); });
 var tracker = new plays.Tracker(function(e){ playStore.add([e]); lfm.played(e); }, function(e){ lfm.nowPlaying(e); });
 var recording = false;
