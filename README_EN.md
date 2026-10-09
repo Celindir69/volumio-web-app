@@ -79,6 +79,7 @@ weekday, and genre, and an annual review with a comparison to the previous year,
 Tapping a month displays the rankings for that month.
 
 <p>
+  <img src="docs/bilder/menue.jpg" width="200" alt="Menu behind the gear">
   <img src="docs/bilder/verlauf.jpg" width="200" alt="Recently Played">
   <img src="docs/bilder/statistik.jpg" width="200" alt="Statistics">
   <img src="docs/bilder/rueckblick.jpg" width="200" alt="Review">
