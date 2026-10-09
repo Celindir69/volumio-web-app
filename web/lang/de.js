@@ -16,6 +16,7 @@ langRegister('de', 'Deutsch', {
   'dec.artists': 'Künstler der {d}',
   'dec.moods': 'Stimmungen der {d}',
   'dec.styles': 'Stile der {d}',
+  'dec.allDecades': 'Alle Jahrzehnte',
   'dec.decades': 'Jahrzehnte',
   'more.empty': 'Zu diesem Künstler gibt es noch nichts zu entdecken. Ähnliche Künstler kommen über Last.fm, Stimmungen und Stile über die Stimmungs-Tags.',
   'browse.playPlaylist': 'Playlist abspielen',
