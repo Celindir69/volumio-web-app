@@ -44,7 +44,7 @@ function seedOf(idx, q, moodOf) {
 }
 
 /* Ähnliche Titel: höchstens n, je Künstler höchstens maxPer, ohne den Titel selbst und skip(it);
-   shuffle (Würfel): aus den besten 3n gewichtet gezogen statt der besten n. -> {seed, items: [{it, r, s}]} */
+   shuffle (Würfel): aus den besten 3n gewichtet gezogen statt der besten n, kürzlich Gehörtes (o.recent) zuletzt. -> {seed, items: [{it, r, s}]} */
 function pick(idx, seed, o) {
   o = o || {};
   var n = o.n || 25, maxPer = o.maxPer || 2, rnd = o.rnd || Math.random;
@@ -60,7 +60,9 @@ function pick(idx, seed, o) {
   cand.sort(function(a, b){ return b.s - a.s; });
   if (o.shuffle) {
     cand = cand.slice(0, n * 3);
-    cand.forEach(function(x){ x.key = Math.pow(rnd() || 1e-9, 1 / (x.s * x.s)); });   /* Ähnlichere öfter */
+    cand.forEach(function(x){                          /* Ähnlichere öfter, kürzlich Gehörtes (o.recent) nur zum Auffüllen */
+      x.key = Math.pow(rnd() || 1e-9, 1 / (x.s * x.s)) - (o.recent && o.recent(x.it) ? 1 : 0);
+    });
     cand.sort(function(a, b){ return b.key - a.key; });
   }
   var per = {}, out = [];

@@ -675,7 +675,9 @@ function doSimilar(query, cb) {
   var seed = similar.seedOf(idx, {f: relUri(query.file), ar: String(query.artist || ''), ti: String(query.title || ''), al: String(query.album || '')},
     function(ar, ti, al){ return moodCollector.moodOf(ar, ti, al); });
   if (!seed) return cb(200, {ok: false, nodata: true, items: []});
-  var list = similar.pick(idx, seed, {n: 25, shuffle: query.shuffle === '1', skip: function(it){ return !!bad[ratings.trackKey(it.f)]; }});
+  var recent = query.shuffle === '1' ? discover.recentFn(discoverStats(playStore.load()), Math.floor(Date.now() / 1000)) : null;
+  var list = similar.pick(idx, seed, {n: 25, shuffle: query.shuffle === '1', skip: function(it){ return !!bad[ratings.trackKey(it.f)]; },
+    recent: recent && function(it){ return recent([it.ar, it.ti]); }});
   if (query.shuffle === '1') list = discover.mix(list.map(function(x){ return [x.it.ar, x.it.ti, x.it.f, x.it.d, x.it.al, x]; }), list.length).map(function(t){ return t[5]; });
   cb(200, {ok: true, seed: {mood: seed.r.mood || [], energy: seed.r.energy, bpm: seed.r.bpm || null, style: seed.r.style || []},
     items: list.map(function(x){ return {f: relUri(x.it.f) || x.it.f, ar: x.it.ar, ti: x.it.ti, al: x.it.al || '', d: x.it.d || 0, why: similar.why(seed.r, x.r)}; })});
@@ -838,23 +840,27 @@ function doRandomMix(body, cb) {
     function send(picked) {
       cb(200, {ok: true, items: picked.map(function(t){ return {f: t[2], ar: t[0], ti: t[1], al: t[4] || '', d: t[3] || 0}; })});
     }
+    /* Würfel-Regeln: höchstens 3 je Künstler (nicht auf der Künstlerseite) und 2 je Album (Künstlerseite 3),
+       in den letzten 14 Tagen Gehörtes nur, wenn sonst zu wenig da ist */
+    var pl = playStore.load(), now = Math.floor(Date.now() / 1000);
+    var rules = {artist: body.artist ? 0 : 3, album: body.artist ? 3 : 2, recent: discover.recentFn(discoverStats(pl), now)};
     if (shelf) {                                                        /* Entdecken-Reihe: Titel der ganzen Reihe */
-      var pl = playStore.load(), now = Math.floor(Date.now() / 1000), extra = {};
+      var extra = {};
       if (shelf === 'ago') {
         var tz = {w: parseInt(body.tzw, 10) || 0, s: parseInt(body.tzs, 10) || 0};
         extra.keys = {};
         plays.ago(pl, now, tz, 500, 'track').items.forEach(function(it){ extra.keys[plays.norm(it.ar) + '|' + plays.norm(it.ti)] = true; });
       }
-      if (shelf !== 'gems') return send(discover.mixCapped(discover.shelfPool(shelf, tl, discoverStats(pl), now, extra), n, 3));
+      if (shelf !== 'gems') return send(discover.mixCapped(discover.shelfPool(shelf, tl, discoverStats(pl), now, extra), n, rules));
       return gemsReady(function(g){
         if (!g) return cb(200, {ok: false, building: albumBuilding, items: []});
         extra.files = {};
         gems.pick(g, 'track', 100).forEach(function(it){ extra.files[it.f] = true; });
-        send(discover.mixCapped(discover.shelfPool('gems', tl, null, now, extra), n, 3));
+        send(discover.mixCapped(discover.shelfPool('gems', tl, null, now, extra), n, rules));
       });
     }
     var pool = discover.mixPool(tl, list, {artist: body.artist, artists: many, dirs: [].concat(body.dirs || []).slice(0, 5000)});
-    send(many.length ? discover.mixBalanced(pool, n, list) : discover.mix(pool, n));   /* ähnliche Künstler: gleichmäßig */
+    send(many.length ? discover.mixBalanced(pool, n, list, null, rules.recent) : discover.mixCapped(pool, n, rules));   /* ähnliche Künstler: gleichmäßig */
   });
 }
 

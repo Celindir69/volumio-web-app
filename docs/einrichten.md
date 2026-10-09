@@ -183,8 +183,8 @@ neu), **Vor einem Jahr gehört** (um dieses Datum vor einem Jahr, sonst vor 2, 3
 (über ein halbes Jahr her), **Noch nie gehört** und **Früher oft gehört** (oft gehört, aber seit einem halben Jahr nicht
 mehr). Leere Reihen fallen weg. Künstler und Album tippen öffnet, Titel tippen spielt ab. Grundlage ist der Verlauf
 (siehe oben). Der Würfel rechts an jeder Reihe spielt 25 Titel aus der ganzen Reihe (nicht nur den sichtbaren
-Kacheln), immer auf Titel-Ebene, egal welcher Reiter offen ist: bei „Noch nie gehört“ etwa nie gespielte Titel. Je
-Künstler höchstens drei, nie derselbe direkt hintereinander, ohne „mag ich nicht“.
+Kacheln), immer auf Titel-Ebene, egal welcher Reiter offen ist: bei „Noch nie gehört“ etwa nie gespielte Titel. Es
+gelten die Würfel-Regeln (siehe Zufallsmix), ohne „mag ich nicht“.
 
 **Nach Stimmung, Energie, Stil und Jahrzehnt:** Unter den Reihen stehen Auswahlknöpfe. Stimmung (Entspannt, Verträumt,
 Melancholisch, Düster, Fröhlich, Intensiv, Episch; dieselben Namen wie im Stimmungs-Mix), Energie (Ruhig, Mittlere Energie, Energiegeladen) und Stil (Acoustic, Ambient,
@@ -228,8 +228,10 @@ Stil und Genre zählen etwas mit. Mindestens eine Stimmung muss übereinstimmen,
 „mag ich nicht“ fällt weg. Jeder Titel zeigt die gemeinsamen Stimmungen, sein Tempo und seine Energie. „Alle abspielen“
 spielt die Liste, der Würfel 25 andere ähnliche Titel. Ohne Stimmungsdaten zum Titel erscheint ein Hinweis.
 
-**Zufallsmix:** Neben „Alle abspielen“ (Künstlerseite, Genre-Listen) startet der Würfel 25 zufällige Titel daraus, nie
-derselbe Künstler direkt hintereinander. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
+**Zufallsmix:** Neben „Alle abspielen“ (Künstlerseite, Genre-Listen) startet der Würfel 25 zufällige Titel daraus.
+Würfel-Regeln: höchstens drei Titel je Künstler und zwei je Album (auf der Künstlerseite keine Künstlergrenze, drei je
+Album), was in den letzten 14 Tagen lief, nur, wenn sonst zu wenig da ist; reicht die Auswahl nicht, wird über die
+Grenzen hinaus aufgefüllt. Nie derselbe Künstler direkt hintereinander; „mag ich nicht“ nie. Die Albenliste liest der Tag-Dienst aus MPD und speichert sie in
 `/data/xplorio/data/albums.json`; sie wird neu gelesen, wenn sich MPDs Datenbank ändert
 (Prüfung höchstens einmal pro Minute; nach Tag-Änderungen gut eine Minute nach dem Scan von selbst).
 
