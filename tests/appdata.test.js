@@ -35,6 +35,16 @@ t('Ordner nicht anlegbar: weiter mit dem alten', function(){
   assert.strictEqual(r.dir, oldDir); assert.strictEqual(r.error, 'ENOENT');
 });
 
+t('Vorgabe Datenordner: neuer Ordner, außer nur der alte von Hand eingerichtete ist da', function(){
+  var b = fs.mkdtempSync(path.join(os.tmpdir(), 'appdir-'));
+  var neu = path.join(b, 'xplorio', 'data'), alt = path.join(b, 'web-app', 'data');
+  assert.strictEqual(ad.defaultDir(neu, alt), neu);                           /* frisch: neuer Ordner */
+  fs.mkdirSync(path.join(b, 'web-app')); fs.mkdirSync(alt);
+  assert.strictEqual(ad.defaultDir(neu, alt), alt);                           /* nur alt vorhanden: dort bleiben */
+  fs.mkdirSync(path.join(b, 'xplorio'));
+  assert.strictEqual(ad.defaultDir(neu, alt), neu);                           /* umgezogen (xplorio-deploy) */
+});
+
 t('Last.fm-Zugang: aus config.local.js nach keys.json übernommen, danach von dort', function(){
   var cfg = {LASTFM_KEY: 'KEY', LASTFM_SECRET: 'GEHEIM'};
   var k = new ad.Keys(newDir, function(){ return cfg; });

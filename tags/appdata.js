@@ -1,7 +1,7 @@
 /* Datenordner des Tag-Dienstes und Zugangsdaten. Node 8, nur ES5.
-   Daten (Verlauf, Last.fm-Sitzung, Check, Analyse …) liegen in /data/web-app/data: außerhalb des Webordners und
+   Daten (Verlauf, Last.fm-Sitzung, Check, Analyse …) liegen in /data/xplorio/data: außerhalb des Webordners und
    außerhalb von /data/INTERNAL, das Volumio als Netzwerkfreigabe anbietet. Früher lagen sie neben dem Programm in
-   /data/INTERNAL/tags; beim ersten Start werden sie verschoben.
+   /data/INTERNAL/tags; beim ersten Start werden sie verschoben. Den Ordner /data/web-app zieht xplorio-deploy um.
    Last.fm-Key und -Secret stehen in keys.json im Datenordner (nur für den Dienst lesbar), nicht mehr in
    web/config.local.js, das jeder Browser im Netz laden kann. */
 var fs   = require('fs');
@@ -39,6 +39,12 @@ function prepare(dir, oldDir, log) {
   return {dir: dir, moved: moved};
 }
 
+/* Vorgabe für den Datenordner: dir, solange es dessen Elternordner gibt oder legacy fehlt; sonst legacy
+   (von Hand eingerichtet unter /data/web-app, noch nicht umgezogen) */
+function defaultDir(dir, legacy) {
+  return exists(path.dirname(dir)) || !legacy || !exists(legacy) ? dir : legacy;
+}
+
 /* Last.fm-Zugang: Umgebung vor keys.json vor (übergangsweise) config.local.js.
    Steht der Zugang nur in config.local.js, wird er einmal nach keys.json übernommen. */
 function Keys(dir, appConfig, log) {
@@ -74,4 +80,4 @@ Keys.prototype.inWeb = function() {
   return !!(c.LASTFM_KEY || c.LASTFM_SECRET);
 };
 
-module.exports = {prepare: prepare, Keys: Keys, DATA_FILES: DATA_FILES};
+module.exports = {prepare: prepare, defaultDir: defaultDir, Keys: Keys, DATA_FILES: DATA_FILES};

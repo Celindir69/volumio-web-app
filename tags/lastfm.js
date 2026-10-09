@@ -11,7 +11,7 @@ var qs     = require('querystring');
 
 var API  = process.env.LASTFM_URL      || 'https://ws.audioscrobbler.com';
 var AUTH = process.env.LASTFM_AUTH_URL || 'https://www.last.fm/api/auth/';
-var UA   = 'Xplorio/1.0 ( https://github.com/Celindir69/volumio-web-app )';
+var UA   = 'Xplorio/1.0 ( https://github.com/Celindir69/xplorio )';
 var BATCH = 50;                       /* Scrobbles je Anfrage (Höchstwert von Last.fm) */
 var RETRY = 10 * 60 * 1000;           /* Warteschlange erneut senden */
 var PAGE_PAUSE = 300;                 /* ms zwischen Seiten beim Einlesen (Last.fm erlaubt ~5 Anfragen/s) */

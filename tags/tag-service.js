@@ -14,10 +14,10 @@ var PYTHON      = process.env.PYTHON      || (['/usr/bin/python', '/usr/local/bi
   try { return fs.statSync(p).isFile(); } catch (e) { return false; } }) ? 'python' : 'python3');
 var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n" starten (nötig, wenn der Mount nur root beschreiben lässt) */
 var MPC         = process.env.MPC         || 'mpc';
-/* Datenordner /data/web-app/data (früher /data/INTERNAL/tags, wird beim ersten Start verschoben; siehe appdata.js) */
+/* Datenordner /data/xplorio/data (früher /data/web-app/data bzw. /data/INTERNAL/tags; siehe appdata.js) */
 var appdata     = require('./appdata.js');
 var DATA_PREP   = process.env.TAGS_LOG ? {dir: path.dirname(process.env.TAGS_LOG)}
-  : appdata.prepare(process.env.TAGS_DATA || '/data/web-app/data', process.env.TAGS_OLD_DATA || '/data/INTERNAL/tags', console.log);
+  : appdata.prepare(process.env.TAGS_DATA || appdata.defaultDir('/data/xplorio/data', '/data/web-app/data'), process.env.TAGS_OLD_DATA || '/data/INTERNAL/tags', console.log);
 var DATA_DIR    = DATA_PREP.dir;
 var LOG_FILE    = process.env.TAGS_LOG    || path.join(DATA_DIR, 'changes.jsonl');
 var MPD_HOST    = process.env.MPD_HOST    || 'localhost';
