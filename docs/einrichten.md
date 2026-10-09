@@ -247,7 +247,7 @@ steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
 Zum laufenden Titel sucht die App in derselben Reihenfolge einen eigenen Text (Last.fm `track.getInfo`, dann ein
 Wikipedia-Artikel, dessen Name der Liedname ist, der sich als Lied, Single oder Song beschreibt und den Interpreten nennt).
 Zusätze wie „(Remastered 2011)“ werden dafür weggelassen. Nur wenn etwas gefunden wird, erscheint der Reiter „Titel“
-hinter „Album“. Das Ergebnis, auch „nichts gefunden“, merkt sich der Browser je Titel (die letzten 400).
+hinter „Album“, beim Webradio als erster Reiter. Das Ergebnis, auch „nichts gefunden“, merkt sich der Browser je Titel (die letzten 400).
 Ist die App über `LANGUAGE` oder `?lang=` auf eine andere Sprache gestellt als Volumio, holt sie die Texte zuerst selbst und fragt Volumio
 nur, wenn dabei nichts herauskommt (Volumio liefert seine Texte in der eigenen Sprache).
 

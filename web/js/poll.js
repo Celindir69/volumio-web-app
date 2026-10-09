@@ -95,9 +95,9 @@ updateSyncedLyrics();
     if (lyrKey !== lastLyrKey) {
       lastLyrKey = lyrKey;
       askExtra(artist, title, radio).then(function(res){ showLyrics(res); });
-      setTrackInfo(lyrKey, title, null);                   /* Reiter des vorigen Titels weg */
+      setTrackInfo(lyrKey, title, null, radio);                   /* Reiter des vorigen Titels weg */
       (function(k, ti){
-        askTrack(artist, ti).then(function(res){ if (k === lastLyrKey) setTrackInfo(k, ti, res); });
+        askTrack(artist, ti).then(function(res){ if (k === lastLyrKey) setTrackInfo(k, ti, res, radio); });
       })(lyrKey, title);
     }
 
