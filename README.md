@@ -2,7 +2,7 @@
 
 **Explorer für Volumio**: die eigene Musiksammlung (wieder) entdecken.
 
-[English version](README_EN.md)
+[English version](README_EN.md) · [Was ist Xplorio?](docs/xplorio.md)
 
 Xplorio ist eine eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
 direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Auf Volumio 3 vermutlich auch, wurde aber nicht getestet. 
@@ -53,6 +53,11 @@ nicht gehört, noch nie gehört und früher oft gehört. Darunter führen Knöpf
 Bewertungen: Herz für Künstler, ein bis fünf Sterne für Alben, Daumen hoch oder runter für Titel (Daumen hoch ist der Volumio-Favorit). Bei Webradio holt die App ein Cover
 zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 
+<p>
+  <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
+  <img src="docs/bilder/album.jpg" width="200" alt="Albumseite mit Sternen und Daumen">
+</p>
+
 ### Stimmungs-Mix
 Eigener erster Reiter neben Playlisten und Radio (Playlisten-Taste). Stimmung wählen (mehrere möglich), Energie von ruhig bis energiegeladen eingrenzen, auf Genres beschränken und unter „Feinabstimmung“ Stile, Länge
 und Entdeckungsgrad festlegen: Favoriten, ausgewogen oder versteckte Perlen, je nach eigenem Verlauf. „Mix erstellen“
@@ -62,7 +67,6 @@ nichts spielt; die Musikdateien bleiben dabei unverändert. Optional hört Essen
 (`tools/essentia/`): Dann kommen Energie und Stimmung aus dem Audio, und ein Tempo-Regler (BPM) kommt dazu.
 
 <p>
-  <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
   <img src="docs/bilder/mix-auswahl.jpg" width="200" alt="Stimmungs-Mix: Auswahl">
   <img src="docs/bilder/mix-vorschau.jpg" width="200" alt="Stimmungs-Mix: Vorschau">
 </p>
