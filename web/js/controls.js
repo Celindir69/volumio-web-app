@@ -2,18 +2,18 @@
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
 /* ---------- Repeat / Random ---------- */
 function updateCtrlUI() {
-  cRepeat.className = stRepeatMode + (curRadio ? ' disabled' : '');
-  repeatBadge.textContent = stRepeatMode === 'all' ? 'ALL' : (stRepeatMode === 'one' ? '1' : '');
+  var shown = repeatShown(stRepeatMode, autodj);                 /* ∞ = AutoDJ (autodj.js) */
+  cRepeat.className = shown + (curRadio ? ' disabled' : '');
+  repeatBadge.textContent = {all: 'ALL', one: '1', inf: '∞'}[shown] || '';
   cRandom.className = (stRandom ? 'on' : '') + (curRadio ? ' disabled' : '');
 }
 
 cRepeat.addEventListener('click', function(){
   if (curRadio) return;
-  var modes = ['off','all','one'];
-  stRepeatMode = modes[(modes.indexOf(stRepeatMode) + 1) % 3];
-  if (stRepeatMode === 'off')      socket.emit('setRepeat', {value:false, repeatSingle:false});
-  else if (stRepeatMode === 'all') socket.emit('setRepeat', {value:true,  repeatSingle:false});
-  else                             socket.emit('setRepeat', {value:true,  repeatSingle:true});
+  var nx = repeatNext(repeatShown(stRepeatMode, autodj), autodj);
+  if (nx.repeat) socket.emit('setRepeat', nx.repeat);
+  stRepeatMode = nx.mode === 'inf' ? 'off' : nx.mode;
+  if (nx.autodj !== null) { autodj.enabled = nx.autodj; autodjCall({enabled: nx.autodj}); }
   updateCtrlUI();
 });
 

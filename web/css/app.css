@@ -55,10 +55,11 @@
     align-items:center; justify-content:center; }
   #cRepeat svg { width:calc(8 * var(--vw)); height:calc(8 * var(--vw)); max-width:36px; max-height:36px;
     fill:var(--fg); opacity:.35; display:block; }
-  #cRepeat.all svg, #cRepeat.one svg { opacity:1; fill:var(--accent, var(--fg)); }
+  #cRepeat.all svg, #cRepeat.one svg, #cRepeat.inf svg { opacity:1; fill:var(--accent, var(--fg)); }
   #cRepeat .badge { position:absolute; top:calc(-1.5 * var(--vw)); right:calc(-2 * var(--vw));
     font-size:calc(2.4 * var(--vw)); font-weight:700; color:var(--fg); opacity:0; line-height:1; }
-  #cRepeat.all .badge, #cRepeat.one .badge { opacity:1; }
+  #cRepeat.all .badge, #cRepeat.one .badge, #cRepeat.inf .badge { opacity:1; }
+  #cRepeat.inf .badge { transform:scale(1.6); transform-origin:left bottom; }   /* ∞ ist als Zeichen klein */
 
   #cRandom { cursor:pointer; display:flex; align-items:center;
     justify-content:center; }
