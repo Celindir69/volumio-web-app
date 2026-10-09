@@ -4,7 +4,7 @@ var http  = require('http');
 var https = require('https');
 var url   = require('url');
 
-var UA = 'Xplorio/1.0 ( https://github.com/Celindir69/volumio-web-app )';   /* MusicBrainz verlangt eine Kennung */
+var UA = 'Xplorio/1.0 ( https://github.com/Celindir69/xplorio )';   /* MusicBrainz verlangt eine Kennung */
 var BASE = {
   itunes:  process.env.ITUNES_URL  || 'https://itunes.apple.com',
   lastfm:  process.env.LASTFM_URL  || 'https://ws.audioscrobbler.com',

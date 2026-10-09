@@ -7,7 +7,7 @@
 Xplorio ist eine eigene Weboberfläche für Volumio 2 (gebaut für einen Musical Fidelity MX-Stream, Raspberry-Pi-CM3), läuft ohne Build-Schritt
 direkt im Browser. Auf Volumio 4 läuft sie ebenfalls (Unterschiede siehe [Einrichtung](docs/einrichten.md#volumio-4)). Auf Volumio 3 vermutlich auch, wurde aber nicht getestet. 
 Zusätzlich zu den Dateien, die auf dem Player laufen, enthält diese Repository nur Tests (`tests/`) und die Einrichtungs-Doku;
-`web-app-deploy` spielt nur die Laufzeitdateien ein.
+`xplorio-deploy` spielt nur die Laufzeitdateien ein.
 
 <p align="center">
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="Display-Layout auf dem iPad: Cover, Albuminfos und mitlaufende Lyrics">
@@ -103,7 +103,7 @@ Fortschritt der Stimmungs-Tags.
 - Optional: Rotel-Verstärker im Netz (Ein/Aus, Lautstärke, Eingang) über `rotel/rotel-bridge.js`.
 - TIDAL-Wächter: verbindet TIDAL neu bzw. startet Volumio neu, wenn das TIDAL-Plugin hängt. 
   (Was auf meinem MX-Stream, aufgrund eines Session-Timeouts, etwa nach 4 Stunden ohne Tidal-Nutzung auftritt.)
-- `web-app-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--rollback`; gleich auf
+- `xplorio-deploy`: aktualisiert direkt auf dem Player aus diesem Repository, mit Sicherung und `--rollback`; gleich auf
   Volumio 3 und 4.
 
 ## Aufbau
@@ -111,21 +111,21 @@ Fortschritt der Stimmungs-Tags.
 | Datei / Ordner | Inhalt | Ort auf dem Player |
 |---|---|---|
 | `app.html` + `web/` | Oberfläche für Handy, iPad, Desktop (Wiedergabe, Queue, Suche lokal und bei Streamingdiensten, Lyrics, Infos, Tag-Editor, Stimmungs-Mix, Verlauf, Display-Layout für große Bildschirme) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
-| `kioskTV.html` | Seite für einen Kiosk-Bildschirm (Cover, Titel, Lyrics) | `/volumio/http/www/` |
-| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/web-app/tags/` (Daten: `/data/web-app/data/`) |
-| `rotel/rotel-bridge.js` | optional: HTTP-Dienst (Port 8765) für einen Rotel-Verstärker im Netz (Lautstärke, Ein/Aus, Eingang) | `/data/web-app/rotel/` |
+| `kioskTV.html` | Seite für einen Kiosk-Bildschirm (Cover, Titel, Lyrics) | `/volumio/http/www*/` |
+| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/xplorio/tags/` (Daten: `/data/xplorio/data/`) |
+| `rotel/rotel-bridge.js` | optional: HTTP-Dienst (Port 8765) für einen Rotel-Verstärker im Netz (Lautstärke, Ein/Aus, Eingang) | `/data/xplorio/rotel/` |
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt (nur unter Volumio 2 erprobt) | `/volumio/http/www3/tools/` |
-| `tools/web-app-deploy.sh` | aktualisiert den Player aus diesem Repository (`web-app-deploy`) | `/usr/local/bin/` |
+| `tools/xplorio-deploy.sh` | aktualisiert den Player aus diesem Repository (`xplorio-deploy`) | `/usr/local/bin/` |
 | `tools/essentia/` | optionale Audio-Analyse auf dem Mac, Ergebnis wird zum Tag-Dienst hochgeladen | nicht auf dem Player |
 
 Voraussetzungen: Volumio 2 (Node 8, Python 2.7, `mpc`) oder Volumio 4 (Node und Python 3 sind dabei). Einrichtung:
-[docs/einrichten.md](docs/einrichten.md). Aktualisieren direkt auf dem Player: `sudo web-app-deploy`
-(`tools/web-app-deploy.sh`, siehe dort).
+[docs/einrichten.md](docs/einrichten.md). Aktualisieren direkt auf dem Player: `sudo xplorio-deploy`
+(`tools/xplorio-deploy.sh`, siehe dort).
 
 Rotel-Verstärker und TIDAL-Wächter sind optional (siehe Einrichtung). 
 Eigene Einstellungen (Sprache, Rotel, Dienste ein/aus) gehören in `web/config.local.js`
 (Vorlage `web/config.local.js.example`); diese Datei ist nicht im Repository. Der Last.fm-Zugang (für ähnliche Künstler,
-Stimmungs-Tags, Infotexte und Scrobbeln) liegt in `/data/web-app/data/keys.json` und wird nur vom Tag-Dienst gelesen.
+Stimmungs-Tags, Infotexte und Scrobbeln) liegt in `/data/xplorio/data/keys.json` und wird nur vom Tag-Dienst gelesen.
 
 ## Tests
 `node tests/run-all.js` (Node 18 oder neuer, keine Abhängigkeiten; der Tag-Dienst-Test braucht zusätzlich Python).

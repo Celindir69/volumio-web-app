@@ -323,7 +323,7 @@
 <script>
   langApply(document);                      /* data-i18n-Texte im HTML in der gewählten Sprache */
 
-  /* App-Skripte immer frisch laden: nach web-app-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
+  /* App-Skripte immer frisch laden: nach xplorio-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
   ['streaming', 'infotext', 'core', 'lyrics', 'autodj', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'rating', 'check', 'history', 'discover', 'genre', 'moodmix', 'ui', 'volumio', 'menu', 'quality', 'mp4probe', 'color', 'poll', 'stage'].forEach(function(n){
     document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
   });

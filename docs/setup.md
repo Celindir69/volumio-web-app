@@ -6,11 +6,11 @@ All commands are run on the player (via SSH), as a user with `sudo` privileges. 
 
 Copy `app.html` and `web/` to `/volumio/http/www3/`, then open `http://<player>/app.html`.
 
-Copy `kioskTV.html` to `/volumio/http/www/` (the Volumio kiosk gets its files from `www/`).
+Copy `kioskTV.html` next to `app.html` (the kiosk loads `http://localhost:3000/kioskTV.html`, i.e. from the folder Volumio serves).
 
 After an update, perform a hard reload in the browser. An existing `web/config.local.js` is preserved.
 
-Custom settings (Rotel, enabling/disabling services, language) go into `web/config.local.js`; use `web/config.local.js.example` as the template. The Last.fm credentials do not belong there but in `/data/web-app/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)).
+Custom settings (Rotel, enabling/disabling services, language) go into `web/config.local.js`; use `web/config.local.js.example` as the template. The Last.fm credentials do not belong there but in `/data/xplorio/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)).
 
 ### Light and Dark
 
@@ -29,51 +29,53 @@ applies, otherwise English. To fix the language, set `LANGUAGE: 'de'` or `'en'` 
 Adding a language: copy `web/lang/en.js`, e.g. to `web/lang/fr.js`, adjust code, name and locale in the last line
 (`langRegister('fr', 'Français', {…}, 'fr-FR')`) and translate the texts; `{name}` are placeholders and stay as they are,
 `{one: …, other: …}` are singular and plural. Then add it in `web/config.local.js`: `LANGUAGES: ['de', 'en', 'fr']`.
-Texts missing from the file are shown in English. `web-app-deploy` leaves your own language files in `web/lang/` in place.
+Texts missing from the file are shown in English. `xplorio-deploy` leaves your own language files in `web/lang/` in place.
 Dates, numbers, month and weekday names come from the browser in the selected language.
 
 Not translated: texts that Volumio itself delivers (e.g. menu names when browsing) and error messages from the tag
 service; these stay German.
 
-## Updating with web-app-deploy
+## Updating with xplorio-deploy
 
 Set it up once:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/web-app-deploy.sh | sudo tee /usr/local/bin/web-app-deploy >/dev/null
-sudo chmod +x /usr/local/bin/web-app-deploy
+curl -fsSL https://raw.githubusercontent.com/Celindir69/xplorio/main/tools/xplorio-deploy.sh | sudo tee /usr/local/bin/xplorio-deploy >/dev/null
+sudo chmod +x /usr/local/bin/xplorio-deploy
 ```
 
 Then on the player:
 
 | Command | Effect |
 |---|---|
-| `sudo web-app-deploy` | fetch `main` from volumio-web-app, show changed and new files, and deploy them after confirmation |
-| `sudo web-app-deploy <branch>` | use a different branch, e.g. for testing before merging |
-| `sudo web-app-deploy -n <branch>` | only show what would change |
-| `sudo web-app-deploy -y <branch>` | deploy without confirmation |
-| `sudo web-app-deploy --rollback` | restore the latest backup (repeat to go back step by step) |
+| `sudo xplorio-deploy` | fetch `main` from xplorio, show changed and new files, and deploy them after confirmation |
+| `sudo xplorio-deploy <branch>` | use a different branch, e.g. for testing before merging |
+| `sudo xplorio-deploy -n <branch>` | only show what would change |
+| `sudo xplorio-deploy -y <branch>` | deploy without confirmation |
+| `sudo xplorio-deploy --rollback` | restore the latest backup (repeat to go back step by step) |
 
-Targets: `app.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/web-app/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
+Targets: `app.html`, `kioskTV.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/xplorio/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
 
-`tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/web-app/backup/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
+`tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/xplorio/backup/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
 
-Everything except the interface lives in `/data/web-app/`: `tags/` (Tag Service), `rotel/` (Rotel bridge), `data/` (Tag Service data), and `backup/` (backups). The folder survives Volumio updates; before a fresh installation, backing it up is enough. Earlier installations had the services under `/data/INTERNAL/`: the script then switches `tag-service.service` and `rotel-bridge.service` to the new paths once (with a backup) and restarts the services; the Tag Service moves its data itself. The old folders `/data/INTERNAL/tags` and `/data/INTERNAL/rotel` stay in place and can be deleted after a test.
+Everything except the interface lives in `/data/xplorio/`: `tags/` (Tag Service), `rotel/` (Rotel bridge), `data/` (Tag Service data), and `backup/` (backups). The folder survives Volumio updates; before a fresh installation, backing it up is enough. Earlier installations had the services under `/data/INTERNAL/`: the script then switches `tag-service.service` and `rotel-bridge.service` to the new paths once (with a backup) and restarts the services; the Tag Service moves its data itself. The old folders `/data/INTERNAL/tags` and `/data/INTERNAL/rotel` stay in place and can be deleted after a test.
+
+**Switching from web-app-deploy (until October 2026 the repository and command were called `volumio-web-app` and `web-app-deploy`):** set up `xplorio-deploy` as above, then run `sudo xplorio-deploy -n` (among other things it shows "Umzug: /data/web-app nach /data/xplorio", i.e. the move) and `sudo xplorio-deploy`. The script moves `/data/web-app` with its data, Last.fm credentials and backups to `/data/xplorio`, leaves `/data/web-app` behind as a symlink, updates the systemd files and restarts the services. `web-app-deploy` and the even older names `mx-deploy` and `volumio4-deploy` keep working and call `xplorio-deploy` (on first use they set it up themselves).
 
 ## Tag Service (for the Tag Editor)
 
 ```bash
-sudo mkdir -p /data/web-app/tags && sudo cp -r tags/. /data/web-app/tags/
-sudo chown -R volumio:volumio /data/web-app/tags
-sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data
+sudo mkdir -p /data/xplorio/tags && sudo cp -r tags/. /data/xplorio/tags/
+sudo chown -R volumio:volumio /data/xplorio/tags
+sudo mkdir -p /data/xplorio && sudo mkdir -m 700 -p /data/xplorio/data && sudo chown volumio:volumio /data/xplorio/data
 sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
 [Unit]
 Description=Tag-Dienst fuer app.html
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/env node /data/web-app/tags/tag-service.js
-WorkingDirectory=/data/web-app/tags
+ExecStart=/usr/bin/env node /data/xplorio/tags/tag-service.js
+WorkingDirectory=/data/xplorio/tags
 Restart=always
 User=volumio
 # Environment=USE_SUDO=1
@@ -93,27 +95,27 @@ If it does not work, uncomment `Environment=USE_SUDO=1` (then only `tags.py` run
 
 After an update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
 
-Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (data folder, default `/data/web-app/data`).
+Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (data folder, default `/data/xplorio/data`).
 
-**Data folder:** The program lives in `/data/web-app/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/web-app/data/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
-`sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data && sudo systemctl restart tag-service`.
+**Data folder:** The program lives in `/data/xplorio/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/xplorio/data/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
+`sudo mkdir -p /data/xplorio && sudo mkdir -m 700 -p /data/xplorio/data && sudo chown volumio:volumio /data/xplorio/data && sudo systemctl restart tag-service`.
 
 ### Last.fm credentials
 
-The API key and "Shared secret" from https://www.last.fm/api/accounts are stored in `/data/web-app/data/keys.json`; only the Tag Service reads them, and the app queries Last.fm through the service:
+The API key and "Shared secret" from https://www.last.fm/api/accounts are stored in `/data/xplorio/data/keys.json`; only the Tag Service reads them, and the app queries Last.fm through the service:
 
 ```bash
-sudo -u volumio tee /data/web-app/data/keys.json > /dev/null << 'KEYS'
+sudo -u volumio tee /data/xplorio/data/keys.json > /dev/null << 'KEYS'
 { "LASTFM_KEY": "YOUR_LASTFM_KEY", "LASTFM_SECRET": "YOUR_SHARED_SECRET" }
 KEYS
-sudo chmod 600 /data/web-app/data/keys.json && sudo systemctl restart tag-service
+sudo chmod 600 /data/xplorio/data/keys.json && sudo systemctl restart tag-service
 ```
 
 The key is enough for similar artists, information texts, cover search, and mood tags; the secret is only needed for scrobbling. If `LASTFM_KEY`/`LASTFM_SECRET` are still in `web/config.local.js` (earlier versions), the service copies them to `keys.json` on start; afterwards delete those two lines from `web/config.local.js`, because any browser on the network can load that file. `curl -s localhost:8766/health` shows `"keysInWeb":true` as long as they are still there.
 
 `tags.py` runs with Python 2.7 and 3 and includes mutagen itself; if there is no `python` command, the service uses `python3`.
 
-Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/web-app/data/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. While the library check is open, changes are only collected and read in once when it is closed (at the latest 10 minutes after the last change). This only works if MPD does not watch the files itself: with `auto_update "yes"` in `/etc/mpd.conf`, MPD scans every changed file immediately, and Volumio then rebuilds its album list each time (about a minute of load per album, up to a hang when editing many albums in a row). Recommendation: `auto_update "no"` (also in the template under `/volumio/app/plugins/music_service/mpd/`, if present) and `sudo systemctl restart mpd`; read in new music as usual with "Update library" (in the Volumio menu "Update", not "Rescan", or with the button at the top of the library check, which also covers changes still being collected). The service is accessible on the local network without authentication.
+Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/xplorio/data/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. While the library check is open, changes are only collected and read in once when it is closed (at the latest 10 minutes after the last change). This only works if MPD does not watch the files itself: with `auto_update "yes"` in `/etc/mpd.conf`, MPD scans every changed file immediately, and Volumio then rebuilds its album list each time (about a minute of load per album, up to a hang when editing many albums in a row). Recommendation: `auto_update "no"` (also in the template under `/volumio/app/plugins/music_service/mpd/`, if present) and `sudo systemctl restart mpd`; read in new music as usual with "Update library" (in the Volumio menu "Update", not "Rescan", or with the button at the top of the library check, which also covers changes still being collected). The service is accessible on the local network without authentication.
 
 ### Search for Cover Art Online
 
@@ -127,7 +129,7 @@ The Tag Service performs the queries; the player therefore needs internet access
 
 In the menu (gear at the top right, only available while the Tag Service is running): finds albums without cover art, compilations without a consistent album artist, artists with multiple spellings, inconsistent album names/years, and tracks without track numbers; the pencil icon opens the appropriate editor.
 
-The check reads the MPD database (`MPD_HOST`, `MPD_PORT`, default `localhost:6600`) and the folders, does not modify any files, and only runs when triggered manually. Result: `/data/web-app/data/check.json`, retained until the next check. Entries whose pencil was used are recorded there and stay greyed out, also after closing, until the next check.
+The check reads the MPD database (`MPD_HOST`, `MPD_PORT`, default `localhost:6600`) and the folders, does not modify any files, and only runs when triggered manually. Result: `/data/xplorio/data/check.json`, retained until the next check. Entries whose pencil was used are recorded there and stay greyed out, also after closing, until the next check.
 
 **Genres:** Two further categories suggest exactly one genre per album from the 15 Discogs top categories (Electronic,
 Rock, Jazz, Classical, Pop, Hip Hop, Funk / Soul, Folk, World, & Country, Latin, Reggae, Blues, Stage & Screen,
@@ -147,7 +149,7 @@ The model is weaker at recognising classical music, soundtracks and radio plays.
 
 If a web radio station broadcasts "Artist - Title", the Tag Service searches iTunes for the corresponding cover art (falling back to Deezer) and displays it in the app and on the kiosk TV; if no title is available or no match is found, the station logo remains.
 
-The radio list displays the station logos using the address provided by Volumio, otherwise by looking up the station name via radio-browser.info. The Tag Service stores both under `/data/web-app/data/radio-covers/` and `/data/web-app/data/stations/`.
+The radio list displays the station logos using the address provided by Volumio, otherwise by looking up the station name via radio-browser.info. The Tag Service stores both under `/data/xplorio/data/radio-covers/` and `/data/xplorio/data/stations/`.
 
 ### History and Statistics
 
@@ -159,32 +161,32 @@ Tapping plays the track or opens the album or artist.
 
 **By mood, energy, style and decade:** Below the rows there are selection buttons. Mood (Relaxed, Dreamy, Melancholic, Dark, Happy, Intense, Epic; the same names as in the mood mix), energy (Calm, Medium energy, High energy) and style (Acoustic, Ambient, Electronic, Funky, Soulful, Experimental) open the matching albums with "Play all" and the dice, just like a genre. An album matches when at least half of its classified tracks carry that mood or style (a style button groups related styles, e.g. Electronic also covers downtempo, house and trip-hop), or when its average energy lies in the range (Calm 1–2, Medium energy 3, High energy 4–5); it needs at least two classified tracks. How many albums match depends on the mood tags. The mood mix stays separate. A decade opens its albums, sorted by year, with "Play all" and the dice. The year is the most frequent Date tag in the album folder (from MPD, i.e. the value shown in the tag editor); albums without a year are left out. After the update the Tag Service re-reads the album list once; until then the decades are missing.
 
-**Ratings** (Tag Service only): on the artist page a heart marks favourite artists; the album header has one to five stars (tap the same star again to clear the rating). Tracks have a thumb, in the queue and in an album's track list; each tap moves on from neutral (outline) to "like" (thumb up) to "dislike" (thumb down) and back. "Like" is the same as a Volumio favourite: the thumb adds the track to the Volumio favourites, and existing favourites show the thumb up. Hearts, stars and dislikes are stored by the Tag Service in `/data/web-app/data/ratings.json`. Disliked tracks are left out of the dice, the mood mix and the track rows in Discover.
+**Ratings** (Tag Service only): on the artist page a heart marks favourite artists; the album header has one to five stars (tap the same star again to clear the rating). Tracks have a thumb, in the queue and in an album's track list; each tap moves on from neutral (outline) to "like" (thumb up) to "dislike" (thumb down) and back. "Like" is the same as a Volumio favourite: the thumb adds the track to the Volumio favourites, and existing favourites show the thumb up. Hearts, stars and dislikes are stored by the Tag Service in `/data/xplorio/data/ratings.json`. Disliked tracks are left out of the dice, the mood mix and the track rows in Discover.
 
 **Random mix:** Next to "Play all" (artist page, genre lists), the dice starts 25 random tracks from that selection, never the same artist twice in a row.
 
-The Tag Service reads the album list from MPD and stores it in `/data/web-app/data/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
+The Tag Service reads the album list from MPD and stores it in `/data/xplorio/data/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
 
 **Genres:** The fourth search tab (only with the Tag Service) shows tiles of all genres when nothing is entered, and the matching genres otherwise. With more than twelve genres, a "Random genres" row sits above them; the dice draws it again. Tapping one opens the genre page: if there are [audio analyses](#audio-analysis-with-essentia-optional-on-the-mac), it first shows tiles of the styles (Discogs sub-styles, e.g. "Trip Hop" under Electronic) with "All" in front, otherwise all albums of the genre right away, sorted by artist. Each album counts up to three sub-styles of its genre, averaged over the analysed tracks; albums without an analysis appear only under "All". Search also finds sub-styles. An album's genre is its most frequent genre tag (from the album list). The album page shows artist, album and genre one below the other; artist and genre open their pages. In album lists the genre is shown small before the pencil. The [library check](#library-check) helps to unify and fill in genre tags.
 
-The Tag Service fetches artist images once from Deezer and stores them under `/data/web-app/data/artists/` (Last.fm no longer provides them); if no image is available, Volumio's artist icon is shown.
+The Tag Service fetches artist images once from Deezer and stores them under `/data/xplorio/data/artists/` (Last.fm no longer provides them); if no image is available, Volumio's artist icon is shown.
 
 The Tag Service checks Volumio every 5 seconds (every 15 seconds while paused/stopped) for playback status (`VOLUMIO_URL`, default `http://localhost:3000`). A track counts if it is longer than 30 seconds and has been played either halfway through or for 4 minutes; web radio does not count.
 
-Each play is stored as one line in `/data/web-app/data/plays.jsonl`. To disable it: set `HISTORY: false` in `web/config.local.js`, then restart the Tag Service.
+Each play is stored as one line in `/data/xplorio/data/plays.jsonl`. To disable it: set `HISTORY: false` in `web/config.local.js`, then restart the Tag Service.
 
-**Last.fm:** For scrobbling, the service needs not only `LASTFM_KEY` but also `LASTFM_SECRET` in `/data/web-app/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)). Then, under Statistics, select "Connect to Last.fm", choose "Allow" on Last.fm, and then return to the app and select "Done". After that:
+**Last.fm:** For scrobbling, the service needs not only `LASTFM_KEY` but also `LASTFM_SECRET` in `/data/xplorio/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)). Then, under Statistics, select "Connect to Last.fm", choose "Allow" on Last.fm, and then return to the app and select "Done". After that:
 
 - new plays are scrobbled (including "now playing"); without an internet connection, they wait in a queue (Last.fm still accepts them up to 14 days later),
 - the existing Last.fm history is imported once; "Sync with Last.fm" only fetches new entries later. Anything already in the history (same track within 5 minutes) is not added twice.
 
-The session key is stored in `/data/web-app/data/lastfm.json` and remains on the player. If another Last.fm plugin in Volumio is also scrobbling, disable one of them, otherwise every track will be submitted to Last.fm twice.
+The session key is stored in `/data/xplorio/data/lastfm.json` and remains on the player. If another Last.fm plugin in Volumio is also scrobbling, disable one of them, otherwise every track will be submitted to Last.fm twice.
 
 ### Mood Tags
 
 With `LASTFM_KEY`, the Tag Service retrieves the Last.fm tags for every track in the library (`track.getTopTags`, falling back to the artist's tags if no useful track tags are available) and maps them to mood, energy (1–5), and style according to `tags/mood/lastfm_mapping.json` and `tags/mood/classification_rules.json`.
 
-Queries are only made while nothing is playing (stopped or paused; checked every 5 seconds), at around 4 requests per second. The music files remain unchanged; the raw tags are stored in `/data/web-app/data/moodtags/`, and the associated track list is stored in `/data/web-app/data/library-tracks.json` (generated together with the album list).
+Queries are only made while nothing is playing (stopped or paused; checked every 5 seconds), at around 4 requests per second. The music files remain unchanged; the raw tags are stored in `/data/xplorio/data/moodtags/`, and the associated track list is stored in `/data/xplorio/data/library-tracks.json` (generated together with the album list).
 
 Progress and distribution are shown in the Library Check under "Mood Tags (Last.fm)".
 
@@ -233,7 +235,7 @@ python3 analyse.py --upload http://<player>:8766
 - An intermediate upload can be performed at any time; the Tag Service then uses the results available so far.
 - If the analysis crashes on a file (macOS then reports "Python quit unexpectedly"), the script continues and records the file as an error; `--retry-errors` retries such files later. Files longer than 30 minutes (recordings, DJ mixes) are skipped because they are loaded entirely into memory (`--max-minutes`, 0 = all); they are counted as "skipped", not as errors.
 - With ffmpeg (`brew install ffmpeg`) the script reads files that Essentia fails on: after a read error, an almost empty result, or a crash (the file is then retried on its own, directly with ffmpeg). The script looks for ffmpeg itself (PATH, `/opt/homebrew/bin`, `/usr/local/bin`) and shows at startup which one it uses; `--ffmpeg <path>` selects another, `--ffmpeg aus` turns it off. `--retry-errors` catches up on files that failed before. Tracks read with ffmpeg carry `"dec":"ffmpeg"` in `essentia.jsonl`.
-- The result file `essentia.jsonl` is located on the player under `/data/web-app/data/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood Tags" how many tracks have been matched.
+- The result file `essentia.jsonl` is located on the player under `/data/xplorio/data/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood Tags" how many tracks have been matched.
 
 ### Artist and Album Information
 
@@ -248,11 +250,11 @@ For the current track the app looks for a text of its own in the same order (Las
 
 If synchronized lyrics consistently appear too early or too late (for example, because a different version of the track is being played), the "−" and "+" controls next to the "Lyrics" heading (stage view: round buttons at the top right) shift the lyrics by 0.5 seconds at a time.
 
-The value applies to that track on all devices (`/data/web-app/data/lyrics-offsets.json`); tapping the value resets it to 0.
+The value applies to that track on all devices (`/data/xplorio/data/lyrics-offsets.json`); tapping the value resets it to 0.
 
 ## Rotel Bridge (Optional)
 
-Copy `rotel/rotel-bridge.js` to `/data/web-app/rotel/` and configure it as a systemd service as above (port 8765). In `web/config.local.js`:
+Copy `rotel/rotel-bridge.js` to `/data/xplorio/rotel/` and configure it as a systemd service as above (port 8765). In `web/config.local.js`:
 
 ```js
 window.APP_CONFIG.ROTEL = true;                  // Power button and amplifier volume in the interface
@@ -296,7 +298,7 @@ The interface also runs under Volumio 4 (tested on a test instance). Differences
 
 - **Folders:** Volumio 4 serves the interface from `/volumio/http/www4/` instead of `www3/`. It is still accessed via `http://<player>/app.html`; `web/config.local.js` belongs in `/volumio/http/www4/web/`.
 
-- **Updating:** as above with [web-app-deploy](#updating-with-web-app-deploy); it finds `www4/` by itself. The first time, inspect first: `sudo web-app-deploy -n` ("changed" would mean that a Volumio file would be replaced). The message "Eingespielt nach …" must include `www4`.
+- **Updating:** as above with [xplorio-deploy](#updating-with-xplorio-deploy); it finds `www4/` by itself. The first time, inspect first: `sudo xplorio-deploy -n` ("changed" would mean that a Volumio file would be replaced). The message "Eingespielt nach …" must include `www4`.
 
 - **Tag Service:** The service file above starts Node via `/usr/bin/env node` and therefore works on both versions. An older service file using `/usr/local/bin/node` fails under Volumio 4 with `status=203/EXEC`; in that case:
 
@@ -304,6 +306,6 @@ The interface also runs under Volumio 4 (tested on a test instance). Differences
 
   Python 3 is included, and the Tag Service includes mutagen.
 
-- **Information texts:** Volumio 4 only provides artist and album information with a subscription; the app therefore retrieves it from Last.fm and Wikipedia (see #artist-and-album-information). With `LASTFM_KEY` in `/data/web-app/data/keys.json`, album information is also available.
+- **Information texts:** Volumio 4 only provides artist and album information with a subscription; the app therefore retrieves it from Last.fm and Wikipedia (see #artist-and-album-information). With `LASTFM_KEY` in `/data/xplorio/data/keys.json`, album information is also available.
 
 - **Not tested under Volumio 4:** `kioskTV.html` (kiosk folder), Rotel Bridge, and TIDAL Watchdog (the watchdog is located under `/volumio/http/www4/tools/` there; adjust the path in the cron entry accordingly).
