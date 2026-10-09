@@ -1,4 +1,4 @@
-# Setting Up on the Player
+# Setting Up Xplorio on the Player
 
 All commands are run on the player (via SSH), as a user with `sudo` privileges. Written for Volumio 2; everything that differs under Volumio 4 is collected under #volumio-4.
 

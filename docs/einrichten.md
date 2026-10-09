@@ -1,4 +1,4 @@
-# Einrichten auf dem Player
+# Xplorio auf dem Player einrichten
 
 Alle Befehle auf dem Player (ssh), als Benutzer mit `sudo`. Geschrieben für Volumio 2; was unter Volumio 4 anders ist,
 steht gesammelt unter [Volumio 4](#volumio-4).
