@@ -255,6 +255,7 @@ def analyse_file(rec, path, use_ffmpeg=False):
         if ln > lim * 60:
             rec['d'] = round(ln)
             rec['err'] = 'länger als %d min (--max-minutes)' % lim
+            rec['skip'] = 1                            # zählt als übersprungen, nicht als Fehler
             return rec
     try:
         es = W['es']
@@ -397,7 +398,7 @@ def main():
         for p, size, mtime in find_files(roots, a.exclude):
             present.add(p)
             o = done.get(p)
-            if o and o.get('sz') == size and o.get('mt') == mtime and o.get('v') == VERSION and not (a.retry_errors and o.get('err')):
+            if o and o.get('sz') == size and o.get('mt') == mtime and o.get('v') == VERSION and not (a.retry_errors and o.get('err') and not o.get('skip')):
                 continue
             # nach einem Absturz gleich mit ffmpeg lesen, sonst stürzt es wieder ab
             todo.append((p, size, mtime, bool(ffmpeg and o and o.get('err') == CRASH)))
@@ -405,7 +406,7 @@ def main():
             todo = todo[:a.limit]
         print('%d Audiodateien gefunden, %d zu analysieren (%d Prozesse).' % (len(present), len(todo), a.jobs), flush=True)
         if todo:
-            t0, n, errs, prof = time.time(), 0, 0, {}
+            t0, n, errs, skips, prof = time.time(), 0, 0, 0, {}
             marks = a.out + '.laeuft'
             os.makedirs(marks, exist_ok=True)
             for x in os.listdir(marks):
@@ -417,21 +418,24 @@ def main():
                                               initargs=(a.models, a.seconds, a.profile, a.max_minutes, marks, ffmpeg))
 
             def handle(f, rec):
-                nonlocal n, errs
+                nonlocal n, errs, skips
                 for k, v in rec.pop('_t', {}).items():
                     prof[k] = prof.get(k, 0) + v
                 f.write(json.dumps(rec, ensure_ascii=False) + '\n')
                 f.flush()
                 done[rec['p']] = rec
                 n += 1
-                if rec.get('err'):
+                if rec.get('skip'):
+                    skips += 1
+                    print('  übersprungen: %s: %s' % (rec['p'], rec['err']), flush=True)
+                elif rec.get('err'):
                     errs += 1
                     print('  Fehler: %s: %s' % (rec['p'], rec['err']), flush=True)
                 if n % 25 == 0 or n == len(todo):
                     el = time.time() - t0
                     eta = el / n * (len(todo) - n)
-                    print('  %d/%d  (%.1f s je Datei, noch etwa %d min, %d Fehler)'
-                          % (n, len(todo), el / n, eta / 60, errs), flush=True)
+                    print('  %d/%d  (%.1f s je Datei, noch etwa %d min, %d Fehler, %d übersprungen)'
+                          % (n, len(todo), el / n, eta / 60, errs, skips), flush=True)
 
             queue = list(reversed(todo))
             solo = []

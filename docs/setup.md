@@ -169,7 +169,7 @@ Progress and distribution are shown in the Library Check under "Mood Tags (Last.
 
 To disable it: set `MOODTAGS: false` in `web/config.local.js`, then restart the Tag Service.
 
-**Mood Mix:** Playlist button, "Mood Mix" tab (appears as soon as the Tag Service is running). Here you can select multiple moods, an energy range, one or more genres (the album's genre tag, never relaxed), and, under "Fine Tuning", styles, length, and discovery level (based on playback history: favorites, balanced, hidden gems).
+**Mood Mix:** Playlist button, "Mood Mix" tab (appears as soon as the Tag Service is running). Here you can select multiple moods, an energy range, one or more genres (the album's genre tag, never relaxed), and, under "Fine Tuning", styles, length, maximum track length (default 20 min, keeps DJ mixes out), and discovery level (based on playback history: favorites, balanced, hidden gems).
 
 "Create Mix" only shows a preview; only "Play Mix" replaces the queue (the list icon next to it appends the mix instead). If there are fewer than 20 exact matches, the mix also includes similar tracks (energy ±1, then without style) and indicates this. The same artist is never played twice in a row.
 
@@ -210,7 +210,7 @@ python3 analyse.py --upload http://<player>:8766
 - `--seconds 120` (default) analyzes only the middle two minutes (for valence/arousal, the middle 45 seconds of that section); `--jobs` specifies the number of parallel processes.
 - Duration: on an older Intel Mac, around 9 seconds per file, or about 5 days for 50,000 tracks; Apple Silicon Macs are significantly faster. `--profile` displays the time spent on each analysis step. Using more processes than CPU cores provides no benefit.
 - An intermediate upload can be performed at any time; the Tag Service then uses the results available so far.
-- If the analysis crashes on a file (macOS then reports "Python quit unexpectedly"), the script continues and records the file as an error; `--retry-errors` retries such files later. Files longer than 30 minutes (recordings, DJ mixes) are skipped because they are loaded entirely into memory (`--max-minutes`, 0 = all).
+- If the analysis crashes on a file (macOS then reports "Python quit unexpectedly"), the script continues and records the file as an error; `--retry-errors` retries such files later. Files longer than 30 minutes (recordings, DJ mixes) are skipped because they are loaded entirely into memory (`--max-minutes`, 0 = all); they are counted as "skipped", not as errors.
 - With ffmpeg (`brew install ffmpeg`) the script reads files that Essentia fails on: after a read error, an almost empty result, or a crash (the file is then retried on its own, directly with ffmpeg). The script looks for ffmpeg itself (PATH, `/opt/homebrew/bin`, `/usr/local/bin`) and shows at startup which one it uses; `--ffmpeg <path>` selects another, `--ffmpeg aus` turns it off. `--retry-errors` catches up on files that failed before. Tracks read with ffmpeg carry `"dec":"ffmpeg"` in `essentia.jsonl`.
 - The result file `essentia.jsonl` is located on the player under `/data/INTERNAL/tags/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood Tags" how many tracks have been matched.
 

@@ -23,8 +23,8 @@ function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
 
 t('Kriterien lesen: Grenzen und Standardwerte', function(){
   var c = mm.parse({moods: 'Relaxed, dreamy', emin: '4', emax: '2', n: '999', disc: '7', match: 'x'});
-  assert.deepStrictEqual(c, {moods: ['relaxed', 'dreamy'], styles: [], genres: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, n: 200, disc: 0.5});
-  assert.deepStrictEqual(mm.parse({}), {moods: [], styles: [], genres: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, n: 50, disc: 0.5});
+  assert.deepStrictEqual(c, {maxd: 0, moods: ['relaxed', 'dreamy'], styles: [], genres: [], match: 'any', emin: 2, emax: 4, bmin: 0, bmax: 0, n: 200, disc: 0.5});
+  assert.deepStrictEqual(mm.parse({}), {maxd: 0, moods: [], styles: [], genres: [], match: 'any', emin: 1, emax: 5, bmin: 0, bmax: 0, n: 50, disc: 0.5});
 });
 
 t('Trefferzahl und Stile unter den Treffern', function(){
@@ -47,6 +47,19 @@ t('Genre: Chips unter den Treffern, Filter streng (auch beim Lockern)', function
   var m = mm.build(coll, {}, mm.parse({moods: 'relaxed', genres: 'Jazz', n: 30}), rnd);
   assert.ok(m.tracks.length === 6 && m.tracks.every(function(x){ return x.ge === 'Jazz'; }));
   assert.strictEqual(mm.build(coll, {}, mm.parse({moods: 'happy', genres: 'jazz'}), rnd).tracks.length, 0);
+});
+
+t('Höchstlänge: lange Titel (DJ-Mixe) fallen raus, Titel ohne Länge bleiben', function(){
+  lib.forEach(function(it){ if (it.ar === 'E') it.d = it.ti.slice(-1) === '1' ? 0 : 2400; });   /* E: 5 × 40 min, 1 × unbekannt */
+  assert.strictEqual(mm.parse({maxd: '20'}).maxd, 20);
+  assert.strictEqual(mm.parse({maxd: '-3'}).maxd, 0);
+  var r = mm.count(coll, mm.parse({moods: 'relaxed', maxd: 20}));
+  assert.strictEqual(r.count, 13);
+  assert.deepStrictEqual(r.genres, [['Electronic', 12], ['Jazz', 1]]);
+  assert.strictEqual(mm.count(coll, mm.parse({moods: 'relaxed'})).count, 18);
+  var m = mm.build(coll, {}, mm.parse({moods: 'relaxed', genres: 'jazz', maxd: 20, n: 30}), rnd);
+  assert.strictEqual(m.tracks.length, 1);
+  lib.forEach(function(it){ it.d = 200; });
 });
 
 t('Mix: nur passende Titel, gewünschte Länge, nie zweimal derselbe Künstler hintereinander', function(){

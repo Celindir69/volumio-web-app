@@ -21,7 +21,9 @@ function parse(q) {
   var bmin = parseInt(q.bmin, 10), bmax = parseInt(q.bmax, 10);    /* Tempo (Audio-Analyse); 0 = keine Grenze */
   bmin = bmin >= BPM_MIN && bmin <= BPM_MAX ? bmin : 0; bmax = bmax >= BPM_MIN && bmax <= BPM_MAX ? bmax : 0;
   if (bmin && bmax && bmin > bmax) { var y = bmin; bmin = bmax; bmax = y; }
-  return {moods: list(q.moods), styles: list(q.styles), genres: list(q.genres), match: q.match === 'all' ? 'all' : 'any',
+  var maxd = parseInt(q.maxd, 10);                                  /* Höchstlänge in Minuten; 0 = keine Grenze */
+  maxd = maxd > 0 && maxd <= 600 ? maxd : 0;
+  return {maxd: maxd, moods: list(q.moods), styles: list(q.styles), genres: list(q.genres), match: q.match === 'all' ? 'all' : 'any',
           emin: emin, emax: emax, bmin: bmin, bmax: bmax, n: Math.min(Math.max(n || 50, 1), MAX_N), disc: disc >= 0 && disc <= 1 ? disc : 0.5};
 }
 
@@ -70,9 +72,14 @@ function genreOk(it, c) {
   return !c.genres || !c.genres.length || c.genres.indexOf(String(it.ge || '').toLowerCase()) >= 0;
 }
 
+/* Höchstlänge (DJ-Mixe, Mitschnitte); Titel ohne bekannte Länge passen, nie gelockert */
+function lengthOk(it, c) {
+  return !c.maxd || !it.d || it.d <= c.maxd * 60;
+}
+
 function candidates(all, c, level) {
   var out = [];
-  all.forEach(function(x){ var s = genreOk(x.it, c) && fit(x.r, c, level); if (s) out.push({it: x.it, r: x.r, s: s}); });
+  all.forEach(function(x){ var s = genreOk(x.it, c) && lengthOk(x.it, c) && fit(x.r, c, level); if (s) out.push({it: x.it, r: x.r, s: s}); });
   return out;
 }
 
@@ -84,7 +91,7 @@ function count(coll, c) {
   var n = 0, bpm = 0;
   all.forEach(function(x){
     if (x.r.bpm) bpm++;
-    if (!fit(x.r, noStyle, 0)) return;
+    if (!fit(x.r, noStyle, 0) || !lengthOk(x.it, c)) return;
     if (x.it.ge) genres[x.it.ge] = (genres[x.it.ge] || 0) + 1;
     if (!genreOk(x.it, c)) return;
     x.r.style.forEach(function(s){ styles[s] = (styles[s] || 0) + 1; });
