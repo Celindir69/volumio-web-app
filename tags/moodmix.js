@@ -161,4 +161,4 @@ function build(coll, pc, c, rnd) {
   })};
 }
 
-module.exports = {parse: parse, count: count, build: build, playCounts: playCounts, fit: fit};
+module.exports = {index: index, parse: parse, count: count, build: build, playCounts: playCounts, fit: fit};

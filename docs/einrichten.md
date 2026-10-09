@@ -179,8 +179,11 @@ mehr). Leere Reihen fallen weg. Künstler und Album tippen öffnet, Titel tippen
 
 **Nach Stimmung, Energie, Stil und Jahrzehnt:** Unter den Reihen stehen Auswahlknöpfe. Stimmung (Entspannt, Verträumt,
 Melancholisch, Düster, Fröhlich, Intensiv, Episch; dieselben Namen wie im Stimmungs-Mix), Energie (Ruhig, Mittlere Energie, Energiegeladen) und Stil (Acoustic, Ambient,
-Electronic, Funky, Soulful, Experimental) erstellen sofort einen Stimmungs-Mix (siehe unten) mit diesem Kriterium und
-zeigen die Vorschau; „Ändern“ führt zur gewohnten Auswahl. Wie viele Titel passen, hängt von den Stimmungs-Tags ab.
+Electronic, Funky, Soulful, Experimental) öffnen wie ein Genre die passenden Alben mit „Alle abspielen“ und Würfel.
+Ein Album passt, wenn mindestens die Hälfte seiner eingeordneten Titel diese Stimmung bzw. diesen Stil trägt (ein
+Stil-Knopf fasst verwandte Stile zusammen, z. B. Electronic auch Downtempo, House und Trip-Hop) oder wenn die mittlere
+Energie im Bereich liegt (Ruhig 1–2, Mittlere Energie 3, Energiegeladen 4–5); es braucht mindestens zwei eingeordnete
+Titel. Wie viele Alben passen, hängt von den Stimmungs-Tags ab. Der Stimmungs-Mix bleibt davon getrennt.
 Ein Jahrzehnt öffnet seine Alben, nach Jahr sortiert, mit „Alle abspielen“ und Würfel. Das Jahr ist das häufigste
 Date-Tag im Albumordner (aus MPD, also der Wert im Tag-Editor); Alben ohne Jahr fehlen dort. Nach dem Update liest
 der Tag-Dienst die Albenliste einmal neu, bis dahin fehlen die Jahrzehnte.

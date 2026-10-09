@@ -148,6 +148,21 @@ function browseDecade(e, seq) {
   });
 }
 
+/* Alben nach Stimmung, Energie oder Stil (browseStack-Eintrag {kind:'moodset', title, q}): q geht an GET /moodalbums */
+function browseMoodSet(e, seq) {
+  tagGetJson('/moodalbums?' + e.q).then(function(r){
+    if (seq !== browseSeq) return;
+    while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
+    var list = (r && r.albums) || [];
+    if (!list.length) { browseBody.appendChild(browseNote(r && r.building ? T('disc.building') : T('disc.moodNone'))); return; }
+    genreAlbumPage(list);
+  }).catch(function(){
+    if (seq !== browseSeq) return;
+    while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
+    browseBody.appendChild(browseNote(T('genre.offline')));
+  });
+}
+
 /* „Alle abspielen“ wie auf der Künstlerseite: Warteschlange durch alle Alben der Liste ersetzen (Reihenfolge wie angezeigt) */
 function genrePlayAllHead(list) {
   var head = document.createElement('div');

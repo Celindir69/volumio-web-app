@@ -60,7 +60,7 @@ function discoverLoad(seq, cat, secs, onlyRandom) {
   }).catch(function(){});
 }
 
-/* Auswahlknöpfe unter den Reihen: Stimmung, Energie, Stil (je ein fertiger Stimmungs-Mix, moodmix.js) und Jahrzehnt (Alben, genre.js) */
+/* Auswahlknöpfe unter den Reihen: Stimmung, Energie, Stil und Jahrzehnt; jeder öffnet die passenden Alben (genre.js) */
 var DISCOVER_MOODS = [['relaxed'], ['dreamy'], ['melancholic'], ['dark'], ['happy'], ['intense'], ['epic']];   /* Namen wie im Stimmungs-Mix */
 var DISCOVER_ENERGY = [[1, 2, 'disc.energy.low'], [3, 3, 'disc.energy.mid'], [4, 5, 'disc.energy.high']];
 var DISCOVER_STYLES = [
@@ -86,16 +86,19 @@ function discoverChips(seq) {
     c.addEventListener('click', onClick);
     box.appendChild(c);
   }
-  if (typeof openMoodMixWith === 'function') {
-    var g = group(T('disc.chips.mood'));
-    DISCOVER_MOODS.forEach(function(m){
-      chip(g, mixName(m[0]), function(){ openMoodMixWith({moods: m}); });
-    });
-    g = group(T('disc.chips.energy'));
-    DISCOVER_ENERGY.forEach(function(e){ chip(g, T(e[2]), function(){ openMoodMixWith({emin: e[0], emax: e[1]}); }); });
-    g = group(T('disc.chips.style'));
-    DISCOVER_STYLES.forEach(function(s){ chip(g, s[0], function(){ openMoodMixWith({styles: s[1]}); }); });
-  }
+  function open(title, q) { openBrowse({kind: 'moodset', title: title, q: q}); }
+  var g = group(T('disc.chips.mood'));
+  DISCOVER_MOODS.forEach(function(m){
+    var name = mixName(m[0]);
+    chip(g, name, function(){ open(name, 'moods=' + encodeURIComponent(m.join(','))); });
+  });
+  g = group(T('disc.chips.energy'));
+  DISCOVER_ENERGY.forEach(function(e){
+    var name = T(e[2]);
+    chip(g, name, function(){ open(name, 'emin=' + e[0] + '&emax=' + e[1]); });
+  });
+  g = group(T('disc.chips.style'));
+  DISCOVER_STYLES.forEach(function(s){ chip(g, s[0], function(){ open(s[0], 'styles=' + encodeURIComponent(s[1].join(','))); }); });
   var dec = group(T('disc.chips.decade'));
   dec.parentNode.style.display = 'none';
   tagGetJson('/decades').then(function(r){
