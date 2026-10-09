@@ -2,7 +2,7 @@
 
 **Explorer for Volumio**: (re)discover your own music collection.
 
-[Deutsche Fassung](README.md)
+[Deutsche Fassung](README.md) · [What is Xplorio?](docs/xplorio_en.md)
 
 Xplorio is a custom web interface for Volumio 2 (built for a Musical Fidelity MX-Stream, Raspberry Pi CM3), running directly in the browser without a build step.
 It also runs on Volumio 4 (for differences, see [Setup](docs/setup.md#volumio-4)). In addition to the files that run on the player, the repository only contains tests (`tests/`) and the setup documentation;
@@ -56,6 +56,11 @@ while, never heard, and once played a lot. Below them, buttons lead on by mood, 
 Ratings: a heart for artists, one to five stars for albums, thumbs up or down for tracks (thumbs up is the Volumio favourite). For web radio, the app retrieves cover art for the currently playing
 track and displays station logos in the station list.
 
+<p>
+  <img src="docs/bilder/entdecken.jpg" width="200" alt="discover in search">
+  <img src="docs/bilder/album.jpg" width="200" alt="album page with stars and thumbs">
+</p>
+
 ### Mood Mix
 
 A dedicated first tab next to Playlists and Radio (playlist button). Select one or more moods, narrow down the energy level
@@ -68,7 +73,6 @@ remain unchanged. Optionally, Essentia on the Mac can analyze each track directl
 energy and mood are derived from the audio, and a tempo control (BPM) is added.
 
 <p>
-  <img src="docs/bilder/entdecken.jpg" width="200" alt="discover in search">
   <img src="docs/bilder/mix-auswahl.jpg" width="200" alt="Mood-Mix: Selection">
   <img src="docs/bilder/mix-vorschau.jpg" width="200" alt="Mood-Mix: Preview">
 </p>
