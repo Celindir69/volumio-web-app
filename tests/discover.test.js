@@ -71,4 +71,24 @@ t('Zufallsmix für Albumordner (Genre-Liste)', function(){
   var pool = d.mixPool(tracks, albumList, {dirs: ['USB/A1/Album 1', 'USB/A2/Album 12']});
   assert.deepStrictEqual(pool.map(function(x){ return x[4]; }).sort(), ['Album 1', 'Album 1', 'Album 1', 'Album 1', 'Album 12', 'Album 12', 'Album 12', 'Album 12']);
 });
+t('Zufallsmix für mehrere Künstler (ähnliche Künstler): jeder etwa gleich oft, nie zweimal hintereinander', function(){
+  /* A1 bekommt viele zusätzliche Titel: trotzdem nicht häufiger */
+  var big = tracks.concat([]);
+  for (var j = 0; j < 40; j++) big.push(['A1', 'Extra ' + j, 'USB/A1/Extra/' + j + '.flac', 200, 'Extra']);
+  var pool = d.mixPool(big, albumList, {artists: ['A1', 'a2', 'A3']});
+  assert.strictEqual(pool.length, 12 + 40 + 12 + 12);
+  var m = d.mixBalanced(pool, 24, albumList, rnd), per = {};
+  assert.strictEqual(m.length, 24);
+  m.forEach(function(x, j){ per[x[0]] = (per[x[0]] || 0) + 1; if (j) assert.notStrictEqual(x[0], m[j - 1][0]); });
+  assert.deepStrictEqual(per, {A1: 8, A2: 8, A3: 8});
+  var files = {};
+  m.forEach(function(x){ assert.ok(!files[x[2]]); files[x[2]] = true; });
+});
+
+t('Zufallsmix für mehrere Künstler: geht einem die Musik aus, füllen die anderen auf', function(){
+  var pool = d.mixPool(tracks, albumList, {artists: ['A1', 'A2']}).slice(0, 14);   /* A1 hat 12, A2 nur 2 */
+  var m = d.mixBalanced(pool, 25, albumList, rnd);
+  assert.strictEqual(m.length, 14);
+});
+
 console.log(n + ' Prüfungen');

@@ -268,11 +268,14 @@ function browseArtist(e, seq) {
     });
     if (genreRows.length && typeof genreDecorate === 'function') genreDecorate(genreRows, seq);   /* Genre vor dem Stift */
 
+    /* „Mehr entdecken“ ganz unten (discover.js); Titel kommen davor */
+    var more = isStream ? null : discoverMore(e.artist, function(){ return seq === browseSeq; });
+    if (more) browseBody.appendChild(more);
     function addTitles(list, showAlbum) {
       if (!list.length || seq !== browseSeq) return;
       albumHead.style.display = '';                   /* "Alben" erst anzeigen, wenn darunter "Titel" folgt */
-      browseBody.appendChild(browseHeading(T('browse.tracks')));
-      list.forEach(function(t){ browseBody.appendChild(browseTrackRow(t, e, showAlbum)); });
+      browseBody.insertBefore(browseHeading(T('browse.tracks')), more);
+      list.forEach(function(t){ browseBody.insertBefore(browseTrackRow(t, e, showAlbum), more); });
     }
     if (isStream) addTitles(pageTracks, true);
     else localExtraTitles(e.artist, albums.map(function(a){ return a.title; })).then(function(list){ addTitles(list, true); });

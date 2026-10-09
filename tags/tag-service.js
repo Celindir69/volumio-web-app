@@ -655,6 +655,17 @@ function doMoodAlbums(query, cb) {
   });
 }
 
+/* GET /artistprofile?artist=… -> {ok, n, moods, styles, energy, decades} („Mehr entdecken“ auf der Künstlerseite) */
+function doArtistProfile(query, cb) {
+  var artist = String(query.artist || '').trim();
+  if (!artist) return cb(400, {ok: false, error: 'artist fehlt'});
+  albumsEnsure(function(list){
+    var r = moodalbums.artistProfile(moodmix.index(moodCollector), list || [], plays.norm(artist), plays.norm);
+    r.ok = true;
+    cb(200, r);
+  });
+}
+
 function doMoodmix(query, cb) {
   albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
   var c = moodmix.parse(query);
@@ -792,13 +803,16 @@ function doRate(body, cb) {
 }
 
 function doRandomMix(body, cb) {
-  if (!body.artist && !(body.dirs && body.dirs.length)) return cb(400, {ok: false, error: 'artist oder dirs fehlt'});
+  var many = Array.isArray(body.artists) ? body.artists.slice(0, 50).map(String) : [];
+  if (!body.artist && !many.length && !(body.dirs && body.dirs.length)) return cb(400, {ok: false, error: 'artist, artists oder dirs fehlt'});
   albumsEnsure(function(list){
     var tl = libTracksLoad();
     if (!tl || !tl.length) return cb(200, {ok: false, building: albumBuilding, items: []});
     var n = Math.min(parseInt(body.n, 10) || 25, 100), bad = ratingStore.disliked();
     tl = tl.filter(function(t){ return !bad[t[2]]; });                 /* „mag ich nicht“ nie im Würfel */
-    var items = discover.mix(discover.mixPool(tl, list, {artist: body.artist, dirs: [].concat(body.dirs || []).slice(0, 5000)}), n).map(function(t){
+    var pool = discover.mixPool(tl, list, {artist: body.artist, artists: many, dirs: [].concat(body.dirs || []).slice(0, 5000)});
+    var picked = many.length ? discover.mixBalanced(pool, n, list) : discover.mix(pool, n);   /* ähnliche Künstler: gleichmäßig */
+    var items = picked.map(function(t){
       return {f: t[2], ar: t[0], ti: t[1], al: t[4] || '', d: t[3] || 0};
     });
     cb(200, {ok: true, items: items});
@@ -1102,6 +1116,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/moodalbums') return doMoodAlbums(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodmix')  return doMoodmix(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/artistprofile') return doArtistProfile(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/gems') return doGems(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/discover') return doDiscover(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

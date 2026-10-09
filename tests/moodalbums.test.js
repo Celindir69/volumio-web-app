@@ -32,4 +32,21 @@ t('Energie: gerundeter Mittelwert der Titel mit Energie', function(){
   assert.deepStrictEqual(ma.list(sums, albumList, {emin: 1, emax: 2})[0], {dir: 'USB/A/Ruhig', al: 'Ruhig', ar: 'Alpha', y: 1999});
 });
 
+t('Profil eines Künstlers: häufige Stimmungen und Stile, mittlere Energie, Jahrzehnte seiner Alben', function(){
+  function a(ar, mood, energy, style) { return {it: {ar: ar, f: 'x'}, r: {mood: mood, energy: energy, style: style}}; }
+  var ix = [a('Alpha', ['relaxed', 'dreamy'], 2, ['ambient']), a('Alpha', ['relaxed'], 1, ['ambient', 'downtempo']),
+            a('Alpha', ['relaxed'], 2, ['ambient']), a('Alpha', ['dark'], 3, []), a('alpha', ['relaxed'], null, ['ambient']),
+            a('Beta', ['intense'], 5, ['house'])];
+  for (var i = 0; i < 6; i++) ix.push(a('Alpha', [], null, []));          /* Titel ohne Stimmung zählen mit */
+  var al = albumList.concat([{dir: 'USB/A/Neu', al: 'Neu', ar: 'Alpha', y: 2004}, {dir: 'USB/A/Alt', al: 'Alt', ar: 'alpha', y: 1971}]);
+  var norm = function(s){ return String(s).toLowerCase(); };
+  var p = ma.artistProfile(ix, al, 'alpha', norm);
+  assert.strictEqual(p.n, 11);
+  assert.deepStrictEqual(p.moods, ['relaxed']);                          /* dreamy, dark: zu selten (unter 20 %) */
+  assert.deepStrictEqual(p.styles, ['ambient']);
+  assert.strictEqual(p.energy, 2);
+  assert.deepStrictEqual(p.decades, [1970, 1990, 2000]);
+  assert.deepStrictEqual(ma.artistProfile(ix, al, 'gamma', norm), {n: 0, moods: [], styles: [], energy: 0, decades: []});
+});
+
 console.log(n + ' Prüfungen');

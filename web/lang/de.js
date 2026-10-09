@@ -325,6 +325,11 @@ langRegister('de', 'Deutsch', {
   'mix.tracks': {one: '{n} Titel', other: '{n} Titel'},
   'mix.why.artist': 'über Künstler',
 
+  'more.decade': 'Jahrzehnte',
+  'more.mood': 'Stimmung und Energie',
+  'more.similar': 'Ähnliche Künstler',
+  'more.style': 'Stile',
+  'more.title': 'MEHR ENTDECKEN',
   'mood.aggressive': 'aggressiv',
   'mood.atmospheric': 'atmosphärisch',
   'mood.calm': 'ruhig',
