@@ -52,17 +52,19 @@ Then on the player:
 | `sudo web-app-deploy <branch>` | use a different branch, e.g. for testing before merging |
 | `sudo web-app-deploy -n <branch>` | only show what would change |
 | `sudo web-app-deploy -y <branch>` | deploy without confirmation |
-| `sudo web-app-deploy --zurueck` | restore the latest backup (repeat to go back step by step) |
+| `sudo web-app-deploy --rollback` | restore the latest backup (repeat to go back step by step) |
 
-Targets: `app.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/INTERNAL/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
+Targets: `app.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, `kioskTV.html` goes to `/volumio/http/www/`, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/web-app/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
 
-`tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/web-app-deploy/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
+`tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/web-app/backup/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
+
+Everything except the interface lives in `/data/web-app/`: `tags/` (Tag Service), `rotel/` (Rotel bridge), `data/` (Tag Service data), and `backup/` (backups). The folder survives Volumio updates; before a fresh installation, backing it up is enough. Earlier installations had the services under `/data/INTERNAL/`: the script then switches `tag-service.service` and `rotel-bridge.service` to the new paths once (with a backup) and restarts the services; the Tag Service moves its data itself. The old folders `/data/INTERNAL/tags` and `/data/INTERNAL/rotel` stay in place and can be deleted after a test.
 
 ## Tag Service (for the Tag Editor)
 
 ```bash
-sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
-sudo chown -R volumio:volumio /data/INTERNAL/tags
+sudo mkdir -p /data/web-app/tags && sudo cp -r tags/. /data/web-app/tags/
+sudo chown -R volumio:volumio /data/web-app/tags
 sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data
 sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
 [Unit]
@@ -70,8 +72,8 @@ Description=Tag-Dienst fuer app.html
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/env node /data/INTERNAL/tags/tag-service.js
-WorkingDirectory=/data/INTERNAL/tags
+ExecStart=/usr/bin/env node /data/web-app/tags/tag-service.js
+WorkingDirectory=/data/web-app/tags
 Restart=always
 User=volumio
 # Environment=USE_SUDO=1
@@ -93,7 +95,7 @@ After an update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-s
 
 Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (data folder, default `/data/web-app/data`).
 
-**Data folder:** The program lives in `/data/INTERNAL/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/web-app/data/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
+**Data folder:** The program lives in `/data/web-app/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/web-app/data/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
 `sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data && sudo systemctl restart tag-service`.
 
 ### Last.fm credentials
@@ -244,7 +246,7 @@ The value applies to that track on all devices (`/data/web-app/data/lyrics-offse
 
 ## Rotel Bridge (Optional)
 
-Copy `rotel/rotel-bridge.js` to `/data/INTERNAL/rotel/` and configure it as a systemd service as above (port 8765). In `web/config.local.js`:
+Copy `rotel/rotel-bridge.js` to `/data/web-app/rotel/` and configure it as a systemd service as above (port 8765). In `web/config.local.js`:
 
 ```js
 window.APP_CONFIG.ROTEL = true;                  // Power button and amplifier volume in the interface

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Früherer Name von web-app-deploy. Unter /usr/local/bin/mx-deploy bzw. volumio4-deploy eingerichtet, richtet es
 # web-app-deploy ein (falls noch nicht da) und ruft es mit denselben Angaben auf. Aufrufe wie bisher:
-#   sudo mx-deploy [-n|-y] [branch]   sudo mx-deploy --zurueck
+#   sudo mx-deploy [-n|-y] [branch]   sudo mx-deploy --rollback
 ROOT=${DEPLOY_ROOT:-${MX_ROOT:-}}                   # nur für Tests
 B=$ROOT/usr/local/bin/web-app-deploy
 if [ ! -x "$B" ]; then

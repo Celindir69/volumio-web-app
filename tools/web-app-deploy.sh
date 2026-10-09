@@ -5,12 +5,16 @@
 #   sudo web-app-deploy claude/mein-branch einen bestimmten Branch
 #   sudo web-app-deploy -n [branch]        nur zeigen, was sich ändern würde
 #   sudo web-app-deploy -y [branch]        ohne Rückfrage
-#   sudo web-app-deploy --zurueck          letzte Sicherung wiederherstellen (auch --zurück)
+#   sudo web-app-deploy --rollback         letzte Sicherung wiederherstellen (alt: --zurueck)
 #
 # Die Oberfläche (app.html, web/, tools/) kommt in jeden vorhandenen Ordner /volumio/http/www*/: Welchen Volumio
 # ausliefert, hängt von Version und gewählter Oberfläche ab (Volumio 3: www3, Volumio 4: www4). Neue Ordner legt das
 # Skript nicht an; gibt es keinen, bricht es ab.
-# Vor jedem Einspielen werden die betroffenen Dateien unter /data/web-app-deploy gesichert (die letzten 5 bleiben).
+# Alles Übrige liegt in /data/web-app (bleibt bei Volumio-Updates erhalten; zum Sichern genügt dieser Ordner):
+#   tags/  Tag-Dienst   rotel/  Rotel-Bridge   data/  Daten des Tag-Dienstes   backup/  Sicherungen dieses Skripts
+# Frühere Installationen hatten die Dienste unter /data/INTERNAL; das Skript stellt ihre systemd-Dateien auf die neuen
+# Pfade um (die alten Dateien bleiben liegen, die Daten zieht der Tag-Dienst selbst um).
+# Vor jedem Einspielen werden die betroffenen Dateien unter /data/web-app/backup gesichert (die letzten 5 bleiben).
 # Eigene Dateien wie web/config.local.js stehen nicht im Repo und bleiben unberührt; gelöscht wird nichts.
 # Einrichten:  curl -fsSL https://raw.githubusercontent.com/Celindir69/volumio-web-app/main/tools/web-app-deploy.sh | sudo tee /usr/local/bin/web-app-deploy >/dev/null && sudo chmod +x /usr/local/bin/web-app-deploy
 # Die früheren Namen mx-deploy und volumio4-deploy rufen dieses Skript auf (tools/mx-deploy.sh).
@@ -27,7 +31,8 @@ if [ -z "$WWWS" ]; then
   done
   WWWS=${WWWS# }
 fi
-STATE=$ROOT/data/web-app-deploy
+APP=$ROOT/data/web-app
+STATE=$APP/backup
 OLD_STATES="$ROOT/data/INTERNAL/mx-deploy $ROOT/data/INTERNAL/volumio4-deploy"   # Sicherungen der früheren Namen
 KEEP=5
 
@@ -35,8 +40,8 @@ KEEP=5
 target() {
   case "$1" in
     kioskTV.html)            echo "$ROOT/volumio/http/www/$1" ;;
-    tags/*)                  echo "$ROOT/data/INTERNAL/$1" ;;
-    rotel/rotel-bridge.js)   echo "$ROOT/data/INTERNAL/$1" ;;
+    tags/*)                  echo "$APP/$1" ;;
+    rotel/rotel-bridge.js)   echo "$APP/$1" ;;
     tools/web-app-deploy.sh) echo "$ROOT/usr/local/bin/$PROG" ;;
     tools/mx-deploy.sh)      for p in mx-deploy volumio4-deploy; do [ -e "$ROOT/usr/local/bin/$p" ] && echo "$ROOT/usr/local/bin/$p"; done; true ;;   # nur vorhandene alte Namen
     app.html|web/*|tools/*)  for w in $WWWS; do echo "$ROOT/volumio/http/$w/$1"; done ;;
@@ -47,12 +52,23 @@ TAB=$'\t'                                           # Einträge der Listen: Repo
 die() { echo "$PROG: $*" >&2; exit 1; }
 [ -n "$ROOT" ] || [ "$(id -u)" = 0 ] || die "bitte mit sudo aufrufen"
 
-restart_services() {               # $1: Liste geänderter Repo-Pfade
+# systemd-Dateien der Dienste, die noch auf /data/INTERNAL zeigen
+UNIT_DIR=$ROOT/etc/systemd/system
+old_units() { for u in tag-service rotel-bridge; do
+  grep -qs '/data/INTERNAL/\(tags\|rotel\)' "$UNIT_DIR/$u.service" && echo "$u"; done; true; }
+
+# Ordner unter /data/web-app; data/ nur für den Dienst (volumio) lesbar
+prepare_dirs() {
+  mkdir -p "$APP" "$STATE"; chmod 700 "$STATE"
+  [ -d "$APP/data" ] || { mkdir -m 700 "$APP/data" && echo "Datenordner $APP/data angelegt"; }
+  [ -n "$ROOT" ] || chown volumio:volumio "$APP/data" 2>/dev/null || true
+}
+
+restart_services() {               # $1: Liste geänderter Repo-Pfade (Dienste als tags/… bzw. rotel/…)
   [ -n "$ROOT" ] && { echo "$1" | grep -q '^tags/' && echo "(Test) tag-service neu starten"; echo "$1" | grep -q '^rotel/' && echo "(Test) rotel-bridge neu starten"; return 0; }
+  systemctl daemon-reload 2>/dev/null || true
   if echo "$1" | grep -q '^tags/'; then
-    chown -R volumio:volumio /data/INTERNAL/tags 2>/dev/null || true
-    # Datenordner des Tag-Dienstes (außerhalb von Webordner und Netzwerkfreigabe); der Dienst zieht beim Start dorthin um
-    [ -d /data/web-app ] || { mkdir -m 700 /data/web-app && chown volumio:volumio /data/web-app && echo "Datenordner /data/web-app angelegt"; } || true
+    chown -R volumio:volumio "$APP/tags" 2>/dev/null || true
     systemctl restart tag-service 2>/dev/null && echo "tag-service neu gestartet" || echo "Hinweis: tag-service nicht neu gestartet (eingerichtet?)"
   fi
   if echo "$1" | grep -q '^rotel/'; then
@@ -61,7 +77,7 @@ restart_services() {               # $1: Liste geänderter Repo-Pfade
 }
 
 # ---------- Wiederherstellen ----------
-if [ "$1" = "--zurueck" ] || [ "$1" = "--zurück" ]; then
+if [ "$1" = "--rollback" ] || [ "$1" = "--zurueck" ] || [ "$1" = "--zurück" ]; then
   last=$(for d in "$STATE" $OLD_STATES; do ls -1 "$d"/backup-*.tar.gz 2>/dev/null; done \
     | while IFS= read -r b; do printf '%s\t%s\n' "$(basename "$b")" "$b"; done | sort | tail -n 1 | cut -f2)
   [ -n "$last" ] || die "keine Sicherung vorhanden"
@@ -122,10 +138,12 @@ show() { while IFS="$TAB" read -r f t; do
   if [ "$r" != "$t" ] && [ "${WWWS#* }" != "$WWWS" ] && [ "$f" != kioskTV.html ]; then echo "$f (${r%%/*})"; else echo "$f"; fi
 done; }
 
-if [ $n = 0 ]; then echo "Alles aktuell ($BRANCH), nichts zu tun."; exit 0; fi
+UNITS=$(old_units)
+if [ $n = 0 ] && [ -z "$UNITS" ]; then echo "Alles aktuell ($BRANCH), nichts zu tun."; exit 0; fi
 echo "Branch $BRANCH: $n Datei(en)"
 [ -n "$CHANGED" ] && printf '%s' "$CHANGED" | show | sed 's/^/  geändert: /'
 [ -n "$NEW" ]     && printf '%s' "$NEW"     | show | sed 's/^/  neu:      /'
+for u in $UNITS; do echo "  Dienst:   $u von /data/INTERNAL nach $APP umstellen"; done
 [ $DRY = 1 ] && exit 0
 if [ $YES = 0 ]; then
   read -r -p "Einspielen? [j/N] " a
@@ -133,12 +151,15 @@ if [ $YES = 0 ]; then
 fi
 
 # ---------- Sichern ----------
-mkdir -p "$STATE"
+prepare_dirs
 base="$STATE/backup-$(date +%Y%m%d-%H%M%S)"
 ALL="$CHANGED$NEW"
+RESTART=$ALL                                        # dazu die umgestellten Dienste (zum Neustart, auch beim Zurückholen)
+for u in $UNITS; do case $u in tag-service) RESTART="${RESTART}tags/$u.service"$'\n' ;; *) RESTART="${RESTART}rotel/$u.service"$'\n' ;; esac; done
 : > "$base.neu"
-printf '%s' "$ALL" > "$base.pfade"
+printf '%s' "$RESTART" > "$base.pfade"
 list="$TMP/sicherung.txt"; : > "$list"
+for u in $UNITS; do echo "${UNIT_DIR#${ROOT:-/}}/$u.service" | sed 's|^/||' >> "$list"; done
 while IFS="$TAB" read -r f t; do
   [ -n "$f" ] || continue
   if [ -e "$t" ]; then echo "${t#${ROOT:-/}}" | sed 's|^/||' >> "$list"; else echo "$t" >> "$base.neu"; fi
@@ -156,6 +177,11 @@ while IFS="$TAB" read -r f t; do
     *)                 cp "$f" "$t" ;;                                               # vorhandene Datei: Besitzer und Rechte bleiben
   esac
 done <<< "$ALL"
-echo "Eingespielt nach /volumio/http/$(echo $WWWS | sed 's/ /, /g'). Sicherung: $(basename "$base") (zurück mit: sudo $PROG --zurueck)"
-restart_services "$ALL"
+for u in $UNITS; do
+  sed -i 's|/data/INTERNAL/tags|/data/web-app/tags|g; s|/data/INTERNAL/rotel|/data/web-app/rotel|g' "$UNIT_DIR/$u.service"
+  case $u in tag-service) d=tags ;; *) d=rotel ;; esac
+  echo "Dienst $u läuft jetzt aus /data/web-app/$d (das alte /data/INTERNAL/$d kann nach einem Test weg)"
+done
+echo "Eingespielt nach /volumio/http/$(echo $WWWS | sed 's/ /, /g'). Sicherung: $(basename "$base") (zurück mit: sudo $PROG --rollback)"
+restart_services "$RESTART"
 echo "Im Browser hart neu laden."

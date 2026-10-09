@@ -45,23 +45,30 @@ Danach auf dem Player:
 | `sudo web-app-deploy <branch>` | einen anderen Branch, z. B. zum Testen vor dem Merge |
 | `sudo web-app-deploy -n <branch>` | nur zeigen, was sich ändern würde |
 | `sudo web-app-deploy -y <branch>` | ohne Rückfrage |
-| `sudo web-app-deploy --zurueck` | letzte Sicherung wiederherstellen (mehrmals: Schritt für Schritt weiter zurück) |
+| `sudo web-app-deploy --rollback` | letzte Sicherung wiederherstellen (mehrmals: Schritt für Schritt weiter zurück) |
 
 Ziele: `app.html`, `web/` und `tools/` in jeden vorhandenen Ordner `/volumio/http/www*/`, `kioskTV.html` nach
-`/volumio/http/www/`, `tags/` und `rotel/rotel-bridge.js` nach `/data/INTERNAL/`; das Skript aktualisiert sich selbst.
+`/volumio/http/www/`, `tags/` und `rotel/rotel-bridge.js` nach `/data/web-app/`; das Skript aktualisiert sich selbst.
 Welchen der Ordner Volumio ausliefert, hängt von Version und gewählter Oberfläche ab (z. B. klassisch `www`, Volumio 3
 `www3`, Volumio 4 `www4`); deshalb bekommen alle vorhandenen die Oberfläche. Neue Ordner legt das Skript nicht an, ohne
 einen bricht es ab; `DEPLOY_WWW=<ordner>` wählt einen bestimmten. `web/config.local.js` liegt je Ordner: Wer die
 Oberfläche wechselt, kopiert sie mit.
 
 `tag-service` bzw. `rotel-bridge` werden nur neu gestartet, wenn sich ihre Dateien geändert haben. Vor jedem Einspielen
-sichert das Skript die betroffenen Dateien nach `/data/web-app-deploy/` (die letzten 5). Gelöscht wird nichts; eigene
+sichert das Skript die betroffenen Dateien nach `/data/web-app/backup/` (die letzten 5). Gelöscht wird nichts; eigene
 Dateien wie `web/config.local.js` bleiben.
+
+Alles außer der Oberfläche liegt in `/data/web-app/`: `tags/` (Tag-Dienst), `rotel/` (Rotel-Bridge), `data/` (Daten des
+Tag-Dienstes) und `backup/` (Sicherungen). Der Ordner übersteht Volumio-Updates; vor einer Neuinstallation genügt es, ihn zu
+sichern. Frühere Installationen hatten die Dienste unter `/data/INTERNAL/`: Das Skript stellt `tag-service.service` und
+`rotel-bridge.service` dann einmal auf die neuen Pfade um (mit Sicherung) und startet die Dienste neu; der Tag-Dienst zieht
+seine Daten selbst um. Die alten Ordner `/data/INTERNAL/tags` und `/data/INTERNAL/rotel` bleiben liegen und können nach
+einem Test gelöscht werden.
 
 ## Tag-Dienst (für den Tag-Editor)
 ```bash
-sudo mkdir -p /data/INTERNAL/tags && sudo cp -r tags/. /data/INTERNAL/tags/
-sudo chown -R volumio:volumio /data/INTERNAL/tags
+sudo mkdir -p /data/web-app/tags && sudo cp -r tags/. /data/web-app/tags/
+sudo chown -R volumio:volumio /data/web-app/tags
 sudo mkdir -p /data/web-app && sudo mkdir -m 700 -p /data/web-app/data && sudo chown volumio:volumio /data/web-app/data
 sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
 [Unit]
@@ -69,8 +76,8 @@ Description=Tag-Dienst fuer app.html
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/env node /data/INTERNAL/tags/tag-service.js
-WorkingDirectory=/data/INTERNAL/tags
+ExecStart=/usr/bin/env node /data/web-app/tags/tag-service.js
+WorkingDirectory=/data/web-app/tags
 Restart=always
 User=volumio
 # Environment=USE_SUDO=1
@@ -87,7 +94,7 @@ Wenn nicht, `Environment=USE_SUDO=1` einkommentieren (dann läuft nur `tags.py` 
 Nach einem Update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
 Weitere Variablen: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (Datenordner, Standard `/data/web-app/data`).
 
-**Datenordner:** Das Programm liegt in `/data/INTERNAL/tags/`, alles, was der Dienst anlegt (Verlauf, Last.fm-Sitzung,
+**Datenordner:** Das Programm liegt in `/data/web-app/tags/`, alles, was der Dienst anlegt (Verlauf, Last.fm-Sitzung,
 Check-Ergebnis, Cover, Analyse …), in `/data/web-app/data/`. Der Ordner ist nur für `volumio` lesbar und liegt weder im
 Webordner noch in `/data/INTERNAL`, das Volumio im Netzwerk freigeben kann. Ältere Installationen hatten die Daten neben
 dem Programm; der Dienst verschiebt sie beim ersten Start selbst. Fehlt der Ordner und darf der Dienst ihn nicht anlegen,
@@ -279,7 +286,7 @@ Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Tite
 allen Geräten (`/data/web-app/data/lyrics-offsets.json`); Tippen auf den Wert setzt ihn auf 0 zurück.
 
 ## Rotel-Bridge (optional)
-`rotel/rotel-bridge.js` nach `/data/INTERNAL/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
+`rotel/rotel-bridge.js` nach `/data/web-app/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
 ```js
 window.APP_CONFIG.ROTEL = true;                  // Ein/Aus-Knopf und Verstärker-Lautstärke in der Oberfläche
 window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';   // Adresse des Verstärkers, liest die Bridge beim Start
