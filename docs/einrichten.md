@@ -176,7 +176,8 @@ App und auf dem Kiosk-TV; ohne Titel oder ohne Treffer bleibt das Senderlogo. Di
 ### Begrüßung
 Beim Öffnen der Seite (nur mit Tag-Dienst) erscheint in der Mitte eine Karte mit Gruß nach Tageszeit (im Querformat mit
 breitem Rand): das **Album des Tages**
-(zufällig, bevorzugt lange nicht oder nie gehört; bleibt den ganzen Tag dasselbe) mit „Abspielen“, **Zuletzt gehört**
+(zufällig, bevorzugt lange nicht oder nie gehört; bleibt den ganzen Tag dasselbe) mit „Abspielen“ und Albumtext (wie im
+Info-Overlay, scrollbar), **Zuletzt gehört**
 (Alben, von denen zuletzt mindestens zwei Titel liefen), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
 180 Tagen dazukamen oder sich änderten, nach dem Änderungsdatum aus MPD) und ein Zufallsmix. Tippen daneben schließt es.
 Es kommt höchstens alle 30 Minuten von selbst und nicht in der Bühnenansicht; „Beim Öffnen zeigen“ unten schaltet es

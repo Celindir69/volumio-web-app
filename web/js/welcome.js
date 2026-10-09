@@ -19,7 +19,8 @@ function welcomeAlbumOpen(it, art) {
   openBrowse({kind: 'album', artist: it.ar === 'Verschiedene' ? '' : it.ar, album: it.al, uri: 'music-library/' + it.dir, albumart: art});
 }
 
-/* Album des Tages: großes Cover, Titel (Jahr), Künstler, wann zuletzt gehört; Tipp öffnet, ▶ spielt */
+/* Album des Tages: großes Cover, Titel (Jahr), Künstler, wann zuletzt gehört, ▶ und der Albumtext; Tipp öffnet das Album.
+   Querformat: Angaben oben neben dem Cover, ▶ rechts daneben, darunter der Text bis zur Unterkante des Covers */
 function welcomeDay(it) {
   var box = histEl('div', 'dRand wDay');
   var art = histAlbumArt(it.ar, it.al, it.dir);
@@ -40,7 +41,16 @@ function welcomeDay(it) {
     ev.stopPropagation();
     browsePlay({uri: 'music-library/' + it.dir, service: 'mpd', type: 'folder', title: it.al, artist: it.ar});
   });
-  meta.appendChild(play);
+  box.appendChild(play);
+  if (it.ar !== 'Verschiedene') {                    /* Albumtext wie im Info-Overlay (Volumio, sonst Last.fm); scrollt bei Bedarf */
+    var info = histEl('div', 'wInfo');
+    info.addEventListener('click', function(ev){ ev.stopPropagation(); });
+    box.appendChild(info);
+    ask({mode: 'storyAlbum', artist: it.ar, album: it.al}).then(function(res){
+      if (res && res.kind === 'story' && res.value) info.textContent = res.value;
+      else box.removeChild(info);
+    }).catch(function(){ if (info.parentNode) box.removeChild(info); });
+  }
   box.addEventListener('click', function(){ welcomeAlbumOpen(it, art); });
   return box;
 }

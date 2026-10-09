@@ -823,10 +823,6 @@ html:not(.light) .wCard { background:rgba(40,40,46,.86); }   /* dunkel: heller a
 @media (orientation:landscape) {
   #overlayWelcome { padding:8vh 12vw; }
   .wCard { --vw:min(1vw, 6px); max-width:1100px; border-radius:20px; }
-  .wDay { flex-direction:row; align-items:center; gap:calc(6 * var(--vw)); text-align:left; }
-  .wDay .dBig { max-width:220px; max-height:220px; }
-  .wDay .dMeta { margin-top:0; }
-  .wDay .wPlay { margin-top:calc(4 * var(--vw)); }
 }
 
 .wDay { margin-bottom:calc(5 * var(--vw)); }
@@ -835,6 +831,16 @@ html:not(.light) .wCard { background:rgba(40,40,46,.86); }   /* dunkel: heller a
   padding:calc(2 * var(--vw)) calc(5 * var(--vw)); border:0; border-radius:999px; cursor:pointer;
   background:var(--fg); color:var(--ink); font:inherit; font-size:calc(3.4 * var(--vw)); font-weight:600; }
 .wPlay svg { width:1.2em; height:1.2em; fill:currentColor; }
+.wInfo { margin-top:calc(4 * var(--vw)); max-height:32vh; overflow-y:auto; text-align:left; white-space:pre-line;
+  font-size:calc(3.2 * var(--vw)); line-height:1.5; opacity:.8; cursor:auto; }
+@media (orientation:landscape) {
+  .wDay { display:grid; grid-template-columns:240px 1fr auto; grid-template-rows:auto minmax(0, 1fr);
+    column-gap:calc(6 * var(--vw)); height:240px; align-items:start; text-align:left; }
+  .wDay .dBig { grid-row:1 / 3; width:240px; height:240px; max-width:none; max-height:none; }
+  .wDay .dMeta { grid-column:2; margin-top:0; min-width:0; }
+  .wDay .wPlay { grid-column:3; align-self:center; margin-top:0; }        /* auf Höhe des Künstlers */
+  .wDay .wInfo { grid-column:2 / 4; align-self:stretch; max-height:none; min-height:0; margin-top:calc(3 * var(--vw)); }
+}
 .wMix { display:flex; align-items:center; gap:calc(2.5 * var(--vw)); margin:calc(4 * var(--vw)) 0 calc(2 * var(--vw)); cursor:pointer; font-size:calc(3.4 * var(--vw)); }
 .wAuto { display:flex; align-items:center; gap:calc(2 * var(--vw)); margin:calc(4 * var(--vw)) 0 calc(6 * var(--vw)); font-size:calc(3 * var(--vw)); opacity:.6; cursor:pointer; }
 .wAuto input { width:1.1em; height:1.1em; accent-color:var(--fg); }
