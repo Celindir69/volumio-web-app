@@ -88,7 +88,8 @@ updateSyncedLyrics();
       album  = '';
     }
     radioArtist = radio ? artist : '';                 /* "Künstler - Titel" im Stream-Titel erkannt */
-    mTitle.classList.toggle('link', !!radioArtist);    /* Klick öffnet dessen Alben (browse.js) */
+    curUri = st.uri || ''; curTitle = radio ? '' : title;
+    mTitle.classList.toggle('link', !!radioArtist || similarOk());   /* Klick öffnet dessen Alben bzw. ähnliche Titel (browse.js) */
 
     var key    = artist + '|' + album + '|' + (radio ? title : '');
     var lyrKey = artist + '|' + title;

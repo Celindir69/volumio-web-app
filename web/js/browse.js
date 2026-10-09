@@ -108,7 +108,7 @@ function browseRender() {
   var e = browseStack[browseStack.length - 1];
   var seq = ++browseSeq;
   browseBack.style.display = (browseStack.length > 1 || browseOrigin) ? '' : 'none';
-  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.kind === 'decade' ? T('disc.decade', {d: e.decade}) : e.kind === 'moodset' ? e.title : e.album;
+  browseTitle.textContent = e.kind === 'artist' ? e.artist : e.kind === 'playlist' ? e.name : e.kind === 'genre' ? e.genre + (e.sub ? ' · ' + e.sub : '') : e.kind === 'decade' ? T('disc.decade', {d: e.decade}) : e.kind === 'moodset' ? e.title : e.kind === 'similar' ? T('similar.title', {ti: e.title}) : e.album;
   browseBody.scrollTop = 0;
   while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
   browseBody.appendChild(browseNote(T('browse.loading')));
@@ -117,6 +117,7 @@ function browseRender() {
   else if (e.kind === 'genre') browseGenre(e, seq);                 /* genre.js */
   else if (e.kind === 'decade') browseDecade(e, seq);               /* genre.js */
   else if (e.kind === 'moodset') browseMoodSet(e, seq);             /* genre.js */
+  else if (e.kind === 'similar') browseSimilar(e, seq);             /* discover.js */
   else browseAlbum(e, seq);
 }
 
@@ -494,9 +495,11 @@ mAlbum.addEventListener('click', function(){
   if (curRadio || !a || !al) return;
   openBrowse({kind:'album', artist:a, album:al, stream:curStream ? curStream.id : undefined});
 });
-mTitle.addEventListener('click', function(){       /* Webradio: Klick auf "Künstler - Titel" */
-  if (curRadio && radioArtist) openBrowse({kind:'artist', artist:radioArtist});
+mTitle.addEventListener('click', function(){       /* Webradio: Klick auf "Künstler - Titel"; eigene Datei: Mehr wie dieser Titel */
+  if (curRadio && radioArtist) return openBrowse({kind:'artist', artist:radioArtist});
+  if (similarOk()) openBrowse({kind:'similar', file:curUri, artist:mArtist.textContent, title:curTitle, album:mAlbum.textContent});
 });
+function similarOk() { return !curRadio && !curStream && !!curUri && !!curTitle && discoverReady; }
 browseBack.addEventListener('click', function(){
   if (browseStack.length > 1) { browseStack.pop(); browseRender(); }
   else if (browseOrigin) {                        /* zurück zu Suche bzw. Info, wie sie waren */

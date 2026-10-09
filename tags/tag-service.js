@@ -666,6 +666,21 @@ function doArtistProfile(query, cb) {
   });
 }
 
+/* GET /similar?file=…&artist=…&title=…&album=…[&shuffle=1] -> {ok, seed: {mood, energy, bpm, style}, items: [{f, ar, ti, al, d, why}]}
+   (Mehr wie dieser Titel); ohne Stimmungsdaten zum Titel {ok: false, nodata: true} */
+var similar = require('./similar.js');
+function doSimilar(query, cb) {
+  albumsEnsure();
+  var idx = moodmix.index(moodCollector), bad = ratingStore.disliked();
+  var seed = similar.seedOf(idx, {f: relUri(query.file), ar: String(query.artist || ''), ti: String(query.title || ''), al: String(query.album || '')},
+    function(ar, ti, al){ return moodCollector.moodOf(ar, ti, al); });
+  if (!seed) return cb(200, {ok: false, nodata: true, items: []});
+  var list = similar.pick(idx, seed, {n: 25, shuffle: query.shuffle === '1', skip: function(it){ return !!bad[ratings.trackKey(it.f)]; }});
+  if (query.shuffle === '1') list = discover.mix(list.map(function(x){ return [x.it.ar, x.it.ti, x.it.f, x.it.d, x.it.al, x]; }), list.length).map(function(t){ return t[5]; });
+  cb(200, {ok: true, seed: {mood: seed.r.mood || [], energy: seed.r.energy, bpm: seed.r.bpm || null, style: seed.r.style || []},
+    items: list.map(function(x){ return {f: relUri(x.it.f) || x.it.f, ar: x.it.ar, ti: x.it.ti, al: x.it.al || '', d: x.it.d || 0, why: similar.why(seed.r, x.r)}; })});
+}
+
 function doMoodmix(query, cb) {
   albumsEnsure();                                        /* hält library-tracks.json (mit Genre) aktuell */
   var c = moodmix.parse(query);
@@ -1118,6 +1133,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artistprofile') return doArtistProfile(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/gems') return doGems(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/similar') return doSimilar(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/discover') return doDiscover(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/random')  return doRandom(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/plays')   return doPlays(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

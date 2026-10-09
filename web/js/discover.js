@@ -230,20 +230,83 @@ tagGetJson('/health').then(function(r){ if (r && r.ok) { discoverReady = true; i
    die ersetzen die Warteschlange */
 function randomMixPlay(q) {
   tagPostJson('/randommix', q).then(function(r){
-    var items = (r && r.items || []).map(function(t){
-      return {uri: 'music-library/' + t.f, service: 'mpd', type: 'song', title: t.ti, artist: t.ar, album: t.al};
-    });
-    if (!items.length) return showToast(T(r && r.building ? 'disc.building' : 'mix.empty'));
-    browseOrigin = null;
-    fetch('/api/v1/replaceAndPlay', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({item: items[0]})
-    }).then(function(){
-      if (items.length > 1) setTimeout(function(){ socket.emit('addToQueue', items.slice(1)); }, 300);
-    }).catch(function(){});
-    showToast(T('disc.mixStarted', {n: items.length}));
-    closeAllOverlays();
+    if (!(r && r.items && r.items.length)) return showToast(T(r && r.building ? 'disc.building' : 'mix.empty'));
+    tracksPlay(r.items);
+    showToast(T('disc.mixStarted', {n: r.items.length}));
   }).catch(function(){ showToast(T('hist.offline')); });
+}
+
+/* Titel vom Tag-Dienst ([{f, ti, ar, al}]) werden die Warteschlange, der erste läuft */
+function tracksPlay(list) {
+  var items = list.map(function(t){
+    return {uri: 'music-library/' + t.f, service: 'mpd', type: 'song', title: t.ti, artist: t.ar, album: t.al};
+  });
+  browseOrigin = null;
+  fetch('/api/v1/replaceAndPlay', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({item: items[0]})
+  }).then(function(){
+    if (items.length > 1) setTimeout(function(){ socket.emit('addToQueue', items.slice(1)); }, 300);
+  }).catch(function(){});
+  closeAllOverlays();
+}
+
+/* ---------- Mehr wie dieser Titel (Tipp auf den Titel in der Wiedergabe) ---------- */
+/* Tag-Dienst GET /similar: Titel mit ähnlicher Stimmung, Energie und ähnlichem Tempo, je Künstler höchstens zwei.
+   „Alle abspielen“ spielt die Liste, der Würfel 25 andere ähnliche Titel; Tipp auf einen Titel spielt ihn. */
+function similarQuery(e) {
+  return '/similar?file=' + encodeURIComponent(e.file || '') + '&artist=' + encodeURIComponent(e.artist || '') +
+    '&title=' + encodeURIComponent(e.title || '') + '&album=' + encodeURIComponent(e.album || '');
+}
+function browseSimilar(e, seq) {
+  tagGetJson(similarQuery(e)).then(function(r){
+    if (seq !== browseSeq) return;
+    discoverClear(browseBody);
+    if (!r || !r.ok || !r.items.length) { browseBody.appendChild(browseNote(T(r && r.nodata ? 'similar.nodata' : 'similar.none'))); return; }
+    var s = r.seed, sum = s.mood.map(mixName).concat(s.energy ? [T('similar.energy', {e: s.energy})] : [], s.bpm ? [s.bpm + '\u00a0BPM'] : []);
+    if (sum.length) browseBody.appendChild(browseNote(T('similar.seed', {why: sum.join(' · ')}), 'sHint simSeed'));
+    var head = document.createElement('div');
+    head.id = 'browseArtistHead';
+    head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
+    var lbl = histEl('div', 'sMeta');
+    lbl.appendChild(histEl('div', 'sTitle bAlbum', T('browse.playAll')));
+    lbl.appendChild(histEl('div', 'sSub', T('browse.trackCount', {n: r.items.length})));
+    head.appendChild(lbl);
+    var dice = histEl('div', 'mixDice');
+    dice.title = T('disc.mix');
+    dice.innerHTML = DICE_SVG;
+    dice.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
+      tagGetJson(similarQuery(e) + '&shuffle=1').then(function(m){
+        if (!m || !m.ok || !m.items.length) return showToast(T('similar.none'));
+        tracksPlay(m.items);
+        showToast(T('disc.mixStarted', {n: m.items.length}));
+      }).catch(function(){ showToast(T('hist.offline')); });
+    });
+    head.appendChild(dice);
+    head.addEventListener('click', function(){ tracksPlay(r.items); });
+    browseBody.appendChild(head);
+    r.items.forEach(function(x){
+      var row = histEl('div', 'sRow mxRow');
+      row.appendChild(histImg(histAlbumArt(x.ar, x.al, x.f.replace(/\/[^\/]*$/, ''))));
+      var meta = histEl('div', 'sMeta');
+      meta.appendChild(histEl('div', 'sTitle', x.ti));
+      meta.appendChild(histEl('div', 'sSub', x.ar));
+      var why = x.why.mood.map(mixName);
+      if (x.why.bpm) why.push(x.why.bpm + '\u00a0BPM');
+      if (why.length) meta.appendChild(histEl('div', 'mxWhy', why.join(' · ')));
+      row.appendChild(meta);
+      if (x.why.energy) row.appendChild(histEl('div', 'mxDots', mixEnergyDots(x.why.energy)));
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', function(){ histPlayUri('music-library/' + x.f, 'mpd', x); });
+      browseBody.appendChild(row);
+    });
+  }).catch(function(){
+    if (seq !== browseSeq) return;
+    discoverClear(browseBody);
+    browseBody.appendChild(browseNote(T('genre.offline')));
+  });
 }
 
 /* ---------- Mehr entdecken (Künstlerseite) ---------- */

@@ -167,6 +167,8 @@ Tapping plays the track or opens the album or artist.
 
 **More to discover:** At the bottom of the artist page (own collection), buttons lead on: similar artists from the collection (Last.fm), the moods and styles carried by at least a fifth of the artist's classified tracks, their average energy and the decades of their albums. Each button opens the artist or the matching albums, just like in Discover; the path so far does not act as a filter. The dice in front of the similar artists starts a random mix in which each of these artists appears about equally often, however much of them is in the collection.
 
+**More like this track:** Tapping the title in the player (own file) opens up to 25 tracks from the collection with a similar mood and energy and, with audio analysis, a similar tempo (half or double tempo counts as the same); style and genre count a little. At least one mood must match, at most two tracks per artist, and "dislike" tracks are left out. Each track shows the shared moods, its tempo and its energy. "Play all" plays the list, the dice 25 other similar tracks. Without mood data for the track, a note is shown.
+
 **Random mix:** Next to "Play all" (artist page, genre lists), the dice starts 25 random tracks from that selection, never the same artist twice in a row.
 
 The Tag Service reads the album list from MPD and stores it in `/data/xplorio/data/albums.json`; it is re-read when the MPD database changes (checked at most once a minute; after tag changes automatically about a minute after the scan).
