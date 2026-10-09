@@ -1,7 +1,7 @@
 /* Endlos-Wiedergabe über das AutoDJ-Plugin (Celindir69/autodj-plugin, REST-Endpunkt "autodj"): vierter Zustand ∞ am
    Wiederholen-Knopf (aus → alle → einer → ∞). AutoDJ pausiert, solange Wiederholen an ist; die Zustände schließen
    sich also aus. Ohne Plugin oder ohne Last.fm-Key im Plugin bleibt es bei drei Zuständen.
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 var autodj = {avail: false, enabled: false, ready: false};
 
 /* angezeigter Zustand: AutoDJ an und Wiederholen aus = ∞ */

@@ -4,8 +4,9 @@ Alle Befehle auf dem Player (ssh), als Benutzer mit `sudo`. Geschrieben für Vol
 steht gesammelt unter [Volumio 4](#volumio-4).
 
 ## Oberfläche
-`app.html` und `web/` nach `/volumio/http/www3/` kopieren, Aufruf `http://<player>/app.html`.
-`kioskTV.html` neben `app.html` (der Kiosk lädt `http://localhost:3000/kioskTV.html`, also aus dem Ordner, den Volumio ausliefert).
+`xplorio.html`, `app.html` und `web/` nach `/volumio/http/www3/` kopieren, Aufruf `http://<player>/xplorio.html`
+(`app.html` ist der frühere Name und leitet nur weiter; alte Lesezeichen und Home-Bildschirm-Verknüpfungen gehen also weiter).
+`kioskTV.html` neben `xplorio.html` (der Kiosk lädt `http://localhost:3000/kioskTV.html`, also aus dem Ordner, den Volumio ausliefert).
 Nach einem Update im Browser hart neu laden. Eine vorhandene `web/config.local.js` bleibt erhalten.
 Eigene Einstellungen (Rotel, Dienste ein/aus, Sprache) kommen in `web/config.local.js`, Vorlage
 `web/config.local.js.example`. Der Last.fm-Zugang gehört nicht dorthin, sondern nach `/data/xplorio/data/keys.json`
@@ -21,7 +22,7 @@ Die Oberfläche gibt es auf Deutsch und Englisch. Sie übernimmt die Sprache, di
 ist; so passen auch die Künstler- und Albumtexte von Volumio dazu. Beim allerersten Aufruf kennt die App diese Sprache noch
 nicht, zeigt kurz die Sprache des Geräts (Browser) und lädt einmal neu. Ist die Volumio-Sprache nicht vorhanden, gilt die
 Gerätesprache, sonst Englisch. Fest einstellen: `LANGUAGE: 'de'` oder `'en'` in `web/config.local.js`. Zum Ausprobieren geht
-auch `http://<player>/app.html?lang=en`.
+auch `http://<player>/xplorio.html?lang=en`.
 
 Weitere Sprache: `web/lang/en.js` kopieren, z. B. als `web/lang/fr.js`, in der letzten Zeile Code, Namen und Locale
 anpassen (`langRegister('fr', 'Français', {…}, 'fr-FR')`) und die Texte übersetzen; `{name}` sind Platzhalter und bleiben
@@ -47,7 +48,7 @@ Danach auf dem Player:
 | `sudo xplorio-deploy -y <branch>` | ohne Rückfrage |
 | `sudo xplorio-deploy --rollback` | letzte Sicherung wiederherstellen (mehrmals: Schritt für Schritt weiter zurück) |
 
-Ziele: `app.html`, `kioskTV.html`, `web/` und `tools/` in jeden vorhandenen Ordner `/volumio/http/www*/`, `tags/` und `rotel/rotel-bridge.js` nach `/data/xplorio/`; das Skript aktualisiert sich selbst.
+Ziele: `xplorio.html`, `app.html` (Weiterleitung), `kioskTV.html`, `web/` und `tools/` in jeden vorhandenen Ordner `/volumio/http/www*/`, `tags/` und `rotel/rotel-bridge.js` nach `/data/xplorio/`; das Skript aktualisiert sich selbst.
 Welchen der Ordner Volumio ausliefert, hängt von Version und gewählter Oberfläche ab (z. B. klassisch `www`, Volumio 3
 `www3`, Volumio 4 `www4`); deshalb bekommen alle vorhandenen die Oberfläche. Neue Ordner legt das Skript nicht an, ohne
 einen bricht es ab; `DEPLOY_WWW=<ordner>` wählt einen bestimmten. `web/config.local.js` liegt je Ordner: Wer die
@@ -78,7 +79,7 @@ sudo chown -R volumio:volumio /data/xplorio/tags
 sudo mkdir -p /data/xplorio && sudo mkdir -m 700 -p /data/xplorio/data && sudo chown volumio:volumio /data/xplorio/data
 sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
 [Unit]
-Description=Tag-Dienst fuer app.html
+Description=Tag-Dienst fuer Xplorio
 After=network-online.target
 
 [Service]
@@ -370,7 +371,7 @@ Plugin-Einstellungen bleibt es bei drei Zuständen.
 Die Oberfläche läuft auch unter Volumio 4 (auf einer Testinstanz erprobt). Unterschiede zu Volumio 2:
 
 - **Ordner:** Volumio 4 liefert die Oberfläche aus `/volumio/http/www4/` statt `www3/`. Aufruf weiter
-  `http://<player>/app.html`; `web/config.local.js` gehört nach `/volumio/http/www4/web/`.
+  `http://<player>/xplorio.html`; `web/config.local.js` gehört nach `/volumio/http/www4/web/`.
 - **Aktualisieren:** wie oben mit [xplorio-deploy](#aktualisieren-mit-xplorio-deploy); es findet `www4/` selbst. Beim
   ersten Mal erst ansehen: `sudo xplorio-deploy -n` („geändert“ hieße, eine Datei von Volumio würde ersetzt). In der
   Meldung „Eingespielt nach …“ muss `www4` stehen.

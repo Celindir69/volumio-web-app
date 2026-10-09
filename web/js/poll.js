@@ -1,5 +1,5 @@
 /* Zustandsabfrage (Poll) und Start der Takte
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Poll ---------- */
 var qualityState = null;
 function paintQuality(st) {

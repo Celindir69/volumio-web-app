@@ -1,5 +1,5 @@
 /* Künstler und Album aus der Wiedergabe: Alben eines Künstlers, Titel eines Albums
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html.
    Klick auf den Künstler: Alben des Künstlers. Klick auf das Album (oder ein Album aus der Liste): Titel des Albums. */
 var overlayBrowse = document.getElementById('overlayBrowse');
 var browseTitle   = document.getElementById('browseTitle');

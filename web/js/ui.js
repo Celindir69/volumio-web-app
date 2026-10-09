@@ -1,5 +1,5 @@
 /* Overlays öffnen/schließen und Wiedergabe-Tasten
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Overlays ---------- */
 function closeAllOverlays() {
   overlayLyrics.classList.remove('on');

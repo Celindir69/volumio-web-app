@@ -4,9 +4,9 @@ All commands are run on the player (via SSH), as a user with `sudo` privileges. 
 
 ## Interface
 
-Copy `app.html` and `web/` to `/volumio/http/www3/`, then open `http://<player>/app.html`.
+Copy `xplorio.html`, `app.html` and `web/` to `/volumio/http/www3/`, then open `http://<player>/xplorio.html` (`app.html` is the former name and only redirects, so old bookmarks and home-screen shortcuts keep working).
 
-Copy `kioskTV.html` next to `app.html` (the kiosk loads `http://localhost:3000/kioskTV.html`, i.e. from the folder Volumio serves).
+Copy `kioskTV.html` next to `xplorio.html` (the kiosk loads `http://localhost:3000/kioskTV.html`, i.e. from the folder Volumio serves).
 
 After an update, perform a hard reload in the browser. An existing `web/config.local.js` is preserved.
 
@@ -24,7 +24,7 @@ The interface is available in German and English. It uses the language set in Vo
 album information from Volumio matches it. On the very first visit the app does not know that language yet; it briefly
 shows the device (browser) language and reloads once. If the Volumio language is not available, the device language
 applies, otherwise English. To fix the language, set `LANGUAGE: 'de'` or `'en'` in `web/config.local.js`. For a quick test,
-`http://<player>/app.html?lang=en` also works.
+`http://<player>/xplorio.html?lang=en` also works.
 
 Adding a language: copy `web/lang/en.js`, e.g. to `web/lang/fr.js`, adjust code, name and locale in the last line
 (`langRegister('fr', 'Français', {…}, 'fr-FR')`) and translate the texts; `{name}` are placeholders and stay as they are,
@@ -54,7 +54,7 @@ Then on the player:
 | `sudo xplorio-deploy -y <branch>` | deploy without confirmation |
 | `sudo xplorio-deploy --rollback` | restore the latest backup (repeat to go back step by step) |
 
-Targets: `app.html`, `kioskTV.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/xplorio/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
+Targets: `xplorio.html`, `app.html` (redirect), `kioskTV.html`, `web/`, and `tools/` go to every existing `/volumio/http/www*/` folder, and `tags/` plus `rotel/rotel-bridge.js` go to `/data/xplorio/`; the script also updates itself. Which of the folders Volumio serves depends on the version and the selected interface (e.g. classic `www`, Volumio 3 `www3`, Volumio 4 `www4`), so every existing one gets the interface. The script does not create new folders and stops if there is none; `DEPLOY_WWW=<folder>` selects a specific one. `web/config.local.js` is per folder: if you switch interfaces, copy it as well.
 
 `tag-service` and `rotel-bridge` are restarted only if their files have changed. Before each deployment, the script backs up the affected files to `/data/xplorio/backup/` (the latest 5 backups). Nothing is deleted; custom files such as `web/config.local.js` are preserved.
 
@@ -70,7 +70,7 @@ sudo chown -R volumio:volumio /data/xplorio/tags
 sudo mkdir -p /data/xplorio && sudo mkdir -m 700 -p /data/xplorio/data && sudo chown volumio:volumio /data/xplorio/data
 sudo tee /etc/systemd/system/tag-service.service > /dev/null << 'UNIT'
 [Unit]
-Description=Tag-Dienst fuer app.html
+Description=Tag-Dienst fuer Xplorio
 After=network-online.target
 
 [Service]
@@ -300,7 +300,7 @@ With the [autodj-plugin](https://github.com/Celindir69/autodj-plugin) (version 1
 
 The interface also runs under Volumio 4 (tested on a test instance). Differences compared with Volumio 2:
 
-- **Folders:** Volumio 4 serves the interface from `/volumio/http/www4/` instead of `www3/`. It is still accessed via `http://<player>/app.html`; `web/config.local.js` belongs in `/volumio/http/www4/web/`.
+- **Folders:** Volumio 4 serves the interface from `/volumio/http/www4/` instead of `www3/`. It is still accessed via `http://<player>/xplorio.html`; `web/config.local.js` belongs in `/volumio/http/www4/web/`.
 
 - **Updating:** as above with [xplorio-deploy](#updating-with-xplorio-deploy); it finds `www4/` by itself. The first time, inspect first: `sudo xplorio-deploy -n` ("changed" would mean that a Volumio file would be replaced). The message "Eingespielt nach …" must include `www4`.
 

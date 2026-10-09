@@ -50,7 +50,7 @@ t('Sprachdateien: de und en vorhanden, gleiche Schlüssel, gleiche Platzhalter u
 
 t('jeder Schlüssel im Code (T(…), data-i18n*) steht in de.js', function(){
   var src = fs.readdirSync(path.join(ROOT, 'web/js')).filter(function(f){ return f !== 'i18n.js'; }).map(function(f){ return path.join(ROOT, 'web/js', f); })
-    .concat([path.join(ROOT, 'app.html'), path.join(ROOT, 'kioskTV.html')]);
+    .concat([path.join(ROOT, 'xplorio.html'), path.join(ROOT, 'kioskTV.html')]);
   var used = {};
   src.forEach(function(f){
     var s = fs.readFileSync(f, 'utf8'), m, re = /\b(?:T|textT)\(\s*'([\w.-]+)'|data-i18n(?:-title|-placeholder|-aria|-empty)?="([\w.-]+)"/g;

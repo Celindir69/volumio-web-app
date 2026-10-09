@@ -1,7 +1,7 @@
 /* Zugang zur originalen Volumio-Oberfläche (Menü oben rechts, Eintrag "Volumio-Oberfläche")
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html.
    Die Seiten öffnen im Overlay in einem Rahmen (iframe), die App bleibt darunter erhalten.
-   Seiten die app.html selbst übernommen hat, können hier einfach aus der Liste entfernt werden. */
+   Seiten die xplorio.html selbst übernommen hat, können hier einfach aus der Liste entfernt werden. */
 
 var VOLUMIO_PAGES = [
   { label: T('volumio.page.browse'),   path: '/browse' },

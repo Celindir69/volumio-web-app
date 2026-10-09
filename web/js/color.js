@@ -3,7 +3,7 @@
    updateMood() lädt das Cover klein in eine Zeichenfläche und setzt die CSS-Variablen
    --accent-d/-l und --tint-d/-l (dunkles bzw. helles Design; base.css wählt daraus --accent und --bg-tint). Nur Cover vom eigenen Player (same origin bzw. /albumart) werden gelesen:
    fremde Server (z. B. Tidal, TuneIn) senden keine CORS-Kopfzeile, dort bleibt es bei der Standardoptik.
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe app.html. */
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 
 function cmClamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
