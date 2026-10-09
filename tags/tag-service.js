@@ -150,6 +150,7 @@ function scanDirs(relFiles) {
    Loslassen ({hold:false}); kommt das nie (Seite zu), spätestens SCAN_HOLD_MAX nach der letzten Änderung. */
 var SCAN_HOLD_MAX = 10 * 60000;
 var scanPending = [], scanTimer = null, scanRunning = false, scanOk = true, scanHold = false;
+var scanAll = false;             /* ganze Bibliothek einlesen (Knopf im Bibliotheks-Check), auch während des Haltens */
 function mpdUpdate(relFiles, cb) {
   scanPending = scanPending.concat(relFiles);
   scanSchedule(scanHold ? SCAN_HOLD_MAX : SCAN_QUIET, scanHold);
@@ -166,12 +167,12 @@ function scanSetHold(on) {
 }
 function scanRun() {
   scanTimer = null;
-  if (scanRunning || scanHold || !scanPending.length) return;
+  if (scanRunning || (scanHold && !scanAll) || (!scanPending.length && !scanAll)) return;
   scanRunning = true;
   libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'status', function(err, st){
     if (!err && st.updating_db) { scanRunning = false; scanSchedule(SCAN_QUIET); return; }
-    var list = scanDirs(scanPending);
-    scanPending = [];
+    var list = scanAll ? [''] : scanDirs(scanPending);
+    scanPending = []; scanAll = false;
     (function step() {
       if (!list.length) {
         scanRunning = false;
@@ -247,13 +248,28 @@ function writeItems(items, batch, scan, cb) {
 }
 
 /* POST /scan {uris}: geänderte Dateien von MPD neu einlesen lassen (nach mehreren /write mit scan:false);
-   POST /scan {hold:true|false}: Scans zurückhalten bzw. alles Gesammelte jetzt einlesen (siehe mpdUpdate) */
+   POST /scan {hold:true|false}: Scans zurückhalten bzw. alles Gesammelte jetzt einlesen (siehe mpdUpdate);
+   POST /scan {all:true}: ganze Bibliothek jetzt einlesen (wie "Bibliothek aktualisieren" in Volumio) */
 function doScan(body, cb) {
+  if (body.all === true) {                                 /* alles Gesammelte geht in diesem einen Scan auf */
+    scanAll = true;
+    clearTimeout(scanTimer); scanTimer = null;
+    scanRun();
+    return cb(200, {ok: true, scan: true});
+  }
   if (typeof body.hold === 'boolean') { scanSetHold(body.hold); return cb(200, {ok: true, hold: scanHold, pending: scanPending.length}); }
   var rel = [];
   (Array.isArray(body.uris) ? body.uris : []).forEach(function(u){ var p = resolveUri(u); if (p && !p.missing) rel.push(p.rel); });
   if (!rel.length) return cb(400, {ok: false, error: 'uris fehlt'});
   mpdUpdate(rel, function(scanned){ cb(200, {ok: true, scan: scanned}); });
+}
+
+/* GET /scan: liest MPD gerade ein? {ok, updating, pending} (Fortschritt für den Knopf im Bibliotheks-Check) */
+function doScanGet(cb) {
+  libcheck.mpdCommand({host: MPD_HOST, port: MPD_PORT}, 'status', function(err, st){
+    if (err) return cb(200, {ok: false, error: 'MPD: ' + err.message});
+    cb(200, {ok: true, updating: !!st.updating_db || scanRunning || scanAll, pending: scanPending.length});
+  });
 }
 
 /* GET /artist?name=…: alle Dateien, deren Interpret oder Album-Interpret dem Namen entspricht
@@ -919,6 +935,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/image')   return doImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/scan')    return doScanGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre'].indexOf(route) >= 0)
     return doGenreLib(route, url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

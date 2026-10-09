@@ -95,6 +95,7 @@ function checkRender(res) {
   btn.addEventListener('click', function(){ btn.disabled = true; btn.textContent = T('check.running'); checkStart(); });
   head.appendChild(info); head.appendChild(btn);
   checkBody.appendChild(head);
+  checkBody.appendChild(checkDbRow());
   if (!r) { checkMoodSection(); checkBody.scrollTop = keepScroll; return; }
   if (checkDoneAt !== r.at) { checkDone = {}; checkDoneAt = r.at; }
   Object.keys(r.done || {}).forEach(function(k){ checkDone[k] = 1; });
@@ -118,6 +119,37 @@ function checkRender(res) {
   });
   checkMoodSection();
   checkBody.scrollTop = keepScroll;
+}
+
+/* Bibliothek aktualisieren (ganze MPD-Datenbank, wie im Volumio-Menü); bereits gesammelte Änderungen gehen darin auf */
+var checkDbTimer = null, checkDbBusy = false;
+function checkDbRow() {
+  var head = document.createElement('div'); head.className = 'ckHead';
+  var info = document.createElement('div'); info.className = 'ckInfo';
+  info.textContent = checkDbBusy ? T('check.db.running') : T('check.db.hint');
+  var btn = document.createElement('button'); btn.className = 'ckBtn';
+  btn.textContent = T('check.db.button'); btn.disabled = checkDbBusy;
+  btn.addEventListener('click', function(){
+    if (!confirm(T('check.db.confirm'))) return;
+    checkDbBusy = true; btn.disabled = true; info.textContent = T('check.db.running');
+    tagPost('/scan', {all: true}).then(function(r){
+      if (!r || !r.ok) throw new Error();
+      checkDbPoll(info, btn);
+    }).catch(function(){ checkDbBusy = false; btn.disabled = false; info.textContent = T('check.db.failed'); });
+  });
+  head.appendChild(info); head.appendChild(btn);
+  if (checkDbBusy) checkDbPoll(info, btn);
+  return head;
+}
+function checkDbPoll(info, btn) {
+  clearTimeout(checkDbTimer);
+  checkDbTimer = setTimeout(function(){
+    tagGetJson('/scan').then(function(r){
+      if (r && r.ok && r.updating) return checkDbPoll(info, btn);
+      checkDbBusy = false; btn.disabled = false;
+      info.textContent = r && r.ok ? T('check.db.done') : T('check.db.failed');
+    }).catch(function(){ checkDbPoll(info, btn); });
+  }, 3000);
 }
 
 /* ---------- Stimmungs-Tags (Tag-Dienst GET /moodtags) ---------- */

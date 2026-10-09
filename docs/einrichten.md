@@ -96,7 +96,8 @@ Elternordners. Solange der Bibliotheks-Check offen ist, wird nur gesammelt und b
 `/etc/mpd.conf` `auto_update "yes"`, scannt MPD jede geänderte Datei sofort, und Volumio baut danach jedes Mal seine
 Albumliste neu auf (rund eine Minute Last je Album, bei vielen Alben hintereinander bis zum Hänger). Empfehlung:
 `auto_update "no"` (auch in der Vorlage unter `/volumio/app/plugins/music_service/mpd/`, falls dort vorhanden) und
-`sudo systemctl restart mpd`; neue Musik dann wie gewohnt mit „Bibliothek aktualisieren“ einlesen. Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
+`sudo systemctl restart mpd`; neue Musik dann wie gewohnt mit „Bibliothek aktualisieren“ einlesen (im Volumio-Menü oder als Knopf oben im
+Bibliotheks-Check; dort gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
 
 ### Cover online suchen
 Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Schlüssel aus `web/config.local.js`) und im
