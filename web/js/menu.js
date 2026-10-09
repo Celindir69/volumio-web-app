@@ -1,0 +1,59 @@
+/* Menü hinter dem Zahnrad oben rechts: Werkzeuge, die nicht zur Suche gehören.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach check.js, history.js und volumio.js geladen.
+   Weitere Einträge: eine Zeile in MENU_ITEMS (needsTags: nur, wenn der Tag-Dienst läuft). */
+var overlayMenu = document.getElementById('overlayMenu');
+var menuBody    = document.getElementById('menuBody');
+var menuTags    = false;          /* Tag-Dienst erreichbar */
+
+var MENU_ITEMS = [
+  {id: 'history', needsTags: true, title: T('menu.history'), sub: T('menu.historySub'), open: function(){ openHistory(); },
+   icon: 'M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z'},
+  {id: 'check', needsTags: true, title: T('menu.check'), sub: T('menu.checkSub'), open: function(){ openCheck(); },
+   icon: 'M2 5h11v2H2zm0 4h11v2H2zm0 4h7v2H2zm15.3 1.3l-2.8-2.8-1.4 1.4 4.2 4.2 6.7-6.7-1.4-1.4z'},
+  {id: 'update', needsTags: true, title: T('check.db.button'), action: true, open: function(){ libUpdStart(); },
+   icon: 'M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z'},
+  {id: 'volumio', title: T('menu.volumio'), sub: T('menu.volumioSub'), open: function(){ openVolumio(); },
+   icon: 'M3 4h4.2l4.8 11.3L16.8 4H21l-7 16h-4L3 4z'}
+];
+var MENU_CHEVRON = 'M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z';
+
+function menuSvg(d, cls) {
+  var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'), p = document.createElementNS(ns, 'path');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  if (cls) svg.setAttribute('class', cls);
+  p.setAttribute('d', d);
+  svg.appendChild(p);
+  return svg;
+}
+
+function menuRender() {
+  while (menuBody.firstChild) menuBody.removeChild(menuBody.firstChild);
+  MENU_ITEMS.forEach(function(it){
+    if (it.needsTags && !menuTags) return;
+    var row = document.createElement('div'); row.className = 'menuRow';
+    var icon = document.createElement('div'); icon.className = 'menuIcon'; icon.appendChild(menuSvg(it.icon));
+    var text = document.createElement('div'); text.className = 'menuText';
+    var ti = document.createElement('div'); ti.className = 'menuTitle'; ti.textContent = it.title;
+    var sub = document.createElement('div'); sub.className = 'menuSub'; sub.textContent = it.sub || '';
+    text.appendChild(ti); text.appendChild(sub);
+    row.appendChild(icon); row.appendChild(text);
+    if (!it.action) row.appendChild(menuSvg(MENU_CHEVRON, 'menuChev'));
+    row.addEventListener('click', function(){ if (!row.classList.contains('busy')) it.open(); });
+    if (it.id === 'update') libUpdWatch('menu', function(st){ sub.textContent = libUpdText(st); row.classList.toggle('busy', st === 'running'); });
+    menuBody.appendChild(row);
+  });
+}
+
+function openMenu() {
+  closeAllOverlays();
+  menuRender();
+  overlayMenu.classList.add('on');
+}
+
+document.getElementById('btnMenu').addEventListener('click', function(){
+  if (overlayMenu.classList.contains('on')) closeAllOverlays(); else openMenu();
+});
+document.getElementById('closeMenu').addEventListener('click', closeAllOverlays);
+
+/* Einträge mit Tag-Dienst nur, wenn er läuft */
+tagGetJson('/health').then(function(r){ menuTags = !!(r && r.ok); if (overlayMenu.classList.contains('on')) menuRender(); }).catch(function(){});

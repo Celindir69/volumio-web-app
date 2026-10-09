@@ -9,6 +9,8 @@ function closeAllOverlays() {
   overlaySearch.classList.remove('on');
   var ob = document.getElementById('overlayBrowse');
   if (ob) ob.classList.remove('on');
+  var om = document.getElementById('overlayMenu');
+  if (om) om.classList.remove('on');
   var ov = document.getElementById('overlayVolumio');
   if (ov) ov.classList.remove('on');
   var oc = document.getElementById('overlayCheck');
