@@ -89,4 +89,11 @@ t('Unterstil-Index und Kacheln, Suche über alle Genres', function(){
   assert.deepStrictEqual(g.subList(list, idx, '', 'rock').map(function(x){ return [x.g, x.s, x.n, x.al]; }), [['Rock', 'Post Rock', 1, 'C']]);
 });
 
+t('Genre-Auswahl im Tag-Editor = Discogs-Hauptgenres', function(){
+  var src = require('fs').readFileSync(require('path').join(__dirname, '../web/js/tagedit.js'), 'utf8');
+  var m = /var GENRE_TOPS = (\[[^\]]*\]);/.exec(src);
+  assert.ok(m);
+  assert.deepStrictEqual(Function('return ' + m[1])(), g.TOPS);
+});
+
 console.log(n + ' Prüfungen bestanden');

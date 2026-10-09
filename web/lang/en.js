@@ -426,6 +426,8 @@ langRegister('en', 'English', {
   'tag.serviceDown': 'Tag service unreachable',
   'tag.serviceDownPort': 'Tag service unreachable (port {port})',
   'tag.textFn': 'Apply text function',
+  'tag.genreTop': 'Main genre',
+  'tag.genreTopHint': 'Use a Discogs main genre (custom values are still possible)',
   'tag.textFnAll': 'Apply text function to all titles',
   'tag.titleAndNumber': 'Title and number',
   'tag.tracks': 'Tracks',

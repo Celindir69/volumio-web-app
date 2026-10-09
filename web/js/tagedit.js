@@ -125,6 +125,30 @@ function tagAaMenu(onPick, title) {
   return sel;
 }
 
+/* Discogs-Hauptgenres (wie TOPS in tags/genres.js): Auswahl neben jedem Genre-Feld, eigene Werte bleiben möglich */
+var GENRE_TOPS = ['Blues', 'Brass & Military', "Children's", 'Classical', 'Electronic', 'Folk, World, & Country', 'Funk / Soul',
+                  'Hip Hop', 'Jazz', 'Latin', 'Non-Music', 'Pop', 'Reggae', 'Rock', 'Stage & Screen'];
+function tagGenreMenu(input) {
+  var sel = document.createElement('select');
+  sel.className = 'tagAa tagGenre';
+  sel.title = T('tag.genreTopHint');
+  [''].concat(GENRE_TOPS).forEach(function(g){
+    var o = document.createElement('option');
+    o.value = g; o.textContent = g || T('tag.genreTop');
+    sel.appendChild(o);
+  });
+  sel.addEventListener('click', function(e){ e.stopPropagation(); });
+  sel.addEventListener('change', function(){
+    var g = sel.value;
+    sel.value = '';
+    if (!g) return;
+    input.value = g;
+    input.setAttribute('data-dirty', '1');
+    input.dispatchEvent(new Event('input'));
+  });
+  return sel;
+}
+
 /* Textfunktion auf ein Eingabefeld anwenden und es als geändert markieren */
 function tagApplyFn(input, fn) {
   var v = fn(input.value);
@@ -182,6 +206,7 @@ function tagRender(files, items) {
     if (!same) inp.placeholder = T('tag.mixed');
     tagCommon[fd[0]] = {input: inp, mixed: !same};
     var aa = fd[0] === 'date' || fd[0] === 'disc' ? null : tagAaMenu(function(fn){ tagApplyFn(inp, fn); });
+    if (fd[0] === 'genre') { var both = document.createDocumentFragment(); both.appendChild(tagGenreMenu(inp)); both.appendChild(aa); aa = both; }
     tagBody.appendChild(tagField(fd[1], inp, aa));
   });
 
@@ -569,7 +594,8 @@ function artistRender() {
   ui.value.placeholder = T('tag.bulk.valuePh');
   ui.find.placeholder = T('tag.bulk.findPh');
   ui.repl.placeholder = T('tag.bulk.replPh');
-  var fValue = tagField(T('tag.bulk.value'), ui.value), fFind = tagField(T('tag.bulk.find'), ui.find), fRepl = tagField(T('tag.bulk.repl'), ui.repl);
+  var genreMenu = tagGenreMenu(ui.value);
+  var fValue = tagField(T('tag.bulk.value'), ui.value, genreMenu), fFind = tagField(T('tag.bulk.find'), ui.find), fRepl = tagField(T('tag.bulk.repl'), ui.repl);
   var fPattern = tagField(T('tag.bulk.pattern'), ui.pattern);
   var hint = document.createElement('div');
   hint.className = 'tagHint';
@@ -587,6 +613,7 @@ function artistRender() {
   function sync() {
     var a = ui.action.value;
     fValue.style.display = a === 'set' ? '' : 'none';
+    genreMenu.style.display = ui.field.value === 'genre' ? '' : 'none';
     fFind.style.display = fRepl.style.display = a === 'replace' ? '' : 'none';
     fPattern.style.display = a === 'split' ? '' : 'none';
     fField.firstChild.textContent = a === 'split' ? T('tag.bulk.fieldSplit') : T('tag.bulk.field');
