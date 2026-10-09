@@ -188,6 +188,15 @@ function browseTrackRow(t, e, showAlbum) {
 }
 
 function browseArtist(e, seq) {
+  if (e.stream && !e.uri) {                         /* aus dem Player bei einem Titel vom Dienst: Künstler dort suchen */
+    var svc = streamById(e.stream);
+    streamFindArtist(svc, e.artist).then(function(hit){
+      if (seq !== browseSeq) return;
+      if (hit) e.uri = hit.uri; else e.stream = null;  /* nicht gefunden: eigene Sammlung */
+      browseArtist(e, seq);
+    });
+    return;
+  }
   var isStream = !!streamOf(e.uri || '');
   browseGet(e.uri || ('artists://' + e.artist)).then(function(j){
     if (seq !== browseSeq) return;
@@ -284,8 +293,26 @@ function resolveAlbumUri(artist, album) {
   }).catch(function(){ return 'albums://' + artist + '/' + album; });
 }
 
+/* Album beim Dienst suchen (Titel vom Dienst im Player): gleicher Titel, bei mehreren der vom gleichen Künstler;
+   Zusätze wie „(Remastered)“ zählen nicht. -> Adresse oder null */
+function streamFindAlbum(svc, artist, album) {
+  if (!svc || !svc.on) return Promise.resolve(null);
+  function bare(s) { return String(s || '').toLowerCase().replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').trim(); }
+  var want = bare(album), who = bare(artist);
+  return withTimeout(fetch('/api/v1/search?query=' + encodeURIComponent(album)).then(function(r){ return r.json(); }), STREAM_TIMEOUT_MS).then(function(j){
+    var lists = (j && j.navigation && j.navigation.lists) || [];
+    var found = streamSplitSearch(lists, album).stream[svc.id].albums.filter(function(it){ return bare(it.title || it.name) === want; });
+    var best = found.filter(function(it){ return !it.artist || bare(it.artist) === who; })[0] || found[0];
+    return best ? best.uri : null;
+  }).catch(function(){ svc.downUntil = Date.now() + 60000; return null; });
+}
+
 function browseAlbum(e, seq) {
-  var ready = e.uri ? Promise.resolve(e.uri) : resolveAlbumUri(e.artist, e.album).then(function(u){ e.uri = u; return u; });
+  var svc = e.stream && !e.uri ? streamById(e.stream) : null;
+  var ready = e.uri ? Promise.resolve(e.uri)
+    : (svc ? streamFindAlbum(svc, e.artist, e.album) : Promise.resolve(null)).then(function(u){
+        return u || resolveAlbumUri(e.artist, e.album);    /* beim Dienst nicht gefunden: eigene Sammlung */
+      }).then(function(u){ e.uri = u; return u; });
   ready.then(browseGet).then(function(j){
     if (seq !== browseSeq) return;
     var info = (j && j.navigation && j.navigation.info) || {};
@@ -455,12 +482,12 @@ function browsePlaylist(e, seq) {
 mArtist.addEventListener('click', function(){
   var a = mArtist.textContent;
   if (curRadio || !a) return;
-  openBrowse({kind:'artist', artist:a});
+  openBrowse({kind:'artist', artist:a, stream:curStream ? curStream.id : undefined});   /* Titel vom Dienst: dort suchen */
 });
 mAlbum.addEventListener('click', function(){
   var a = mArtist.textContent, al = mAlbum.textContent;
   if (curRadio || !a || !al) return;
-  openBrowse({kind:'album', artist:a, album:al});
+  openBrowse({kind:'album', artist:a, album:al, stream:curStream ? curStream.id : undefined});
 });
 mTitle.addEventListener('click', function(){       /* Webradio: Klick auf "Künstler - Titel" */
   if (curRadio && radioArtist) openBrowse({kind:'artist', artist:radioArtist});

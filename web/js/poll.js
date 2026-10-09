@@ -48,6 +48,7 @@ updateSyncedLyrics();
       : '<path d="M7 5v14l12-7z"/>';
 
     curRadio = (st.trackType === 'webradio');
+    curStream = curRadio ? null : streamOf({service: st.service, uri: st.uri});
     showVolumio(st);
     if (typeof st.random === 'boolean') stRandom = st.random;
     if (typeof st.repeat === 'boolean') {

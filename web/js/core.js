@@ -137,6 +137,7 @@ var searchResults   = document.getElementById('searchResults');
 
 var radioArtist = '';          /* Künstler aus dem Stream-Titel (nur Webradio) */
 var curRadio    = false;       /* spielt gerade ein Webradio? */
+var curStream   = null;        /* Streamingdienst des laufenden Titels (streaming.js), sonst null */
 var lastKey     = '';
 var lastLyrKey  = '';
 var lastArt     = '';
