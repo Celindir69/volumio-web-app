@@ -500,9 +500,11 @@
     .overlayHandle { display:none; }
   }
 
-  /* iPad und Desktop (Höhe ab 600 px): Seitenleiste breiter, Schrift darin kleiner */
+  /* iPad und Desktop (Höhe ab 600 px): Seitenleiste nimmt zwei Drittel der Breite (Kachelreihen, Listen, Statistik
+     haben Platz), höchstens 1280 px; Schrift darin kleiner. Links bleibt das Cover sichtbar. */
   @media (orientation:landscape) and (min-width:700px) and (min-height:600px) {
-    .overlay { --vw:min(1vw, 4.4px); width:clamp(480px, 42vw, 720px); }
+    .overlay { --vw:min(1vw, 4.4px); width:clamp(480px, 66.7vw, 1280px); }
+    .dRow.fit { justify-content:flex-start; }   /* wenige Kacheln in der breiten Leiste: links statt verteilt */
   }
 
   /* Touch im Querformat: Griff am linken Rand der Seitenleiste, Wischen nach rechts schließt */
