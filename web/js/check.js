@@ -2,7 +2,6 @@
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach tagedit.js geladen. */
 var overlayCheck = document.getElementById('overlayCheck');
 var checkBody    = document.getElementById('checkBody');
-var btnCheck     = document.getElementById('btnCheck');
 var checkTimer   = null;
 var checkOpen    = {};          /* aufgeklappte Kategorien bleiben beim Neuzeichnen offen */
 var CHECK_PAGE   = 100;         /* so viele Einträge je Kategorie, dann "weitere anzeigen" */
@@ -121,35 +120,43 @@ function checkRender(res) {
   checkBody.scrollTop = keepScroll;
 }
 
-/* Bibliothek aktualisieren (ganze MPD-Datenbank, wie im Volumio-Menü); bereits gesammelte Änderungen gehen darin auf */
-var checkDbTimer = null, checkDbBusy = false;
+/* Bibliothek aktualisieren (ganze MPD-Datenbank); bereits gesammelte Änderungen gehen darin auf.
+   Gemeinsamer Zustand für den Knopf im Check und die Zeile im Menü (menu.js): '' | running | done | failed */
+var libUpd = {state: '', timer: null, watch: {}};
+function libUpdSet(st) {
+  libUpd.state = st;
+  Object.keys(libUpd.watch).forEach(function(k){ libUpd.watch[k](st); });
+}
+function libUpdWatch(key, fn) { libUpd.watch[key] = fn; fn(libUpd.state); }
+function libUpdText(st) {
+  return st === 'running' ? T('check.db.running') : st === 'done' ? T('check.db.done') : st === 'failed' ? T('check.db.failed') : T('check.db.hint');
+}
+function libUpdStart() {
+  if (libUpd.state === 'running' || !confirm(T('check.db.confirm'))) return;
+  libUpdSet('running');
+  tagPost('/scan', {all: true}).then(function(r){
+    if (!r || !r.ok) throw new Error();
+    libUpdPoll();
+  }).catch(function(){ libUpdSet('failed'); });
+}
+function libUpdPoll() {
+  clearTimeout(libUpd.timer);
+  libUpd.timer = setTimeout(function(){
+    tagGetJson('/scan').then(function(r){
+      if (r && r.ok && r.updating) return libUpdPoll();
+      libUpdSet(r && r.ok ? 'done' : 'failed');
+    }).catch(libUpdPoll);
+  }, 3000);
+}
 function checkDbRow() {
   var head = document.createElement('div'); head.className = 'ckHead';
   var info = document.createElement('div'); info.className = 'ckInfo';
-  info.textContent = checkDbBusy ? T('check.db.running') : T('check.db.hint');
   var btn = document.createElement('button'); btn.className = 'ckBtn';
-  btn.textContent = T('check.db.button'); btn.disabled = checkDbBusy;
-  btn.addEventListener('click', function(){
-    if (!confirm(T('check.db.confirm'))) return;
-    checkDbBusy = true; btn.disabled = true; info.textContent = T('check.db.running');
-    tagPost('/scan', {all: true}).then(function(r){
-      if (!r || !r.ok) throw new Error();
-      checkDbPoll(info, btn);
-    }).catch(function(){ checkDbBusy = false; btn.disabled = false; info.textContent = T('check.db.failed'); });
-  });
+  btn.textContent = T('check.db.button');
+  btn.addEventListener('click', libUpdStart);
   head.appendChild(info); head.appendChild(btn);
-  if (checkDbBusy) checkDbPoll(info, btn);
+  libUpdWatch('check', function(st){ info.textContent = libUpdText(st); btn.disabled = st === 'running'; });
   return head;
-}
-function checkDbPoll(info, btn) {
-  clearTimeout(checkDbTimer);
-  checkDbTimer = setTimeout(function(){
-    tagGetJson('/scan').then(function(r){
-      if (r && r.ok && r.updating) return checkDbPoll(info, btn);
-      checkDbBusy = false; btn.disabled = false;
-      info.textContent = r && r.ok ? T('check.db.done') : T('check.db.failed');
-    }).catch(function(){ checkDbPoll(info, btn); });
-  }, 3000);
 }
 
 /* ---------- Stimmungs-Tags (Tag-Dienst GET /moodtags) ---------- */
@@ -296,13 +303,8 @@ function checkSpellingRow(v, i, group) {
   return checkRow('spelling|' + v.name, v.name, T('check.spellingSub', {n: v.count, others: others}), function(){ openArtistEditor(v.name); });
 }
 
-btnCheck.addEventListener('click', openCheck);
 document.getElementById('closeCheck').addEventListener('click', function(){ clearTimeout(checkTimer); closeAllOverlays(); });
 document.getElementById('checkBack').addEventListener('click', function(){
   clearTimeout(checkTimer);
-  closeAllOverlays();
-  overlaySearch.classList.add('on');
+  openMenu();
 });
-
-/* Knopf in der Suche nur zeigen, wenn der Tag-Dienst läuft */
-tagGetJson('/health').then(function(r){ if (r && r.ok) btnCheck.style.display = ''; }).catch(function(){});

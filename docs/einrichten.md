@@ -107,7 +107,7 @@ nebeneinander; ein Tipp übernimmt das Bild wie ein gewähltes (einbetten und/od
 Die Abfragen macht der Tag-Dienst; der Player braucht dafür Internetzugang.
 
 ### Bibliotheks-Check
-In der Suche oben rechts (Symbol mit Haken, nur wenn der Tag-Dienst läuft): findet Alben ohne Cover, Compilations ohne
+Im Menü (Zahnrad oben rechts, nur wenn der Tag-Dienst läuft): findet Alben ohne Cover, Compilations ohne
 einheitlichen Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche Albumnamen/Jahre und Titel ohne
 Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-Datenbank (`MPD_HOST`, `MPD_PORT`, Standard
 `localhost:6600`) und die Ordner, ändert nichts an den Dateien und läuft nur auf Knopfdruck. Ergebnis:
@@ -136,7 +136,7 @@ App und auf dem Kiosk-TV; ohne Titel oder ohne Treffer bleibt das Senderlogo. Di
 `/data/INTERNAL/tags/radio-covers/` und `/data/INTERNAL/tags/stations/`.
 
 ### Verlauf und Statistik
-In der Suche oben rechts (Uhr-Symbol): **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
+Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag, Top-8-Genres; ein Genre antippen öffnet seine Alben) und **Rückblick**
 (ein Jahr: Summen mit Vergleich zum Vorjahr, Monate und zum Aufklappen Top-Titel, -Alben, -Künstler, -Genres (antippbar) und neu entdeckte Künstler; Tipp auf einen Monatsbalken zeigt die Ranglisten für diesen Monat; Genres aus der Albenliste unten). Antippen spielt
 den Titel ab bzw. öffnet Album oder Künstler.

@@ -97,10 +97,9 @@
   #btnStage { display:none; }
   @media (orientation:landscape) and (min-width:900px) and (min-height:560px) { #btnStage { display:flex; } }
   #btnStage.on { opacity:1; }
-  #btnVolumio { opacity:.75; border:2px solid var(--fg); border-radius:24%; }
-  #btnVolumio svg { width:50%; height:50%; }
-  /* solange ein Overlay offen ist, schaut das V nicht durch die Seitenleiste (liegt sonst über dem Schließen-Kreuz) */
-  body:has(.overlay.on) #btnVolumio { visibility:hidden; }
+  #btnMenu { opacity:.75; }
+  /* solange ein Overlay offen ist, schaut das Zahnrad nicht durch die Seitenleiste (liegt sonst über dem Schließen-Kreuz) */
+  body:has(.overlay.on) #btnMenu { visibility:hidden; }
 
   #toast { position:fixed; z-index:20; left:50%; bottom:max(env(safe-area-inset-bottom,0px), 24px);
     transform:translate(-50%, 20px); opacity:0; pointer-events:none; max-width:86%; text-align:center;
@@ -621,8 +620,6 @@ html.noTidal #searchSources .srcTidal, html.noQobuz #searchSources .srcQobuz,
 html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { display:none; }
 
 /* ---------- Bibliotheks-Check ---------- */
-#btnCheck svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
-html.noStream #btnCheck { margin-left:auto; }
 #overlayCheck .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 #checkBack { cursor:pointer; opacity:.7; display:flex; }
 #checkBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
@@ -666,8 +663,23 @@ html.noStream #btnCheck { margin-left:auto; }
 #historyBack { cursor:pointer; opacity:.7; display:flex; }
 #historyBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
-#btnHistory svg { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); }
-html.noStream #btnCheck[style*="none"] + #btnHistory { margin-left:auto; }
+
+/* ---------- Menü (Zahnrad) ---------- */
+#menuBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); }
+.menuRow { display:flex; align-items:center; gap:calc(4 * var(--vw)); padding:calc(3.5 * var(--vw)) 0;
+  border-bottom:1px solid rgba(var(--fg-rgb),.15); cursor:pointer; }
+.menuRow:last-child { border-bottom:none; }
+.menuRow.busy { cursor:default; }
+.menuIcon { flex:0 0 auto; width:calc(10 * var(--vw)); height:calc(10 * var(--vw)); max-width:44px; max-height:44px;
+  border-radius:24%; background:rgba(var(--fg-rgb),.1); display:flex; align-items:center; justify-content:center; }
+.menuIcon svg { width:58%; height:58%; fill:var(--fg); }
+.menuText { flex:1 1 auto; min-width:0; }
+.menuTitle { font-size:calc(4.2 * var(--vw)); font-weight:600; }
+.menuSub { font-size:calc(3.3 * var(--vw)); opacity:.6; margin-top:2px; line-height:1.35; }
+.menuChev { flex:0 0 auto; width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); fill:var(--fg); opacity:.4; }
+#volumioBack { cursor:pointer; opacity:.7; display:flex; }
+#volumioBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
+#overlayVolumio .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 #histTabBar { flex:0 0 auto; display:flex; border-bottom:1px solid rgba(var(--fg-rgb),.2); margin:0 calc(5 * var(--vw)); }
 #histBody { padding:0 calc(5 * var(--vw)) calc(6 * var(--vw)); }
 #histBody .infoSection:first-child { margin-top:calc(3 * var(--vw)); }

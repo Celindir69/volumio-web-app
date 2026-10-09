@@ -100,6 +100,8 @@ progress of the mood tags.
 
 ### More
 
+- Menu behind the gear at the top right: history and stats, library check, update library, and the original Volumio
+  interface (browse, queue, settings, plugins).
 - Light and dark, following the device setting or set explicitly.
 - German and English, following the Volumio language setting or set explicitly; further languages as a file in `web/lang/`
   (see [Setup](docs/setup.md#language)).
