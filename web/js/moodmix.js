@@ -5,7 +5,8 @@ var mixBody    = document.getElementById('mixBody');
 var MIX_CORE   = ['relaxed', 'dreamy', 'uplifting', 'melancholic', 'dark', 'reflective', 'happy', 'romantic'];
 var MIX_MORE   = ['calm', 'atmospheric', 'emotional', 'epic', 'intense', 'aggressive', 'sensual', 'sad'];
 var MIX_DISC   = [[0, T('mix.disc.favorites')], [0.5, T('mix.disc.balanced')], [1, T('mix.disc.hidden')]];
-var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', genres: [], n: 50, disc: 0.5};
+var mixCrit    = {moods: [], emin: 1, emax: 5, bmin: 0, bmax: 0, styles: [], match: 'any', genres: [], n: 50, disc: 0.5, maxd: 20};
+var MIX_MAXD   = 20;                           /* Vorgabe Höchstlänge je Titel in Minuten (DJ-Mixe draußen); 0 = keine Grenze */
 var MIX_GENRES = 10;                           /* so viele Genre-Chips, der Rest hinter „mehr“ */
 var MIX_BPM    = [60, 180, 5];                 /* Tempo-Regler: Ende links/rechts = offen (0) */
 var mixState   = {view: 'pick', fine: false, more: false, styles: null, genres: null, genresMore: false, result: null};
@@ -15,13 +16,14 @@ try { var saved = JSON.parse(localStorage.getItem('moodMix') || 'null'); if (sav
 if (!mixCrit.bmin) mixCrit.bmin = 0;
 if (!mixCrit.bmax) mixCrit.bmax = 0;
 if (!mixCrit.genres) mixCrit.genres = [];
+if (typeof mixCrit.maxd !== 'number') mixCrit.maxd = MIX_MAXD;
 function mixSave() { try { localStorage.setItem('moodMix', JSON.stringify(mixCrit)); } catch (e) { /* egal */ } }
 
 function mixName(m) { var s = MOOD_NAMES[m] || m; return s.charAt(0).toUpperCase() + s.slice(1); }
 function mixQuery() {
   return 'moods=' + encodeURIComponent(mixCrit.moods.join(',')) + '&emin=' + mixCrit.emin + '&emax=' + mixCrit.emax + '&bmin=' + mixCrit.bmin + '&bmax=' + mixCrit.bmax +
     '&styles=' + encodeURIComponent(mixCrit.styles.join(',')) + '&match=' + mixCrit.match +
-    '&genres=' + encodeURIComponent(mixCrit.genres.join(',')) + '&n=' + mixCrit.n + '&disc=' + mixCrit.disc;
+    '&genres=' + encodeURIComponent(mixCrit.genres.join(',')) + '&n=' + mixCrit.n + '&disc=' + mixCrit.disc + '&maxd=' + mixCrit.maxd;
 }
 function mixClear() { while (mixBody.firstChild) mixBody.removeChild(mixBody.firstChild); }
 function mixDuration(sec) {
@@ -127,6 +129,10 @@ function mixPick() {
 
   fine.appendChild(histEl('div', 'mxLabel', T('mix.length')));
   fine.appendChild(mixSeg([[25, T('mix.tracks', {n: 25})], [50, T('mix.tracks', {n: 50})], [100, T('mix.tracks', {n: 100})]], mixCrit.n, function(v){ mixCrit.n = v; }));
+  fine.appendChild(histEl('div', 'mxLabel', T('mix.maxLen')));
+  fine.appendChild(mixSeg([[0, T('mix.maxLen.none')], [10, T('mix.maxLen.min', {m: 10})], [20, T('mix.maxLen.min', {m: 20})], [30, T('mix.maxLen.min', {m: 30})]],
+    mixCrit.maxd, function(v){ mixCrit.maxd = v; }));
+  fine.appendChild(histEl('div', 'mxHint', T('mix.maxLen.hint')));
   fine.appendChild(histEl('div', 'mxLabel', T('mix.discovery')));
   fine.appendChild(mixSeg(MIX_DISC, mixCrit.disc, function(v){ mixCrit.disc = v; }));
   fine.appendChild(histEl('div', 'mxHint', T('mix.discovery.hint')));
@@ -231,7 +237,7 @@ function mixGenres() {
 
 /* Feinabstimmung zugeklappt, aber abweichend von den Vorgaben: „(aktiv)“ hinter der Überschrift */
 function mixFineActive() {
-  return mixCrit.styles.length > 0 || !!mixCrit.bmin || !!mixCrit.bmax || mixCrit.n !== 50 || mixCrit.disc !== 0.5;
+  return mixCrit.styles.length > 0 || !!mixCrit.bmin || !!mixCrit.bmax || mixCrit.n !== 50 || mixCrit.disc !== 0.5 || mixCrit.maxd !== MIX_MAXD;
 }
 function mixFineLabel() {
   if (mixState.fineLabel) mixState.fineLabel.textContent = T('mix.fine') + (mixFineActive() ? ' ' + T('mix.fine.active') : '');
