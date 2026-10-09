@@ -153,7 +153,7 @@ The radio list displays the station logos using the address provided by Volumio,
 
 ### Welcome screen
 
-When the page opens (only with the Tag Service), an overlay greets you by time of day: the **album of the day** (random, preferring albums not played for a long time or never; it stays the same all day) with "Play", **Recently played** (albums with at least two tracks played recently), **New in the collection** (albums whose files were added or changed in the last 180 days, by MPD's modification date) and a random mix. Tapping beside it closes it. It appears on its own at most every 30 minutes and not in the stage layout; "Show on opening" at the bottom turns it off for this device, and the menu entry "Welcome" opens it any time. After the update the Tag Service re-reads the album list once; until then "New in the collection" is missing.
+When the page opens (only with the Tag Service), a card in the middle of the window (with a wide margin in landscape) greets you by time of day: the **album of the day** (random, preferring albums not played for a long time or never; it stays the same all day) with "Play", **Recently played** (albums with at least two tracks played recently), **New in the collection** (albums whose files were added or changed in the last 180 days, by MPD's modification date) and a random mix. Tapping beside it closes it. It appears on its own at most every 30 minutes and not in the stage layout; "Show on opening" at the bottom turns it off for this device, and the menu entry "Welcome" opens it any time. After the update the Tag Service re-reads the album list once; until then "New in the collection" is missing.
 
 ### History and Statistics
 
