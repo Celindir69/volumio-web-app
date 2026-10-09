@@ -19,7 +19,7 @@ function artistKey(name) { return plays.norm(name); }
 function albumKey(uri) { var f = fileOf(uri); return f ? albums.albumDir(f) : (uri ? 'uri:' + uri : ''); }
 function trackKey(uri) { var f = fileOf(uri); return f || (uri ? 'uri:' + uri : ''); }
 
-function Store(file) { this.file = file; this.data = null; }
+function Store(file) { this.file = file; this.data = null; this.rev = 0; }   /* rev: zählt Änderungen (Zwischenspeicher) */
 
 Store.prototype.load = function() {
   if (this.data) return this.data;
@@ -54,6 +54,7 @@ Store.prototype.set = function(b, now) {
   else return null;
   if (!key) return null;
   var d = this.load();
+  this.rev++;
   if (!v) delete d[list][key];
   else { rec.v = v; rec.t = now || Math.floor(Date.now() / 1000); d[list][key] = rec; }
   this.save();
