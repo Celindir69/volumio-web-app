@@ -866,7 +866,7 @@ html.light .mxRange::-webkit-slider-thumb { background:#fff; box-shadow:0 1px 4p
 html.light .mxRange::-moz-range-thumb { background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
 html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 
-/* Bewertungen (rating.js): Daumen je Titel und im Player, Herz auf der Künstlerseite, Sterne im Albumkopf */
+/* Bewertungen (rating.js): Daumen je Titel (Albumseite, Warteschlange), Herz auf der Künstlerseite, Sterne im Albumkopf */
 .rateThumb { flex:0 0 auto; width:calc(8 * var(--vw)); height:calc(8 * var(--vw)); max-width:36px; max-height:36px;
   margin-left:calc(1.5 * var(--vw)); border-radius:50%; cursor:pointer; opacity:.35;
   display:flex; align-items:center; justify-content:center; }
@@ -874,7 +874,6 @@ html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 .rateThumb.on { opacity:1; }
 .rateThumb.on svg { fill:var(--accent, var(--fg)); }
 .rateThumb:active { background:rgba(var(--fg-rgb),.15); }
-#mRate { width:calc(6.5 * var(--vw)); height:calc(6.5 * var(--vw)); margin-left:0; }
 .rateHeart { flex:0 0 calc(10 * var(--vw)); height:calc(10 * var(--vw)); max-width:44px; max-height:44px;
   margin-left:calc(2 * var(--vw)); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .rateHeart svg { width:58%; height:58%; fill:var(--fg); opacity:.55; display:block; }

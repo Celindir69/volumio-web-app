@@ -80,7 +80,6 @@ updateSyncedLyrics();
     mAlbum.classList.toggle('link',  !radio && !!album);
     paintQuality(st);
     tagPaintPlayer(st);
-    if (typeof ratePaintPlayer === 'function') ratePaintPlayer(st);   /* rating.js */
     if (radio) {
       var p = title.indexOf(' - ');
       artist = (p > 0) ? title.slice(0, p).trim() : '';

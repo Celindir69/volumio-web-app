@@ -49,7 +49,6 @@ function rateTrackSet(t, v) {
     delete favMap[k];
   }
   favAt = Date.now();                                  /* Volumio braucht einen Moment, bis die Liste stimmt */
-  if (rateNow && rateFileKey(rateNow.uri) === k) ratePlayerShow(v);
   showToast(T(v === 1 ? 'rate.liked' : v === -1 ? 'rate.disliked' : 'rate.cleared'));
   return tagPostJson('/rate', {kind: 'track', uri: t.uri, v: v === -1 ? -1 : 0, ar: t.artist || '', ti: t.title || ''})
     .catch(function(){ if (v === -1) showToast(T('rate.saveError')); });
@@ -58,8 +57,8 @@ function rateTrackSet(t, v) {
 function rateTrackValue(t, down) { return down === -1 ? -1 : favMap[rateFileKey(t.uri)] ? 1 : 0; }
 
 /* Daumen: Tipp schaltet neutral -> mag ich -> mag ich nicht -> neutral */
-function rateThumb(t, v, cls) {
-  var b = histEl('div', 'rateThumb' + (cls ? ' ' + cls : ''));
+function rateThumb(t, v) {
+  var b = histEl('div', 'rateThumb');
   b.title = T('rate.track');
   b.setValue = function(x){
     v = x;
@@ -72,41 +71,39 @@ function rateThumb(t, v, cls) {
     e.stopPropagation();
     var next = v === 0 ? 1 : v === 1 ? -1 : 0;
     b.setValue(next);
-    rateTrackSet(typeof t === 'function' ? t() : t, next);
+    rateTrackSet(t, next);
   });
   return b;
 }
 
-/* ---------- Player: Daumen neben der Qualitätsanzeige ---------- */
-var rateBtnP = null, rateNow = null, rateLastSt = null;
-function ratePlayerShow(v) { if (rateBtnP) rateBtnP.setValue(v); }
-function ratePaintPlayer(st) {
-  rateLastSt = st;
-  if (!rateBtnP) {
-    var row = document.getElementById('mTechRow');
-    if (!row) return;
-    rateBtnP = rateThumb(function(){ return rateNow; }, 0, 'mRate');
-    rateBtnP.id = 'mRate';
-    row.insertBefore(rateBtnP, document.getElementById('mEdit'));
-  }
-  var ok = rateReady && !!st && !!st.uri && st.trackType !== 'webradio' && st.service !== 'webradio';
-  rateBtnP.style.display = ok ? '' : 'none';
-  if (!ok) { rateNow = null; return; }
-  if (rateNow && rateNow.uri === st.uri) return;
-  rateNow = {uri: st.uri, service: st.service || 'mpd', title: st.title || '', artist: st.artist || '', album: st.album || '', albumart: st.albumart || ''};
-  var uri = st.uri;
-  rateBtnP.setValue(favMap[rateFileKey(uri)] ? 1 : 0);
-  Promise.all([favRefresh(true), tagPostJson('/ratings', {tracks: [uri]}).catch(function(){ return {}; })]).then(function(r){
-    if (!rateNow || rateNow.uri !== uri) return;
-    rateBtnP.setValue(rateTrackValue(rateNow, (r[1].tracks || [])[0]));
+/* Daumen in Titelzeilen nachtragen: items (Volumio-Einträge) und rows in gleicher Reihenfolge, vor dem Stift
+   (sonst vor before, z. B. dem Papierkorb der Warteschlange); alive() false: Liste inzwischen neu aufgebaut */
+function rateRows(items, rows, alive, before, extra) {
+  var idx = [];
+  items.forEach(function(t, i){ if (t.uri && (t.service || 'mpd') !== 'webradio' && t.trackType !== 'webradio') idx.push(i); });
+  if (!rateReady || !idx.length) return Promise.resolve(null);
+  var body = extra || {};
+  body.tracks = idx.map(function(i){ return items[i].uri; });
+  return Promise.all([favRefresh(true), tagPostJson('/ratings', body)]).then(function(r){
+    if (!alive()) return null;
+    idx.forEach(function(i, k){
+      var t = items[i];
+      var item = {uri: t.uri, service: t.service || 'mpd', title: t.title || t.name || '', artist: t.artist || '', album: t.album || '', albumart: t.albumart || ''};
+      var row = rows[i], th = rateThumb(item, rateTrackValue(item, (r[1].tracks || [])[k]));
+      row.insertBefore(th, row.querySelector('.tagEditMini') || (before ? row.querySelector(before) : null));
+    });
+    return r[1];
   });
 }
-/* Favorit geändert (auch in der Volumio-Oberfläche): Daumen im Player neu lesen */
-socket.on('urifavourites', function(){
-  var st = rateNow;
-  rateNow = null;
-  if (st) ratePaintPlayer(st); else favRefresh(true);
-});
+
+/* ---------- Warteschlange: Daumen je Titel ---------- */
+var rateQueueSeq = 0;
+function rateQueue(items, rows) {
+  var seq = ++rateQueueSeq;
+  rateRows(items, rows, function(){ return seq === rateQueueSeq; }, '.qTrash').catch(function(){});
+}
+/* Favorit geändert (auch in der Volumio-Oberfläche) */
+socket.on('urifavourites', function(){ favRefresh(true); });
 
 /* ---------- Künstlerseite: Herz ---------- */
 function rateArtistHeart(name) {
@@ -151,20 +148,16 @@ function rateAlbumPage(seq, e, who, tracks, meta, rows) {
   show();
   rateStop(stars);
   meta.appendChild(stars);
-  Promise.all([favRefresh(true), tagPostJson('/ratings', {album: albumUri, tracks: tracks.map(function(t){ return t.uri; })})]).then(function(r){
-    if (seq !== browseSeq) return;
-    v = r[1].album || 0; show();
-    tracks.forEach(function(t, i){
-      var item = {uri: t.uri, service: t.service || 'mpd', title: t.title || t.name || '', artist: t.artist || who || '', album: t.album || e.album || '', albumart: t.albumart || ''};
-      var th = rateThumb(item, rateTrackValue(item, (r[1].tracks || [])[i]));
-      var pen = rows[i].querySelector('.tagEditMini');
-      rows[i].insertBefore(th, pen);
-    });
+  var items = tracks.map(function(t){
+    return {uri: t.uri, service: t.service, title: t.title || t.name || '', artist: t.artist || who || '', album: t.album || e.album || '', albumart: t.albumart || ''};
+  });
+  rateRows(items, rows, function(){ return seq === browseSeq; }, null, {album: albumUri}).then(function(r){
+    if (r) { v = r.album || 0; show(); }
   }).catch(function(){});
 }
 
 tagGetJson('/health').then(function(r){
   if (!r || !r.ok) return;
   rateReady = true;
-  if (rateLastSt) ratePaintPlayer(rateLastSt); else favRefresh(true);
+  favRefresh(true);
 }).catch(function(){});
