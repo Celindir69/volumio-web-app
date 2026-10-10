@@ -40,24 +40,46 @@ function parseMeminfo(text) {
   return {total: o.MemTotal || 0, avail: avail, swapTotal: o.SwapTotal || 0, swapFree: o.SwapFree || 0};
 }
 
-/* /proc/mounts -> Laufwerke, die auf der Seite erscheinen: /data (interne Karte), alles unter /mnt/
-   (USB, NAS, …); gleiche lokale Geräte nur einmal (z. B. /mnt/INTERNAL liegt auf /data) */
+/* /proc/mounts -> Laufwerke, die auf der Seite erscheinen: jede echte Partition (/dev/…) und jede
+   Netzwerkverbindung. Volumio hängt USB je nach Version unter /media/… oder /mnt/USB/… ein, die interne Karte
+   unter /data (Volumio 2 auch unter /mnt/ext o. ä.). Ein Gerät erscheint nur einmal, unter dem
+   aussagekräftigsten Pfad; Start- und Abbildpartitionen (/boot, /imgpart, /static) bleiben weg.
+   kind: card (interne Karte/Systemlaufwerk), usb, net */
 var NET_FS = /^(cifs|smb3|smbfs|nfs|nfs4|fuse\.sshfs)$/;
-var SKIP_FS = /^(tmpfs|devtmpfs|proc|sysfs|devpts|cgroup2?|squashfs|overlay|autofs|debugfs|securityfs|pstore|mqueue|configfs|fusectl|binfmt_misc|rpc_pipefs)$/;
+var SKIP_FS = /^(tmpfs|devtmpfs|proc|sysfs|devpts|cgroup2?|squashfs|overlay|autofs|debugfs|securityfs|pstore|mqueue|configfs|fusectl|binfmt_misc|rpc_pipefs|iso9660)$/;
+var SKIP_MOUNT = /^\/(boot|imgpart|static|run|proc|sys|dev)(\/|$)/;
+function mountRank(m) {
+  if (m === '/data') return 0;
+  if (/^\/(mnt|media)\/./.test(m) && !/^\/mnt\/INTERNAL(\/|$)/.test(m)) return 1;
+  if (m === '/') return 3;
+  return 2;
+}
 function parseMounts(text) {
-  var seen = {}, out = [];
+  var byDev = {}, out = [], rootLine = false;
   String(text || '').split('\n').forEach(function(l){
     var p = l.split(' ');
     if (p.length < 3) return;
     var dev = p[0].replace(/\\040/g, ' '), mount = p[1].replace(/\\040/g, ' '), type = p[2];
-    if (SKIP_FS.test(type)) return;
-    if (mount !== '/data' && mount.indexOf('/mnt/') !== 0) return;
+    if (mount === '/') rootLine = true;
+    if (SKIP_FS.test(type) || SKIP_MOUNT.test(mount)) return;
     var net = NET_FS.test(type);
-    if (!net && seen[dev]) return;
-    seen[dev] = true;
-    out.push({mount: mount, type: type, net: net});
+    if (!net && dev.indexOf('/dev/') !== 0) return;
+    if (!net && /^\/dev\/(loop|ram|zram)/.test(dev)) return;
+    var kind = net ? 'net' : /^\/dev\/(sd|usb)/.test(dev) && mount !== '/' && mount !== '/data' ? 'usb' : 'card';
+    var d = {mount: mount, type: type, net: net, kind: kind};
+    if (net) return out.push(d);
+    var have = byDev[dev];
+    if (have) { if (mountRank(mount) < mountRank(have.mount)) { have.mount = mount; have.type = type; have.kind = kind; } return; }
+    byDev[dev] = d;
+    out.push(d);
   });
-  return out;
+  /* Datenpartition nicht sichtbar eingehängt (nur als Overlay unter /): df auf / zeigt deren Belegung */
+  if (rootLine && !out.some(function(d){ return d.kind === 'card'; })) out.push({mount: '/', type: 'overlay', net: false, kind: 'card'});
+  /* interne Karte zuerst, dann USB, dann Netz; sonst in der Reihenfolge von /proc/mounts */
+  var order = {card: 0, usb: 1, net: 2};
+  return out.map(function(d, i){ return [d, i]; })
+    .sort(function(a, b){ return order[a[0].kind] - order[b[0].kind] || a[1] - b[1]; })
+    .map(function(x){ return x[0]; });
 }
 
 /* Ausgabe von df -kP für einen Pfad -> kB */
@@ -187,7 +209,7 @@ Sysinfo.prototype.diskList = function(cb) {
   if (!left) return fin();
   list.forEach(function(d, i){
     self.df(d.mount, function(r){
-      res[i] = {mount: d.mount, type: d.type, net: d.net, ok: !!r, size: r ? r.size : 0, used: r ? r.used : 0, avail: r ? r.avail : 0};
+      res[i] = {mount: d.mount, type: d.type, net: d.net, kind: d.kind, ok: !!r, size: r ? r.size : 0, used: r ? r.used : 0, avail: r ? r.avail : 0};
       if (--left === 0) fin();
     });
   });

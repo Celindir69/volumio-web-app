@@ -19,6 +19,8 @@ put('proc/mounts', [
   'overlay / overlay rw 0 0',
   '/dev/mmcblk0p3 /mnt/INTERNAL ext4 rw 0 0',
   'tmpfs /run tmpfs rw 0 0',
+  '/dev/mmcblk0p1 /boot vfat rw 0 0',
+  '/dev/sda1 /media/MX-Media fuseblk rw 0 0',
   '/dev/sda1 /mnt/USB/MX-Media fuseblk rw 0 0',
   '//nas/musik /mnt/NAS/Musik cifs rw 0 0',
   '//nas/hörbuch /mnt/NAS/H\\040Buch cifs rw 0 0'
@@ -36,10 +38,16 @@ t('Speicher: MemAvailable, sonst frei + Puffer + Cache', function(){
   assert.strictEqual(si.parseMeminfo('MemTotal: 1000 kB\nMemFree: 100 kB\nBuffers: 50 kB\nCached: 150 kB\n').avail, 300);
 });
 
-t('Laufwerke: /data und /mnt/…, gleiche Karte einmal, jede NAS-Verbindung einzeln, Leerzeichen im Namen', function(){
+t('Laufwerke: Karte, USB (auch unter /media), jede NAS-Verbindung; jedes Gerät einmal, /boot weg', function(){
   var l = si.parseMounts(fs.readFileSync(path.join(root, 'proc/mounts'), 'utf8'));
-  assert.deepStrictEqual(l.map(function(d){ return d.mount; }), ['/data', '/mnt/USB/MX-Media', '/mnt/NAS/Musik', '/mnt/NAS/H Buch']);
-  assert.deepStrictEqual(l.map(function(d){ return d.net; }), [false, false, true, true]);
+  assert.deepStrictEqual(l.map(function(d){ return d.mount; }), ['/data', '/media/MX-Media', '/mnt/NAS/Musik', '/mnt/NAS/H Buch']);
+  assert.deepStrictEqual(l.map(function(d){ return d.kind; }), ['card', 'usb', 'net', 'net']);
+});
+
+t('Laufwerke: Volumio 2 ohne eingehängtes /data -> Belegung über das Overlay unter /', function(){
+  var l = si.parseMounts(['/dev/mmcblk0p2 /imgpart ext4 rw 0 0', '/dev/loop0 /static squashfs ro 0 0', 'overlay / overlay rw 0 0',
+                          '/dev/mmcblk0p1 /boot vfat rw 0 0', '/dev/sda1 /media/MX-Media exfat rw 0 0', '//nas/m /mnt/NAS/M cifs rw 0 0'].join('\n'));
+  assert.deepStrictEqual(l.map(function(d){ return d.mount + ':' + d.kind; }), ['/:card', '/media/MX-Media:usb', '/mnt/NAS/M:net']);
 });
 
 t('df -kP auslesen', function(){
