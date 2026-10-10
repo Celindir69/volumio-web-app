@@ -91,6 +91,7 @@ if (typeof module !== 'undefined') {
       code = String(code || '').toLowerCase();
       if (!code || code === langStored()) return;
       try { localStorage.setItem('volumioLang', code); } catch (e) {}
+      if (langStored() !== code) return;                /* Speicher gesperrt: nicht neu laden, sonst endlos */
       var want = langPick(avail, location.search, cfg.LANGUAGE, [code].concat(device.slice(1)));
       var once = false;
       try { once = sessionStorage.getItem('langReload') === want; sessionStorage.setItem('langReload', want); } catch (e) {}

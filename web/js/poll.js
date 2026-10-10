@@ -31,10 +31,12 @@ function radioArt(st, stationArt) {
   return stationArt;
 }
 
+var pollBusy = false;                                   /* nie mehrere getState gleichzeitig (Volumio hängt z. B. beim Einlesen) */
 function poll() {
-  if (document.hidden) return;
+  if (document.hidden || pollBusy) return;
+  pollBusy = true;
   if (!volDrag && ROTEL_ON) rotel('/state');  
-fetch('/api/v1/getState').then(function(r){ return r.json(); }).then(function(st){
+withTimeout(fetch('/api/v1/getState'), 8000).then(function(r){ return r.json(); }).then(function(st){
 
 curDur = Number(st.duration) || 0;
 /* gestoppt zählt Volumio die Zeit teils weiter (Wiedergabe angefordert, aber das Ausgabegerät ließ sich nicht öffnen):
@@ -102,7 +104,7 @@ updateSyncedLyrics();
 
     if (lyrKey !== lastLyrKey) {
       lastLyrKey = lyrKey;
-      askExtra(artist, title, radio).then(function(res){ showLyrics(res); });
+      askExtra(artist, title, radio).then(function(res){ if (lyrKey === lastLyrKey) showLyrics(res); });   /* späte Antwort des vorigen Titels verwerfen */
       setTrackInfo(lyrKey, title, null, radio);                   /* Reiter des vorigen Titels weg */
       (function(k, ti){
         askTrack(artist, ti).then(function(res){ if (k === lastLyrKey) setTrackInfo(k, ti, res, radio); });
@@ -118,6 +120,7 @@ if (!artist) { showInfo([]); return; }
 if (radio) {
   Promise.all([ask({mode:'storyArtist', artist:artist}), askDiscography(artist)])
     .then(function(res){
+      if (key !== lastKey) return;                   /* inzwischen läuft etwas anderes */
       showInfo([
         {title:artist,            label:T('info.tab.artist'), data:res[0], always:true},
         {title:T('info.collection'), label:T('info.tab.collection'), data:res[1]},
@@ -133,6 +136,7 @@ Promise.all([
   ask({mode:'creditsAlbum', artist:artist, album:album}),
   askDiscography(artist)
 ]).then(function(res){
+  if (key !== lastKey) return;    /* inzwischen läuft etwas anderes: späte Antwort verwerfen */
   showInfo([                      /* title: Überschrift im Overlay; label: kurzer Reitername (lange Namen würden die Leiste sprengen) */
     {title:album,             label:T('info.tab.album'),       data:res[0], always:true},
     {title:artist,            label:T('info.tab.artist'),    data:res[1], always:true},
@@ -142,7 +146,8 @@ Promise.all([
   ]);
 });
 
-  }).catch(function(){});
+  }).catch(function(){ playing = false; })            /* Volumio nicht erreichbar: Zeit nicht weiterlaufen lassen */
+    .then(function(){ pollBusy = false; });
 }
 
 setInterval(function(){ updateSyncedLyrics(); }, 200);

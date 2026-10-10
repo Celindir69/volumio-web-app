@@ -173,7 +173,8 @@ function tagMsg(text) {
 
 /* files: [{uri, title}] */
 function openTagEditor(files, heading) {
-  tagMode = 'album'; artSeq++;
+  tagMode = 'album';
+  var seq = ++artSeq;                                     /* späte Antwort eines vorher geöffneten Albums verwerfen */
   tagSave.textContent = T('tag.save');
   if (!heading && files.length === 1) heading = files[0].title;
   document.getElementById('tagTitle').textContent = heading || T('tag.edit');
@@ -181,9 +182,11 @@ function openTagEditor(files, heading) {
   tagMsg(T('tag.loading'));
   overlayTags.classList.add('on');
   tagPost('/read', {uris: files.map(function(f){ return f.uri; })}).then(function(res){
+    if (seq !== artSeq) return;
     if (!res.ok) { tagMsg(T('tag.error', {error: res.error || T('tag.unknown')})); return; }
     tagRender(files, res.items);
   }).catch(function(){
+    if (seq !== artSeq) return;
     tagMsg(T('tag.serviceDownPort', {port: (window.APP_CONFIG && window.APP_CONFIG.TAGS_PORT) || 8766}));
   });
 }
