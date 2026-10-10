@@ -20,8 +20,10 @@ HIGHRESAUDIO too (valid subscription needed). One tap, and it plays.
 
 ## Can't decide?
 
-Leave the search field empty and let yourself be inspired:
+As soon as you open it, Xplorio greets you with the **album of the day**, what you played recently and what is new in
+the collection. Or leave the search field empty and let yourself be inspired:
 
+- **Birthdays** celebrate albums released today, this week or this month, with round anniversaries in gold.
 - **Random Discoveries** brings up albums that haven't played in a long time.
 - **Played a Year Ago** reminds you of what kept you company last autumn.
 - **Once Played a Lot** brings back old favourites you had almost forgotten.
@@ -54,7 +56,8 @@ just playing.
 ## Like what's playing right now?
 
 Then start right there. Tap the artist and see what of theirs is in your collection. Look at similar artists you also
-own. Read who played on the album and what there is to know about it. Follow your own path through the collection to
+own. Read who played on the album and what there is to know about it. Every album page offers similar albums from
+your collection, even for albums you are only streaming. Follow your own path through the collection to
 the next album that grabs you. And if you can't decide: for artists, genres, moods and decades, the dice plays 25
 tracks from them.
 

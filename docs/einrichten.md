@@ -33,6 +33,12 @@ Sprachdateien in `web/lang/` stehen. Datum, Zahlen, Monats- und Wochentagsnamen 
 Nicht übersetzt werden Texte, die Volumio selbst liefert (z. B. Menünamen beim Durchsuchen), und Fehlermeldungen des
 Tag-Dienstes; die bleiben deutsch.
 
+### Hinweise zum Ausgabegerät
+Kann Volumio das Ausgabegerät nicht öffnen (z. B. Verstärker oder DAC aus), zeigt die App kurz „Audioziel nicht
+erreichbar“ bzw. „Audioziel ist belegt“; der Fortschrittsbalken bleibt dann am Anfang. Meldet Volumio ein getrenntes
+Gerät, erscheint „Audioziel getrennt“ statt Volumios Fenster mit Bestätigung; „Audioziel verbunden“ gibt es nur, wenn
+Volumio die Rückkehr meldet (USB-DAC). Erkannt werden Volumios Meldungen auf Deutsch und Englisch.
+
 ## Aktualisieren mit xplorio-deploy
 Einmal einrichten:
 ```bash
@@ -143,7 +149,7 @@ Elternordners. Solange der Bibliotheks-Check offen ist, wird nur gesammelt und b
 Albumliste neu auf (rund eine Minute Last je Album, bei vielen Alben hintereinander bis zum Hänger). Empfehlung:
 `auto_update "no"` (auch in der Vorlage unter `/volumio/app/plugins/music_service/mpd/`, falls dort vorhanden) und
 `sudo systemctl restart mpd`; neue Musik dann wie gewohnt mit „Bibliothek aktualisieren“ einlesen (im Volumio-Menü „Aktualisieren“, nicht „Neu
-einlesen“, oder mit dem Knopf oben im Bibliotheks-Check; dort gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar, nimmt Aufträge aber nur von der Oberfläche an (siehe Zugriffsschutz oben).
+einlesen“, oder mit dem Knopf oben im Bibliotheks-Check bzw. dem Eintrag „Bibliothek aktualisieren“ im Zahnradmenü; dabei gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
 
 ### Cover online suchen
 Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Key aus `keys.json`) und im
@@ -190,7 +196,7 @@ Info-Overlay, scrollbar), **Zuletzt gehört**
 (Alben, von denen zuletzt mindestens zwei Titel liefen), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
 180 Tagen dazukamen oder sich änderten, nach dem Änderungsdatum aus MPD) und ein Zufallsmix. Tippen daneben schließt es.
 Es kommt höchstens alle 30 Minuten von selbst und nicht in der Bühnenansicht; „Beim Öffnen zeigen“ unten schaltet es
-für dieses Gerät ab, im Menü unter „Begrüßung“ ist es jederzeit erreichbar. Nach dem Update liest der Tag-Dienst die
+für dieses Gerät ab, im Menü unter „Begrüßung“ ist es jederzeit erreichbar. Mit `?welcome=0` in der Adresse bleibt es beim Öffnen aus (z. B. für ein Lesezeichen). Nach dem Update liest der Tag-Dienst die
 Albenliste einmal neu, bis dahin fehlt „Neu in der Sammlung“.
 
 **Geburtstage:** Alben, die heute, in dieser Woche (Montag bis Sonntag) oder in diesem Monat Erscheinungstag haben. Die
@@ -200,7 +206,7 @@ gehört“ und „Neu in der Sammlung“. Runde Geburtstage (10, 20, 30 … Jahr
 (JJJJ-MM-TT, passend zum Jahr des Albums); fehlt es, schlägt der Tag-Dienst es einmal bei MusicBrainz nach (erstes
 Erscheinen der Release-Group, eine Anfrage je 1,5 Sekunden, Sampler ausgenommen) und merkt es sich in
 `/data/xplorio/data/releasedates.jsonl`; nicht Gefundenes fragt er nach 90 Tagen erneut. Bei einer großen Sammlung dauert
-das beim ersten Mal einige Stunden, solange zeigt Entdecken den Stand. Ausschalten: `RELEASEDATES: false` in
+das beim ersten Mal einige Stunden; solange kaum Daten da sind und noch kein Geburtstag gefunden ist, zeigt Entdecken den Stand. Ausschalten: `RELEASEDATES: false` in
 `web/config.local.js`, dann den Tag-Dienst neu starten.
 
 ### Verlauf und Statistik
@@ -399,7 +405,7 @@ allen Geräten (`/data/xplorio/data/lyrics-offsets.json`); Tippen auf den Wert s
 `rotel/rotel-bridge.js` nach `/data/xplorio/rotel/`, als systemd-Dienst wie oben (Port 8765). In `web/config.local.js`:
 ```js
 window.APP_CONFIG.ROTEL = true;                  // Ein/Aus-Knopf und Verstärker-Lautstärke in der Oberfläche
-window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';   // Adresse des Verstärkers, liest die Bridge beim Start
+window.APP_CONFIG.ROTEL_HOST = '<IP-des-Verstaerkers>';   // Adresse des Verstärkers, liest die Bridge beim Start
 ```
 Danach die Bridge neu starten. Damit der Verstärker im Standby per Netz einschaltbar ist, dort Power Mode „Quick“ einstellen.
 Ohne `ROTEL: true` regelt die Oberfläche die Lautstärke von Volumio (falls dort eingeschaltet).

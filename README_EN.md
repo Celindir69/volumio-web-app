@@ -5,14 +5,14 @@
 [Deutsche Fassung](README.md) · [What is Xplorio?](docs/xplorio_en.md)
 
 Xplorio is a custom web interface for Volumio 2 (built for a Musical Fidelity MX-Stream, Raspberry Pi CM3), running directly in the browser without a build step.
-It also runs on Volumio 4 (for differences, see [Setup](docs/setup.md#volumio-4)). In addition to the files that run on the player, the repository only contains tests (`tests/`) and the setup documentation;
+It also runs on Volumio 4 (for differences, see [Setup](docs/setup.md#volumio-4)). It probably runs on Volumio 3 as well, but this has not been tested. In addition to the files that run on the player, the repository only contains tests (`tests/`) and the setup documentation;
 `xplorio-deploy` deploys only the runtime files.
 
 <p align="center">
   <img src="docs/bilder/display-ipad.jpg" width="820" alt="display-layout on iPad: cover, albuminfo and synced Lyrics">
 </p>
 
-All images in this file show a fictional example library in german language setting (artists, cover art, and texts are made up). - They do not always show the latest state of development so some faetures have been moved or added since the creation of the Screenshots.
+All images in this file show a fictional example library in German language setting (artists, cover art, and texts are made up). They do not always show the latest state of development, so some features have been moved or added since the screenshots were taken.
 
 Developed using AI (Claude code https://claude.ai)
 
@@ -51,7 +51,7 @@ automatically cycles through the available pages. Switch using the control at th
 ### Search & Discover
 
 Search finds artists, albums, tracks, and genres (per genre the styles from the audio analysis and all albums) in the local library and on the streaming services configured in Volumio
-(TIDAL, Qobuz, HIGHRESAUDIO, Spotify), each in separate sections with checkboxes for showing or hiding them. As long as
+(TIDAL, Qobuz, HIGHRESAUDIO, Spotify (not tested yet)), each in separate sections with checkboxes for showing or hiding them. As long as
 nothing has been entered, the selected tab shows rows to discover: random discoveries, hidden gems (rarely played music that matches your ratings), played a year ago, not heard in a
 while, never heard, and once played a lot. Below them, buttons lead on by mood, energy, style and decade. Next to "Play all" and on every Discover row, a dice starts a random mix of 25 tracks. On every artist page, the "Discover" tab leads to similar artists (with a random mix from them), the artist's moods, styles and decades; on every album page to similar albums, mood, style, year and more albums by the artist. The "Background" tab there shows the artist or album text and the credits. Tapping the current title shows similar tracks by mood, energy and tempo. Every album title shows its release year; tapping it opens that year's albums with suggestions from the decade.
 Ratings: a heart for artists, one to five stars for albums, thumbs up or down for tracks (thumbs up is the Volumio favourite). For web radio, the app retrieves cover art for the currently playing
@@ -60,14 +60,15 @@ track and displays station logos in the station list.
 <p>
   <img src="docs/bilder/entdecken.jpg" width="200" alt="discover in search">
   <img src="docs/bilder/album.jpg" width="200" alt="album page with stars and thumbs">
+  <img src="docs/bilder/album-entdecken.jpg" width="200" alt="album page: discover">
 </p>
 
 ### Mood Mix
 
 A dedicated first tab next to Playlists and Radio (playlist button). Select one or more moods, narrow down the energy level
-from calm to high energy, limit it to genres, and under "Fine Tuning" choose styles, mix length, and discovery level: favorites, balanced, or
-hidden gems, based on your listening history. "Create Mix" first displays a preview with the reason for each track;
-individual tracks can be removed or the mix can be reshuffled. Only "Play Mix" replaces the queue.
+from calm to high energy, limit it to genres, and under "Fine-tuning" choose styles, mix length, and discovery level: favorites, balanced, or
+hidden gems, based on your listening history. "Create mix" first displays a preview with the reason for each track;
+individual tracks can be removed or the mix can be reshuffled. Only "Play mix" replaces the queue.
 
 The mix is based on Last.fm tags for each track, which the Tag Service collects while nothing is playing; the music files
 remain unchanged. Optionally, Essentia on the Mac can analyze each track directly (`tools/essentia/`): in that case,
@@ -81,15 +82,16 @@ energy and mood are derived from the audio, and a tempo control (BPM) is added.
 ### History, Statistics, and Review
 
 The Tag Service records what is played and can scrobble to Last.fm as well as import the existing Last.fm listening history.
-This data is used to provide "Recently Played", rankings (tracks, albums, artists, genres), statistics by day, time of day,
+This data is used to provide "Recent", rankings (tracks, albums, artists, genres), statistics by day, time of day,
 weekday, and genre, and an annual review with a comparison to the previous year, top genres, and newly discovered artists.
 Tapping a month displays the rankings for that month.
 
 <p>
+  <img src="docs/bilder/begruessung.jpg" width="200" alt="Welcome screen">
   <img src="docs/bilder/menue.jpg" width="200" alt="Menu behind the gear">
-  <img src="docs/bilder/verlauf.jpg" width="200" alt="Recently Played">
-  <img src="docs/bilder/statistik.jpg" width="200" alt="Statistics">
-  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Review">
+  <img src="docs/bilder/verlauf.jpg" width="200" alt="Recent">
+  <img src="docs/bilder/statistik.jpg" width="200" alt="Stats">
+  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Year in review">
 </p>
 
 ### Tag Editor and Library Check
@@ -97,7 +99,7 @@ Tapping a month displays the rankings for that month.
 Edit tags for individual tracks, entire albums, or all tracks by an artist, with text functions such as upper/lowercase
 conversion, Undo, and cover art options (choose a file, search online, save embedded cover art as `folder.jpg`). The Library Check finds
 albums without cover art, missing or inconsistent album artists, artists with multiple spellings, inconsistent
-album names or years, and tracks without track numbers, and suggests one genre per album (Discogs top categories, from
+album names or years, tracks without track numbers and release dates that differ from MusicBrainz, and suggests one genre per album (Discogs top categories, from
 existing genre tags and the audio analysis); each entry opens the appropriate editor directly and then stays greyed out until the next check. It also shows the
 progress of the mood tags.
 
@@ -118,6 +120,7 @@ progress of the mood tags.
   (see [Setup](docs/setup.md#language)).
 - Optional: control a network-connected Rotel amplifier (power, volume, input) via `rotel/rotel-bridge.js`.
 - TIDAL Watchdog: reconnects TIDAL or restarts Volumio if the TIDAL plugin becomes unresponsive.
+  (On my MX-Stream this happens due to a session timeout after about 4 hours without TIDAL use.)
 - `xplorio-deploy`: updates the player directly from this repository, with backups and `--rollback`; the same on
   Volumio 3 and 4.
 
@@ -137,7 +140,7 @@ Requirements: Volumio 2 (Node 8, Python 2.7, `mpc`) or Volumio 4 (Node and Pytho
 [docs/setup.md](docs/setup.md). Update directly on the player: `sudo xplorio-deploy`
 (`tools/xplorio-deploy.sh`, see there).
 
-The Rotel amplifier integration and TIDAL are optional (see setup). Custom settings (language, Rotel, services on/off) belong in `web/config.local.js`
+The Rotel amplifier integration and the TIDAL watchdog are optional (see setup). Custom settings (language, Rotel, services on/off) belong in `web/config.local.js`
 (template `web/config.local.js.example`); this file is not included in the repository. The Last.fm credentials (for similar artists,
 mood tags, information texts, and scrobbling) live in `/data/xplorio/data/keys.json` and are read only by the Tag Service.
 
