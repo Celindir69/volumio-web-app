@@ -27,7 +27,7 @@ function sysFull() {
       if (seq !== sysSeq) return;
       sysData = res[0];
       if (!sysData || !sysData.ok) throw new Error('keine Daten');
-      sysRender(res[1]);
+      sysKeepScroll(function(){ sysRender(res[1]); });
       sysLive(seq);
       sysFullTimer = setTimeout(function(){ if (seq === sysSeq && sysOpen()) sysFull(); }, 60000);
     }).catch(function(){
@@ -51,6 +51,19 @@ function sysLive(seq) {
   }, 2000);
 }
 
+/* Seite neu aufbauen, ohne dass die Bildlaufposition verloren geht (Höhe halten, Position zurücksetzen) */
+function sysKeepScroll(fn) {
+  var keep = [];
+  for (var el = sysBody; el && el.nodeType === 1; el = el.parentNode) if (el.scrollTop) keep.push([el, el.scrollTop]);
+  var se = document.scrollingElement;
+  if (se && se.scrollTop) keep.push([se, se.scrollTop]);
+  sysBody.style.minHeight = sysBody.offsetHeight + 'px';
+  fn();
+  keep.forEach(function(k){ k[0].scrollTop = k[1]; });
+  sysBody.style.minHeight = '';
+  keep.forEach(function(k){ k[0].scrollTop = k[1]; });
+}
+
 /* ---------- Formate ---------- */
 function sysNum(x, d) {
   try { return Number(x).toLocaleString(LANG_LOCALE, {minimumFractionDigits: d || 0, maximumFractionDigits: d || 0}); } catch (e) { return Number(x).toFixed(d || 0); }
@@ -68,11 +81,13 @@ function sysTime(t) {
   var d = new Date(t);
   return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
 }
-function sysDiskName(m) {
-  if (m === '/data') return T('sys.diskInternal');
-  var p = m.split('/');                                   /* /mnt/USB/Name, /mnt/NAS/Name, /mnt/INTERNAL */
-  if (p[2] === 'INTERNAL') return T('sys.diskInternalMusic');
-  return p.length > 3 ? p[2] + ' · ' + p.slice(3).join('/') : p.slice(2).join('/');
+function sysDiskName(k) {
+  var m = k.mount, last = m.split('/').filter(Boolean).pop() || m;
+  if (k.kind === 'card' || m === '/data' || m === '/') return T('sys.diskInternal');
+  if (/^\/mnt\/INTERNAL(\/|$)/.test(m)) return T('sys.diskInternalMusic');
+  if (k.kind === 'usb') return 'USB · ' + last;
+  var p = m.split('/');                                   /* /mnt/NAS/Name -> NAS · Name */
+  return p[1] === 'mnt' && p.length > 3 ? p[2] + ' · ' + p.slice(3).join('/') : last;
 }
 
 /* ---------- Bausteine ---------- */
@@ -82,11 +97,12 @@ function sysCard(title, cls) {
   return c;
 }
 function sysMeter(frac) {
-  var m = histEl('div', 'syMeter'), f = histEl('div', 'syMeterFill');
-  f.style.width = Math.max(0, Math.min(100, frac * 100)) + '%';
-  m.appendChild(f);
+  var m = histEl('div', 'syMeter');
+  m.appendChild(histEl('div', 'syMeterFill'));
+  sysMeterSet(m, frac);
   return m;
 }
+function sysMeterSet(m, frac) { m.firstChild.style.width = Math.max(0, Math.min(100, frac * 100)) + '%'; }
 function sysSvg(tag, attrs, parent) {
   var e = document.createElementNS(SYS_NS, tag);
   Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
@@ -97,8 +113,10 @@ function sysSvg(tag, attrs, parent) {
 /* Flächendiagramm [[Zeit, Wert], …] mit fester Skala lo..hi; Lücken (Dienst lief nicht) unterbrechen die Linie.
    opts: {lo, hi, h, fmt(v), grid:[Werte], gap (ms), labels: true, hover: true} */
 function sysArea(box, pts, opts) {
+  var W = Math.max(200, box.clientWidth || 320), H = opts.h || 120;
+  box.style.height = H + 'px';                             /* Höhe fest: beim Neuzeichnen wird die Seite nie kürzer (sonst springt sie nach oben) */
   while (box.firstChild) box.removeChild(box.firstChild);
-  var W = Math.max(200, box.clientWidth || 320), H = opts.h || 120, padB = opts.labels ? 18 : 2, padT = 6;
+  var padB = opts.labels ? 18 : 2, padT = 6;
   var svg = sysSvg('svg', {viewBox: '0 0 ' + W + ' ' + H, width: '100%', height: H, 'class': 'syChart'}, box);
   var lo = opts.lo, hi = opts.hi, ph = H - padB - padT;
   pts = pts.filter(function(p){ return p[1] !== null && p[1] !== undefined; });
@@ -233,7 +251,7 @@ function sysRender(st) {
   (d.disks || []).forEach(function(k){
     var row = histEl('div', 'syDisk');
     var head = histEl('div', 'syDiskHead');
-    head.appendChild(histEl('span', 'syDiskName', sysDiskName(k.mount)));
+    head.appendChild(histEl('span', 'syDiskName', sysDiskName(k)));
     head.appendChild(histEl('span', 'syDiskVal', k.ok
       ? T('sys.diskFree', {free: sysBytes(k.avail), size: sysBytes(k.size)})
       : T('sys.diskOffline')));
@@ -290,18 +308,22 @@ function sysPaintLive() {
   var now = d.now || Date.now(), live = d.live || [];
   sysArea(e.cpuLive, live, {lo: 0, hi: 100, h: 64, fmt: function(v){ return sysNum(v) + ' %'; }, grid: [50], gap: 10000,
                             t0: live.length ? live[live.length - 1][0] - 180000 : now - 180000, t1: live.length ? live[live.length - 1][0] : now, hover: true});
-  while (e.cores.firstChild) e.cores.removeChild(e.cores.firstChild);
-  (d.cores || []).forEach(function(c, i){
-    var b = histEl('div', 'syCore');
-    b.appendChild(histEl('span', 'syCoreName', T('sys.core', {n: i + 1})));
-    b.appendChild(sysMeter((c || 0) / 100));
-    b.appendChild(histEl('span', 'syCoreVal', c === null ? '–' : sysNum(c) + ' %'));
-    e.cores.appendChild(b);
+  (d.cores || []).forEach(function(c, i){                 /* Zeilen bleiben stehen, nur Werte ändern sich */
+    var b = e.cores.children[i];
+    if (!b) {
+      b = histEl('div', 'syCore');
+      b.appendChild(histEl('span', 'syCoreName', T('sys.core', {n: i + 1})));
+      b.appendChild(sysMeter(0));
+      b.appendChild(histEl('span', 'syCoreVal', ''));
+      e.cores.appendChild(b);
+    }
+    sysMeterSet(b.children[1], (c || 0) / 100);
+    b.children[2].textContent = c === null ? '–' : sysNum(c) + ' %';
   });
   if (d.temp !== null && d.temp !== undefined) {
     e.tempVal.textContent = sysNum(d.temp, 1) + ' °C';
-    while (e.tempMeter.firstChild) e.tempMeter.removeChild(e.tempMeter.firstChild);
-    e.tempMeter.appendChild(sysMeter((d.temp - 30) / 55));           /* Skala 30–85 °C: ab 80 °C drosselt der Raspberry Pi */
+    if (!e.tempMeter.firstChild) e.tempMeter.appendChild(sysMeter(0));
+    sysMeterSet(e.tempMeter.firstChild, (d.temp - 30) / 55);           /* Skala 30–85 °C: ab 80 °C drosselt der Raspberry Pi */
     e.tempNote.textContent = d.temp >= 80 ? '⚠ ' + T('sys.tempHot') : d.temp >= 70 ? '⚠ ' + T('sys.tempWarm') : T('sys.tempOk');
     e.tempNote.className = 'syNote' + (d.temp >= 70 ? ' syWarn' : '');
   } else e.tempVal.textContent = T('sys.none');
@@ -309,8 +331,8 @@ function sysPaintLive() {
   if (m.total) {
     var used = m.total - m.avail;
     e.memVal.textContent = sysNum(used / m.total * 100) + ' %';
-    while (e.memMeter.firstChild) e.memMeter.removeChild(e.memMeter.firstChild);
-    e.memMeter.appendChild(sysMeter(used / m.total));
+    if (!e.memMeter.firstChild) e.memMeter.appendChild(sysMeter(0));
+    sysMeterSet(e.memMeter.firstChild, used / m.total);
     e.memNote.textContent = T('sys.memUsed', {used: sysBytes(used), total: sysBytes(m.total)}) +
       (m.swapTotal ? ' · ' + T('sys.swap', {used: sysBytes(m.swapTotal - m.swapFree)}) : '');
   }
