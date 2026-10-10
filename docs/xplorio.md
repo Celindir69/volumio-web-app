@@ -20,8 +20,10 @@ gleich auch bei TIDAL, Qobuz oder HIGHRESAUDIO (aktives Abo vorausgesetzt). Ein 
 
 ## Du bist unschlüssig?
 
-Dann lass das Suchfeld einfach leer und dich inspirieren:
+Schon beim Öffnen begrüßt dich Xplorio mit dem **Album des Tages**, dem zuletzt Gehörten und dem, was neu in der
+Sammlung ist. Oder lass das Suchfeld einfach leer und dich inspirieren:
 
+- **Geburtstage** feiern Alben, die heute, diese Woche oder diesen Monat erschienen sind, runde Jubiläen in Gold.
 - **Zufällige Entdeckungen** bringen Alben nach oben, die schon lange nicht mehr liefen.
 - **Vor einem Jahr gehört** erinnert dich daran, was dich letzten Herbst begleitet hat.
 - **Früher oft gehört** holt alte Lieblinge zurück, die du fast vergessen hattest.
@@ -55,7 +57,8 @@ was gerade lief.
 ## Du magst, was gerade läuft?
 
 Dann fang genau dort an. Tipp auf den Künstler und sieh, was von ihm in deiner Sammlung liegt. Schau dir ähnliche
-Künstler an, die du auch besitzt. Lies, wer an dem Album mitgewirkt hat und was es darüber zu wissen gibt. Folge deinem
+Künstler an, die du auch besitzt. Lies, wer an dem Album mitgewirkt hat und was es darüber zu wissen gibt. Auf jeder Albumseite warten ähnliche Alben
+aus deiner Sammlung, auch zu Alben, die du gerade nur streamst. Folge deinem
 eigenen Pfad durch die Sammlung, bis zum nächsten Album, das dich packt. Und wenn du dich nicht entscheiden kannst:
 Bei Künstlern, Genres, Stimmungen und Jahrzehnten spielt der Würfel 25 zufällige Titel daraus.
 
