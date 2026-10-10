@@ -8,7 +8,7 @@ process.env.APP_CONFIG_DIR = dir;
 var svc = require('../tags/tag-service.js').server;
 svc.listen(0, function(){
   function req(method, p, body, cb) {
-    var r = http.request({port: svc.address().port, path: p, method: method}, function(res){
+    var r = http.request({port: svc.address().port, path: p, method: method, headers: {'X-Xplorio': '1'}}, function(res){
       var d = ''; res.on('data', function(c){ d += c; }); res.on('end', function(){ cb(res.statusCode, JSON.parse(d)); });
     });
     r.end(body ? JSON.stringify(body) : undefined);

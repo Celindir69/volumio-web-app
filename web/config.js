@@ -13,6 +13,8 @@ window.APP_CONFIG = {
   M4A_PROBE: true,    /* m4a: Codec (ALAC/AAC) aus der Datei lesen; false = nur M4A_LOSSLESS */
   M4A_LOSSLESS: true, /* m4a als verlustfrei (ALAC) einstufen; false = kein Abzeichen für m4a (AAC wäre sonst falsch eingestuft) */
   TAGS_PORT: 8766,    /* Port des Tag-Dienstes (Tag-Editor) auf dem Player */
+  ALLOWED_HOSTS: [],  /* Tag-Dienst und Rotel-Bridge antworten nur unter IP, Namen ohne Punkt und .local/.lan/.home/.internal/
+                         .home.arpa/.fritz.box. Weitere Namen des Players hier eintragen, z. B. ['player.example.net'] */
   ROTEL: false,       /* Rotel-Verstärker über rotel/rotel-bridge.js: Ein/Aus oben links, Lautstärke am Verstärker.
                          false = Lautstärke von Volumio (falls dort eingeschaltet), kein Ein/Aus-Knopf */
   ROTEL_HOST: '',     /* Adresse des Verstärkers im Netz (liest nur rotel-bridge.js), z. B. '192.168.1.50' */

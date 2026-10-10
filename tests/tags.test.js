@@ -137,7 +137,7 @@ else {
   var http = require('http');
   process.env.TAGS_LOG = path.join(root, 'log', 'changes.jsonl');
   function post(port, route, body, cb) {
-    var req = http.request({port: port, path: route, method: 'POST'}, function(res){
+    var req = http.request({port: port, path: route, method: 'POST', headers: {'X-Xplorio': '1'}}, function(res){
       var d = ''; res.on('data', function(c){ d += c; }); res.on('end', function(){ cb(JSON.parse(d)); });
     });
     req.end(JSON.stringify(body));

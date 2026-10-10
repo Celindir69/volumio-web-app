@@ -97,6 +97,15 @@ After an update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-s
 
 Additional variables: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (data folder, default `/data/xplorio/data`).
 
+**Access protection:** The Tag Service and the Rotel bridge only accept commands from the interface on the same device.
+Another website open in the browser can neither write tags, switch the amplifier, nor read the history.
+The services only answer when the player is addressed by its IP address, a name without a dot (`volumio`),
+or a name ending in `.local`, `.lan`, `.home`, `.internal`, `.home.arpa`, or `.fritz.box`.
+Add other names in `web/config.local.js` and restart both services:
+`window.APP_CONFIG.ALLOWED_HOSTS = ['player.example.net'];` (or the environment variable `XPLORIO_HOSTS`, comma-separated).
+Your own scripts that write without a browser (for example with `curl`) send the header `X-Xplorio: 1`;
+`curl -s localhost:8766/health` and other queries work as before.
+
 **Data folder:** The program lives in `/data/xplorio/tags/`; everything the service creates (history, Last.fm session, check result, covers, analysis …) lives in `/data/xplorio/data/`. That folder is readable only by `volumio` and is neither inside the web folder nor inside `/data/INTERNAL`, which Volumio may share on the network. Older installations kept the data next to the program; the service moves it on its first start. If the folder is missing and the service is not allowed to create it, it keeps using the old folder; in that case run once:
 `sudo mkdir -p /data/xplorio && sudo mkdir -m 700 -p /data/xplorio/data && sudo chown volumio:volumio /data/xplorio/data && sudo systemctl restart tag-service`.
 

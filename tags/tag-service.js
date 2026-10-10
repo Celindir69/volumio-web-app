@@ -16,6 +16,7 @@ var USE_SUDO    = process.env.USE_SUDO === '1';          /* tags.py per "sudo -n
 var MPC         = process.env.MPC         || 'mpc';
 /* Datenordner /data/xplorio/data (früher /data/web-app/data bzw. /data/INTERNAL/tags; siehe appdata.js) */
 var appdata     = require('./appdata.js');
+var guard       = require('./guard.js');
 var DATA_PREP   = process.env.TAGS_LOG ? {dir: path.dirname(process.env.TAGS_LOG)}
   : appdata.prepare(process.env.TAGS_DATA || appdata.defaultDir('/data/xplorio/data', '/data/web-app/data'), process.env.TAGS_OLD_DATA || '/data/INTERNAL/tags', console.log);
 var DATA_DIR    = DATA_PREP.dir;
@@ -1207,13 +1208,17 @@ function doLastfmApi(query, cb) {
 /* ---------- HTTP ---------- */
 
 function send(res, code, obj) {
-  res.writeHead(code, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  });
+  var h = guard.corsHeaders(res.xplorioOrigin);
+  h['Content-Type'] = 'application/json; charset=utf-8';
+  res.writeHead(code, h);
   res.end(JSON.stringify(obj));
+}
+
+/* Zusätzlich erlaubte Namen des Players (APP_CONFIG.ALLOWED_HOSTS, XPLORIO_HOSTS); einmal je Minute neu gelesen */
+var extraHostsAt = 0, extraHostsList = [];
+function extraHosts() {
+  if (Date.now() - extraHostsAt > 60000) { extraHostsList = guard.extraHosts(appConfig(), process.env.XPLORIO_HOSTS); extraHostsAt = Date.now(); }
+  return extraHostsList;
 }
 
 var server = http.createServer(function(req, res){
@@ -1224,6 +1229,10 @@ var server = http.createServer(function(req, res){
   }
 });
 function handle(req, res) {
+  /* nur die Oberfläche auf diesem Gerät (siehe guard.js) */
+  var g = guard.check(req, req.method === 'POST', extraHosts());
+  if (!g.ok) { res.writeHead(403, {'Content-Type': 'application/json; charset=utf-8', 'Vary': 'Origin'}); return res.end(JSON.stringify({ok: false, error: 'nicht erlaubt (' + g.reason + ')'})); }
+  res.xplorioOrigin = g.origin;
   var route = req.url.split('?')[0];
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true, lastfm: !!keys.lastfm().key, keysInWeb: keys.inWeb()});

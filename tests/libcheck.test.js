@@ -99,7 +99,7 @@ function service(mpdPort) {
   fs.mkdirSync(path.join(root, 'log'));
   var s2 = require('../tags/tag-service.js').server;
   function call(method, route, cb) {
-    var req = http.request({port: s2.address().port, path: route, method: method}, function(res){
+    var req = http.request({port: s2.address().port, path: route, method: method, headers: {'X-Xplorio': '1'}}, function(res){
       var d = ''; res.on('data', function(c){ d += c; }); res.on('end', function(){ cb(JSON.parse(d)); });
     });
     req.end(method === 'POST' ? '{}' : undefined);
