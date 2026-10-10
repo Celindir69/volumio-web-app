@@ -1,6 +1,6 @@
 # Setting Up Xplorio on the Player
 
-All commands are run on the player (via SSH), as a user with `sudo` privileges. Written for Volumio 2; everything that differs under Volumio 4 is collected under #volumio-4.
+All commands are run on the player (via SSH), as a user with `sudo` privileges. Written for Volumio 2; everything that differs under Volumio 4 is collected under [Volumio 4](#volumio-4).
 
 ## Interface
 
@@ -34,6 +34,13 @@ Dates, numbers, month and weekday names come from the browser in the selected la
 
 Not translated: texts that Volumio itself delivers (e.g. menu names when browsing) and error messages from the tag
 service; these stay German.
+
+### Output device notices
+
+If Volumio cannot open the output device (e.g. amplifier or DAC switched off), the app briefly shows "Audio output not
+reachable" or "Audio output is busy"; the progress bar then stays at the start. When Volumio reports a disconnected
+device, "Audio output disconnected" appears instead of Volumio's confirmation window; "Audio output connected" only
+appears when Volumio reports the device coming back (USB DAC). Volumio's messages are recognised in German and English.
 
 ## Updating with xplorio-deploy
 
@@ -115,11 +122,11 @@ The key is enough for similar artists, information texts, cover search, and mood
 
 `tags.py` runs with Python 2.7 and 3 and includes mutagen itself; if there is no `python` command, the service uses `python3`.
 
-Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/xplorio/data/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. While the library check is open, changes are only collected and read in once when it is closed (at the latest 10 minutes after the last change). This only works if MPD does not watch the files itself: with `auto_update "yes"` in `/etc/mpd.conf`, MPD scans every changed file immediately, and Volumio then rebuilds its album list each time (about a minute of load per album, up to a hang when editing many albums in a row). Recommendation: `auto_update "no"` (also in the template under `/volumio/app/plugins/music_service/mpd/`, if present) and `sudo systemctl restart mpd`; read in new music as usual with "Update library" (in the Volumio menu "Update", not "Rescan", or with the button at the top of the library check, which also covers changes still being collected). The service is accessible on the local network without authentication.
+Notes: Only files under `/mnt/INTERNAL`, `/mnt/USB`, and `/mnt/NAS` are allowed. Previous values for "Undo" are stored in `/data/xplorio/data/changes.jsonl`. If the music files are mirrored from another computer, the next synchronization will overwrite the changes made on the player. After changes MPD re-reads the affected folders, collected 15 seconds after the last change and never while MPD is still updating; with more than three folders, one scan of their common parent folder. While the library check is open, changes are only collected and read in once when it is closed (at the latest 10 minutes after the last change). This only works if MPD does not watch the files itself: with `auto_update "yes"` in `/etc/mpd.conf`, MPD scans every changed file immediately, and Volumio then rebuilds its album list each time (about a minute of load per album, up to a hang when editing many albums in a row). Recommendation: `auto_update "no"` (also in the template under `/volumio/app/plugins/music_service/mpd/`, if present) and `sudo systemctl restart mpd`; read in new music as usual with "Update library" (in the Volumio menu "Update", not "Rescan", or with the button at the top of the library check, which also covers changes still being collected, or with "Update library" in the gear menu). The service is accessible on the local network without authentication.
 
 ### Search for Cover Art Online
 
-In the Album Editor, "Search Online" searches iTunes, Last.fm (using the Last.fm key from `keys.json`), and the Cover Art Archive (MusicBrainz) for the album artist (otherwise the artist) and album currently entered in the fields. You can temporarily change the fields for searching without saving them.
+In the Album Editor, "Search online" searches iTunes, Last.fm (using the Last.fm key from `keys.json`), and the Cover Art Archive (MusicBrainz) for the album artist (otherwise the artist) and album currently entered in the fields. You can temporarily change the fields for searching without saving them.
 
 Suggestions appear side by side; tapping one applies the image just like a manually selected image (embed and/or `folder.jpg`, with Undo support).
 
@@ -153,13 +160,13 @@ The radio list displays the station logos using the address provided by Volumio,
 
 ### Welcome screen
 
-When the page opens (only with the Tag Service), a card in the middle of the window (with a wide margin in landscape) greets you by time of day: the **album of the day** (random, preferring albums not played for a long time or never; it stays the same all day) with "Play" and the album text (as in the info overlay, scrollable), **Recently played** (albums with at least two tracks played recently), **New in the collection** (albums whose files were added or changed in the last 180 days, by MPD's modification date) and a random mix. Tapping beside it closes it. It appears on its own at most every 30 minutes and not in the stage layout; "Show on opening" at the bottom turns it off for this device, and the menu entry "Welcome" opens it any time. After the update the Tag Service re-reads the album list once; until then "New in the collection" is missing.
+When the page opens (only with the Tag Service), a card in the middle of the window (with a wide margin in landscape) greets you by time of day: the **album of the day** (random, preferring albums not played for a long time or never; it stays the same all day) with "Play" and the album text (as in the info overlay, scrollable), **Recently played** (albums with at least two tracks played recently), **New in the collection** (albums whose files were added or changed in the last 180 days, by MPD's modification date) and a random mix. Tapping beside it closes it. It appears on its own at most every 30 minutes and not in the stage layout; "Show on opening" at the bottom turns it off for this device, and the menu entry "Welcome" opens it any time. With `?welcome=0` in the address it stays closed on opening (e.g. for a bookmark). After the update the Tag Service re-reads the album list once; until then "New in the collection" is missing.
 
-**Birthdays:** albums whose release day is today, this week (Monday to Sunday) or this month. The welcome screen shows today and this week (otherwise the month); Search & Discover shows all three in the Albums tab, plus "Recently played" and "New in the collection". Round birthdays (10, 20, 30 … years) carry the years as a badge, anniversaries (25, 50, 75 years) also a gold frame; they come first. The date comes from a complete Date tag (YYYY-MM-DD, matching the album's year); without one, the Tag Service looks it up once at MusicBrainz (first release of the release group, one request every 1.5 seconds, compilations excluded) and keeps it in `/data/xplorio/data/releasedates.jsonl`; albums not found are tried again after 90 days. For a large collection the first pass takes a few hours; meanwhile Discover shows the progress. To disable it: set `RELEASEDATES: false` in `web/config.local.js`, then restart the Tag Service.
+**Birthdays:** albums whose release day is today, this week (Monday to Sunday) or this month. The welcome screen shows today and this week (otherwise the month); Search & Discover shows all three in the Albums tab, plus "Recently played" and "New in the collection". Round birthdays (10, 20, 30 … years) carry the years as a badge, anniversaries (25, 50, 75 years) also a gold frame; they come first. The date comes from a complete Date tag (YYYY-MM-DD, matching the album's year); without one, the Tag Service looks it up once at MusicBrainz (first release of the release group, one request every 1.5 seconds, compilations excluded) and keeps it in `/data/xplorio/data/releasedates.jsonl`; albums not found are tried again after 90 days. For a large collection the first pass takes a few hours; while there is hardly any data and no birthday has been found yet, Discover shows the progress. To disable it: set `RELEASEDATES: false` in `web/config.local.js`, then restart the Tag Service.
 
 ### History and Statistics
 
-In the menu (gear at the top right) under "History and stats": **Recently Played** (by day), **Most Played** (tracks, albums, artists, or genres; 30 days, 12 months, or all time), **Statistics** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
+In the menu (gear at the top right) under "History and stats": **Recent** (by day), **Most played** (tracks, albums, artists, or genres; 30 days, 12 months, or all time), **Stats** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Year in review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
 
 Tapping plays the track or opens the album or artist.
 
@@ -206,19 +213,19 @@ With `LASTFM_KEY`, the Tag Service retrieves the Last.fm tags for every track in
 
 Queries are only made while nothing is playing (stopped or paused; checked every 5 seconds), at around 4 requests per second. The music files remain unchanged; the raw tags are stored in `/data/xplorio/data/moodtags/`, and the associated track list is stored in `/data/xplorio/data/library-tracks.json` (generated together with the album list).
 
-Progress and distribution are shown in the Library Check under "Mood Tags (Last.fm)".
+Progress and distribution are shown in the Library Check under "Mood tags (Last.fm)".
 
 To disable it: set `MOODTAGS: false` in `web/config.local.js`, then restart the Tag Service.
 
-**Mood Mix:** Playlist button, "Mood Mix" tab (appears as soon as the Tag Service is running). Here you can select multiple moods, an energy range, one or more genres (the album's genre tag, never relaxed), and, under "Fine Tuning", styles, tempo (with audio analysis), years (the album's release year from the Date tag; with a limit, albums without a year are left out, never relaxed), length, maximum track length (default 20 min, keeps DJ mixes out), and discovery level (based on playback history: favorites, balanced, hidden gems).
+**Mood Mix:** Playlist button, "Mood Mix" tab (appears as soon as the Tag Service is running). Here you can select multiple moods, an energy range, one or more genres (the album's genre tag, never relaxed), and, under "Fine-tuning", styles, tempo (with audio analysis), years (the album's release year from the Date tag; with a limit, albums without a year are left out, never relaxed), length, maximum track length (default 20 min, keeps DJ mixes out), and discovery level (based on playback history: favorites, balanced, hidden gems).
 
-"Create Mix" only shows a preview; only "Play Mix" replaces the queue (the list icon next to it appends the mix instead). If there are fewer than 20 exact matches, the mix also includes similar tracks (energy ±1, then without style) and indicates this. The same artist is never played twice in a row.
+"Create mix" only shows a preview; only "Play mix" replaces the queue (the list icon next to it appends the mix instead). If there are fewer than 20 exact matches, the mix also includes similar tracks (energy ±1, then without style) and indicates this. The same artist is never played twice in a row.
 
 ### Audio Analysis with Essentia (Optional, on the Mac)
 
 [Essentia](https://essentia.upf.edu) analyzes each track's audio directly and provides tempo (BPM), key, mood (happy, sad, relaxed, aggressive, party), danceability, vocal/instrumental classification, valence and arousal, as well as Discogs styles.
 
-This requires too much processing power for the player, so `tools/essentia/analyse.py` runs on the Mac and uploads a results file. The Tag Service then uses the audio-derived energy, tempo, and mood values for those tracks, while Last.fm adds additional moods and styles; the Mood Mix then gets a tempo control under "Fine Tuning".
+This requires too much processing power for the player, so `tools/essentia/analyse.py` runs on the Mac and uploads a results file. The Tag Service then uses the audio-derived energy, tempo, and mood values for those tracks, while Last.fm adds additional moods and styles; the Mood Mix then gets a tempo control under "Fine-tuning".
 
 One-time setup (macOS 15 or later; Python 3.14 from python.org or `brew install python@3.14`):
 
@@ -253,7 +260,7 @@ python3 analyse.py --upload http://<player>:8766
 - An intermediate upload can be performed at any time; the Tag Service then uses the results available so far.
 - If the analysis crashes on a file (macOS then reports "Python quit unexpectedly"), the script continues and records the file as an error; `--retry-errors` retries such files later. Files longer than 30 minutes (recordings, DJ mixes) are skipped because they are loaded entirely into memory (`--max-minutes`, 0 = all); they are counted as "skipped", not as errors.
 - With ffmpeg (`brew install ffmpeg`) the script reads files that Essentia fails on: after a read error, an almost empty result, or a crash (the file is then retried on its own, directly with ffmpeg). The script looks for ffmpeg itself (PATH, `/opt/homebrew/bin`, `/usr/local/bin`) and shows at startup which one it uses; `--ffmpeg <path>` selects another, `--ffmpeg aus` turns it off. `--retry-errors` catches up on files that failed before. Tracks read with ffmpeg carry `"dec":"ffmpeg"` in `essentia.jsonl`.
-- The result file `essentia.jsonl` is located on the player under `/data/xplorio/data/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood Tags" how many tracks have been matched.
+- The result file `essentia.jsonl` is located on the player under `/data/xplorio/data/` (replaced with each upload; alternatively copy it there using `scp`). The Library Check shows under "Mood tags" how many tracks have been matched.
 
 ### Artist and Album Information
 
@@ -280,7 +287,7 @@ Copy `rotel/rotel-bridge.js` to `/data/xplorio/rotel/` and configure it as a sys
 
 ```js
 window.APP_CONFIG.ROTEL = true;                  // Power button and amplifier volume in the interface
-window.APP_CONFIG.ROTEL_HOST = '192.168.1.50';   // Amplifier address, read by the bridge at startup
+window.APP_CONFIG.ROTEL_HOST = '<amplifier-ip>';   // Amplifier address, read by the bridge at startup
 ```
 
 Then restart the bridge. To allow the amplifier to be powered on via the network while in standby, set its Power Mode to "Quick".
@@ -328,6 +335,6 @@ The interface also runs under Volumio 4 (tested on a test instance). Differences
 
   Python 3 is included, and the Tag Service includes mutagen.
 
-- **Information texts:** Volumio 4 only provides artist and album information with a subscription; the app therefore retrieves it from Last.fm and Wikipedia (see #artist-and-album-information). With `LASTFM_KEY` in `/data/xplorio/data/keys.json`, album information is also available.
+- **Information texts:** Volumio 4 only provides artist and album information with a subscription; the app therefore retrieves it from Last.fm and Wikipedia (see [Artist and Album Information](#artist-and-album-information)). With `LASTFM_KEY` in `/data/xplorio/data/keys.json`, album information is also available.
 
 - **Not tested under Volumio 4:** `kioskTV.html` (kiosk folder), Rotel Bridge, and TIDAL Watchdog (the watchdog is located under `/volumio/http/www4/tools/` there; adjust the path in the cron entry accordingly).
