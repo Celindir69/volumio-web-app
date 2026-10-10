@@ -1,5 +1,5 @@
 /* Menü hinter dem Zahnrad oben rechts: Werkzeuge, die nicht zur Suche gehören.
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach check.js, history.js, system.js und volumio.js geladen.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach check.js, history.js, system.js und volumio.js geladen (help.js danach, openHelp erst beim Tippen).
    Weitere Einträge: eine Zeile in MENU_ITEMS (needsTags: nur, wenn der Tag-Dienst läuft). */
 var overlayMenu = document.getElementById('overlayMenu');
 var menuBody    = document.getElementById('menuBody');
@@ -17,7 +17,9 @@ var MENU_ITEMS = [
   {id: 'system', needsTags: true, title: T('menu.system'), sub: T('menu.systemSub'), open: function(){ openSystem(); },
    icon: 'M3 13h4l3-8 4 14 3-6h4v2h-2.8L14 22 10 9.4 8.4 15H3z'},
   {id: 'volumio', title: T('menu.volumio'), sub: T('menu.volumioSub'), open: function(){ openVolumio(); },
-   icon: 'M3 4h4.2l4.8 11.3L16.8 4H21l-7 16h-4L3 4z'}
+   icon: 'M3 4h4.2l4.8 11.3L16.8 4H21l-7 16h-4L3 4z'},
+  {id: 'help', title: T('menu.help'), sub: T('menu.helpSub'), open: function(){ openHelp(); },
+   icon: 'M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14a4 4 0 0 0-4 4h2a2 2 0 1 1 4 0c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5a4 4 0 0 0-4-4z'}
 ];
 var MENU_CHEVRON = 'M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z';
 
