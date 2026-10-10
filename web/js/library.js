@@ -131,8 +131,15 @@ function loadPlaylists() {
 }
 
 /* Senderlogos vom Tag-Dienst (auf dem Player gespeichert) statt des Symbols; ohne Logo bleibt die bisherige Anzeige */
+/* Sendername je Adresse merken: läuft der Sender, meldet poll.js das Logo aus dem Player unter diesem Namen (radioLogoLearn) */
+function radioNames() { try { return JSON.parse(localStorage.getItem('radioNames') || '{}') || {}; } catch (e) { return {}; } }
 function radioLogos(items, container) {
   if (typeof TAGS === 'undefined') return;
+  var names = radioNames(), keys;
+  items.forEach(function(it){ var n = it.title || it.name || ''; if (it.uri && n) { delete names[it.uri]; names[it.uri] = n; } });
+  keys = Object.keys(names);
+  keys.slice(0, Math.max(0, keys.length - 500)).forEach(function(k){ delete names[k]; });
+  try { localStorage.setItem('radioNames', JSON.stringify(names)); } catch (e) { /* egal */ }
   var rows = container.querySelectorAll('.plRow');
   items.forEach(function(it, i){
     var icon = rows[i] && rows[i].querySelector('.plIcon'), name = it.title || it.name || '';

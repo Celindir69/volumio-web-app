@@ -11,6 +11,19 @@ function paintQuality(st) {
   mBadge.className = 'qBadge' + (q.kind ? ' ' + q.kind : '');
 }
 
+/* Webradio: zeigt der Player ein Senderlogo (Adresse von Volumio), es dem Tag-Dienst für die Senderliste melden.
+   Den Namen kennt die Senderliste (radioNames in library.js); einmal je Sender und Adresse */
+var radioLogoSent = {};
+function radioLogoLearn(st) {
+  if (st.trackType !== 'webradio' || typeof TAGS === 'undefined' || !st.uri) return;
+  var a = String(st.albumart || '');
+  if (!/^https?:\/\//.test(a)) return;
+  var name = (typeof radioNames === 'function' && radioNames()[st.uri]) || '';
+  if (!name || radioLogoSent[st.uri] === a) return;
+  radioLogoSent[st.uri] = a;
+  new Image().src = TAGS + '/stationlogo?name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(a);
+}
+
 /* Webradio: Cover zum laufenden Titel vom Tag-Dienst (iTunes/Deezer); bis es geladen ist und ohne Treffer das Senderlogo */
 var radioCovers = {};            /* "Künstler|Titel" -> Bildadresse, false (kein Cover) oder null (lädt) */
 function radioArt(st, stationArt) {
@@ -63,6 +76,7 @@ updateSyncedLyrics();
     }
     updateCtrlUI();
 
+    radioLogoLearn(st);
     var art = radioArt(st, artUrl(st.albumart));
     if (art && art !== lastArt) {
       lastArt = art;
@@ -155,7 +169,7 @@ Promise.all([
 
 /* kleine Zwischenspeicher im Dauerbetrieb (iPad läuft tagelang) begrenzen: älteste Einträge zuerst */
 setInterval(function(){
-  [[radioCovers, 300], [similarCache, 300], [similarAllCache, 300], [streamSimilarCache, 200], [moodCache, 300], [creditCache, 300]]
+  [[radioCovers, 300], [radioLogoSent, 300], [similarCache, 300], [similarAllCache, 300], [streamSimilarCache, 200], [moodCache, 300], [creditCache, 300]]
     .forEach(function(p){
       var keys = Object.keys(p[0]);
       keys.slice(0, Math.max(0, keys.length - p[1])).forEach(function(k){ delete p[0][k]; });
