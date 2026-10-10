@@ -52,16 +52,18 @@ Store.prototype.get = function(name, cb, extra) {
   var self = this, f = this.files(name);
   fs.readFile(f.img, function(e, buf){
     if (!e) return cb(null, buf);
-    var none = null;
-    try { none = fs.statSync(f.none); } catch (x) { /* noch nie gesucht */ }
-    if (none && Date.now() - none.mtime.getTime() < self.noneTtl) return cb(null, null);
+    var none = null, noneFor = '';
+    try { none = fs.statSync(f.none); noneFor = fs.readFileSync(f.none, 'utf8'); } catch (x) { /* noch nie gesucht */ }
+    /* "nichts gefunden" gilt, bis die Zeit um ist; eine neue Bildadresse (extra) wird trotzdem versucht */
+    if (none && Date.now() - none.mtime.getTime() < self.noneTtl && (!extra || String(extra) === noneFor)) return cb(null, null);
     if (self.waiting[f.img]) return self.waiting[f.img].push(cb);
     self.waiting[f.img] = [cb];
     self.queue.push(function(done){
       self.lookup(name, function(buf, temporary){
         try { fs.mkdirSync(self.dir); } catch (x) { /* existiert schon */ }
         try {
-          if (buf) fs.writeFileSync(f.img, buf); else if (!temporary) fs.writeFileSync(f.none, '');   /* Netzfehler nicht merken */
+          if (buf) { fs.writeFileSync(f.img, buf); try { fs.unlinkSync(f.none); } catch (x) { /* gab keins */ } }
+          else if (!temporary) fs.writeFileSync(f.none, extra ? String(extra) : '');   /* Netzfehler nicht merken */
         } catch (x) { /* nächstes Mal neu */ }
         if (self.max && ++self.writes % 50 === 0) self.prune();
         var list = self.waiting[f.img]; delete self.waiting[f.img];

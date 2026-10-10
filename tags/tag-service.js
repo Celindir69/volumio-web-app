@@ -1070,7 +1070,7 @@ var stationLogos = new artistimg.Store(path.join(DATA_DIR, 'stations'), {lookup:
 
 function sendImage(res, buf) {
   var type = buf && radio.mime(buf);
-  if (!type) { res.writeHead(404, {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600'}); return res.end(); }
+  if (!type) { res.writeHead(404, {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store'}); return res.end(); }   /* kann gleich danach gelernt werden */
   res.writeHead(200, {'Content-Type': type, 'Content-Length': buf.length, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=2592000'});
   res.end(buf);
 }

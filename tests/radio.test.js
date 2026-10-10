@@ -70,8 +70,17 @@ fake.listen(0, function(){
                       assert.strictEqual(r8.statusCode, 404);
                       assert.strictEqual(calls.filter(function(c){ return c === '/img/swr.png'; }).length, swrBefore);
                     });
-                    console.log(n + ' Prüfungen');
-                    svc.close(); fake.close();
+                    process.env.RADIO_ALLOW_LOCAL = '1';
+                    get('/stationlogo?name=' + encodeURIComponent('Heimnetz FM') + '&url=' + encodeURIComponent(base + '/img/bob.png'), function(r9){
+                      t('nach "kein Logo": eine neue Adresse aus dem Player wird doch geladen und gemerkt', function(){
+                        assert.strictEqual(r9.statusCode, 200);
+                      });
+                      get('/stationlogo?name=' + encodeURIComponent('Heimnetz FM'), function(r10){
+                        t('danach auch ohne Adresse vom Player', function(){ assert.strictEqual(r10.statusCode, 200); });
+                        console.log(n + ' Prüfungen');
+                        svc.close(); fake.close();
+                      });
+                    });
                   });
                 });
               });
