@@ -157,6 +157,7 @@
     font-size:calc(3.8 * var(--vw)); border-bottom:2px solid transparent;
     opacity:.5; transition:all .2s; white-space:nowrap; }
   .infoTab.on { border-bottom-color:var(--fg); opacity:1; }
+  .bTabs .infoTab { padding-top:calc(1.5 * var(--vw) + 4px); }   /* zwischen der Linie des Seitenkopfs und der eigenen mittig */
   #infoSlider { position:relative; overflow:hidden; }
   .infoImg { width:100%; max-height:60vh; object-fit:cover; border-radius:calc(2 * var(--vw)); margin-bottom:calc(4 * var(--vw)); display:block; }
   @media (orientation:landscape) { .infoImg.album { display:none; } }
