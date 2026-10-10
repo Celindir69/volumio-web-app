@@ -76,7 +76,10 @@ function menuAbout() {
     row.appendChild(b); row.appendChild(document.createTextNode(' · ' + T(x[1])));
     list.appendChild(row);
   });
-  more.addEventListener('click', function(){ box.classList.toggle('third'); });
+  more.addEventListener('click', function(){
+    box.classList.toggle('third');
+    if (box.classList.contains('third')) list.scrollIntoView({behavior: 'smooth', block: 'end'});   /* klappt sonst unter dem Rand auf */
+  });
   [logo, name, claim, ver, copy, lic, more, list].forEach(function(el){ box.appendChild(el); });
   function show(v) {
     var parts = [];
