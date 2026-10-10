@@ -106,4 +106,4 @@ document.getElementById('btnMenu').addEventListener('click', function(){
 document.getElementById('closeMenu').addEventListener('click', closeAllOverlays);
 
 /* Einträge mit Tag-Dienst nur, wenn er läuft */
-tagGetJson('/health').then(function(r){ menuTags = !!(r && r.ok); if (overlayMenu.classList.contains('on')) menuRender(); }).catch(function(){});
+whenTags(function(){ menuTags = true; if (overlayMenu.classList.contains('on')) menuRender(); });

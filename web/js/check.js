@@ -52,13 +52,20 @@ function openCheck() {
   checkLoad();
 }
 
+var checkShown = null;          /* {at, info, res}: zuletzt gezeichnetes Ergebnis; während der Prüfung nur den Fortschritt neu schreiben */
 function checkLoad() {
   clearTimeout(checkTimer);
-  Promise.all([tagGetJson('/check'), tagGetJson('/moodtags').catch(function(){ return null; })]).then(function(both){
+  var have = checkShown && checkShown.info.isConnected && checkShown.at ? '?have=' + encodeURIComponent(checkShown.at) : '';
+  Promise.all([tagGetJson('/check' + have), tagGetJson('/moodtags').catch(function(){ return null; })]).then(function(both){
     var res = both[0];
     if (!overlayCheck.classList.contains('on')) return;
     checkMood = both[1];
-    checkRender(res);
+    if (res.result === 'same' && checkShown && checkShown.running && res.running) {
+      checkShown.info.textContent = checkRunText(res.running) + (res.error ? T('check.errorSuffix', {error: res.error}) : '');
+    } else {
+      if (res.result === 'same') res.result = checkShown ? checkShown.res.result : null;
+      checkRender(res);
+    }
     var mt = checkMood && checkMood.enabled && checkMood.status;
     if (res.running) checkTimer = setTimeout(checkLoad, 2000);
     else if (mt && mt.state === 'läuft') checkTimer = setTimeout(checkLoad, 10000);
@@ -72,6 +79,11 @@ function checkStart() {
   tagPost('/check', {}).then(checkLoad).catch(checkLoad);
 }
 
+function checkRunText(run) {
+  return run.phase === 'mpd'
+    ? (run.total ? T('check.runFolders', {done: checkNum(run.done), total: checkNum(run.total)}) : T('check.runFoldersNoTotal', {done: checkNum(run.done)}))
+    : T('check.runCovers', {done: checkNum(run.done), total: checkNum(run.total)});
+}
 function checkRender(res) {
   var keepScroll = checkBody.scrollTop;
   while (checkBody.firstChild) checkBody.removeChild(checkBody.firstChild);
@@ -79,10 +91,9 @@ function checkRender(res) {
 
   var head = document.createElement('div'); head.className = 'ckHead';
   var info = document.createElement('div'); info.className = 'ckInfo';
+  checkShown = {at: r ? r.at : null, info: info, res: res, running: !!run};
   if (run) {
-    info.textContent = run.phase === 'mpd'
-      ? (run.total ? T('check.runFolders', {done: checkNum(run.done), total: checkNum(run.total)}) : T('check.runFoldersNoTotal', {done: checkNum(run.done)}))
-      : T('check.runCovers', {done: checkNum(run.done), total: checkNum(run.total)});
+    info.textContent = checkRunText(run);
   } else if (r) {
     info.textContent = T('check.checkedAt', {date: checkFmtDate(r.at), songs: checkNum(r.songs), albums: checkNum(r.albums)});
   } else {

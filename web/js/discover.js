@@ -293,7 +293,7 @@ if (window.MutationObserver) new MutationObserver(function(){
   if (!overlaySearch.classList.contains('on')) clearTimeout(discoverTimer);
 }).observe(overlaySearch, {attributes: true, attributeFilter: ['class']});
 
-tagGetJson('/health').then(function(r){ if (r && r.ok) { discoverReady = true; if (!searchQuery) renderSearchResults(); } }).catch(function(){});
+whenTags(function(){ discoverReady = true; if (!searchQuery) renderSearchResults(); });
 
 /* ---------- Zufallsmix: Würfel neben „Alle abspielen“ ---------- */
 /* q: {artist} oder {dirs: [...]}; der Tag-Dienst zieht 25 Titel (nie derselbe Künstler direkt hintereinander),

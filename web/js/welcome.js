@@ -124,5 +124,6 @@ overlayWelcome.addEventListener('click', function(ev){ if (ev.target === overlay
 (function(){
   var p = welcomePref();
   if (p.off || stageOn || Date.now() - (p.at || 0) < WELCOME_GAP_MS || /[?&]welcome=0\b/.test(location.search)) return;
-  tagGetJson('/health').then(function(r){ if (r && r.ok) openWelcome(true); }).catch(function(){});
+  var loaded = Date.now();
+  whenTags(function(){ if (Date.now() - loaded < 120000 && !stageOn) openWelcome(true); });   /* später nicht mehr überraschend aufgehen */
 })();

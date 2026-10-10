@@ -11,8 +11,14 @@
 <link rel="icon" type="image/png" sizes="32x32" href="web/icons/favicon-32.png">
 <link rel="manifest" href="web/manifest.json">
 <script>
-  document.write('<link rel="stylesheet" href="web/css/base.css?t=' + Date.now() + '">' +
-                 '<link rel="stylesheet" href="web/css/app.css?t=' + Date.now() + '">');
+  /* Stand der Installation (schreibt xplorio-deploy): Skripte und Styles nur nach einem Deploy neu laden.
+     Ohne web/build.js (Entwicklung) jedes Mal frisch. */
+  document.write('<script src="web/build.js?t=' + Date.now() + '" onerror="void 0"><\/script>');
+</script>
+<script>
+  var XV = window.XPLORIO_BUILD || String(Date.now());
+  document.write('<link rel="stylesheet" href="web/css/base.css?v=' + XV + '">' +
+                 '<link rel="stylesheet" href="web/css/app.css?v=' + XV + '">');
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -22,8 +28,8 @@
 </script>
 <script>
   /* hell/dunkel (theme.js), Sprache wählen und Sprachdateien laden (i18n.js lädt web/lang/<code>.js nach) */
-  document.write('<script src="web/js/theme.js?t=' + Date.now() + '"><\/script>' +
-                 '<script src="web/js/i18n.js?t=' + Date.now() + '"><\/script>');
+  document.write('<script src="web/js/theme.js?v=' + XV + '"><\/script>' +
+                 '<script src="web/js/i18n.js?v=' + XV + '"><\/script>');
 </script>
 </head>
 <body>
@@ -338,9 +344,9 @@
 <script>
   langApply(document);                      /* data-i18n-Texte im HTML in der gewählten Sprache */
 
-  /* App-Skripte immer frisch laden: nach xplorio-deploy sonst oft alte Stände aus dem Browser-Cache (Reihenfolge wichtig) */
+  /* App-Skripte je Stand laden (?v=): nach xplorio-deploy neu, sonst aus dem Browser-Cache (Reihenfolge wichtig) */
   ['streaming', 'infotext', 'core', 'lyrics', 'autodj', 'controls', 'info', 'queue', 'library', 'marquee', 'browse', 'textfn', 'tagedit', 'rating', 'check', 'history', 'discover', 'genre', 'moodmix', 'ui', 'volumio', 'menu', 'quality', 'mp4probe', 'color', 'poll', 'stage', 'welcome'].forEach(function(n){
-    document.write('<script src="web/js/' + n + '.js?t=' + Date.now() + '"><\/script>');
+    document.write('<script src="web/js/' + n + '.js?v=' + XV + '"><\/script>');
   });
 </script>
 </body>

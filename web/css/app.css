@@ -7,6 +7,7 @@
 
 #coverWrap { flex:0 0 auto; margin-bottom:3.5vh;
   /* auf kurzen Bildschirmen (iPhone SE) schrumpft das Cover, damit die Symbolleiste frei bleibt */
+  width:min(calc(76 * var(--vw)), calc(100vh - 440px)); height:min(calc(76 * var(--vw)), calc(100vh - 440px));   /* Safari < 15.4: ohne dvh */
   width:min(calc(76 * var(--vw)), calc(100dvh - 440px)); height:min(calc(76 * var(--vw)), calc(100dvh - 440px));
   max-width:360px; max-height:360px; }
   #cover { width:100%; height:100%; object-fit:contain;
@@ -37,8 +38,8 @@
 #seekWrap { flex:0 0 auto; width:88%; margin-bottom:2vh; }
   #seekBar { width:100%; height:4px; background:rgba(var(--fg-rgb),.25);
     border-radius:2px; cursor:pointer; }
-  #seekFill { height:100%; width:0%; background:var(--accent, var(--fg)); transition:background-color .8s; border-radius:2px;
-    pointer-events:none; }
+  #seekFill { height:100%; width:100%; background:var(--accent, var(--fg)); transition:background-color .8s; border-radius:2px;
+    pointer-events:none; transform:scaleX(0); transform-origin:left center; }   /* scaleX statt width: kein neues Layout je Takt */
   #seekTimes { display:flex; justify-content:space-between;
     margin-top:calc(1.5 * var(--vw)); font-size:calc(3 * var(--vw)); opacity:.5; }
 
@@ -100,7 +101,7 @@
   #btnStage.on { opacity:1; }
   #btnMenu { opacity:.75; }
   /* solange ein Overlay offen ist, schaut das Zahnrad nicht durch die Seitenleiste (liegt sonst über dem Schließen-Kreuz) */
-  body:has(.overlay.on) #btnMenu { visibility:hidden; }
+  body.ovOn #btnMenu { visibility:hidden; }   /* ovOn/ovMain setzt ui.js (statt :has, fehlt in Safari < 15.4) */
 
   #toast { position:fixed; z-index:20; left:50%; bottom:max(env(safe-area-inset-bottom,0px), 24px);
     transform:translate(-50%, 20px); opacity:0; pointer-events:none; max-width:86%; text-align:center;
@@ -465,7 +466,7 @@
       padding-right:max(env(safe-area-inset-right,0px),12px);
       padding-top:0; justify-content:flex-start; gap:calc(3 * var(--vw)); }
     #topSpacer { display:none; }
-    #coverWrap { flex:0 0 auto; margin:0; width:auto; height:88dvh;
+    #coverWrap { flex:0 0 auto; margin:0; width:auto; height:88vh; height:88dvh;
       max-width:none; max-height:none; }
     #cover { width:auto; height:100%; border-radius:calc(2 * var(--vw)); }
     #rightPane { flex:1 1 auto; min-width:0; display:flex;
@@ -500,7 +501,7 @@
     #app { padding-left:max(env(safe-area-inset-left,0px), calc((100vw - 1500px) / 2), 28px);
       padding-right:max(env(safe-area-inset-right,0px), calc((100vw - 1500px) / 2), 28px);
       gap:clamp(24px, 4vw, 72px); }
-    #coverWrap { height:min(84dvh, 46vw, calc(100dvh - 80px)); }
+    #coverWrap { height:min(84vh, 46vw, calc(100vh - 80px)); height:min(84dvh, 46vw, calc(100dvh - 80px)); }
     #rightPane { max-width:700px; }
     #cRepeat .badge { font-size:11px; top:-5px; left:calc(100% - 9px); }
     #actions { justify-content:space-between; gap:0; }
@@ -633,7 +634,7 @@ html.stage #topRight .actBtn { padding:0; opacity:.55; }
 html.stage #topRight .actBtn svg { width:58%; height:58%; max-width:none; max-height:none; }
 html.stage #topBar .topBtn { width:44px; height:44px; }
 /* offenes Seitenfenster (Queue, Suche …) liegt über den Lyrics: Knöpfe oben rechts ausblenden */
-html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #topRight { visibility:hidden; }
+html.stage body.ovMain #topRight { visibility:hidden; }
 
 
 /* Bilder, die nicht laden oder keine Quelle haben: nichts zeigen (kein Fragezeichen), Platz bleibt */
@@ -773,7 +774,7 @@ html.lyrSynced #lyrSync { display:flex; }
 #lyrSyncVal.set { opacity:1; font-weight:700; }
 #lyrShiftBar { display:none; position:absolute; top:0; bottom:0; align-items:center; justify-content:flex-start; gap:12px; pointer-events:none; }
 html.stage.lyrSynced #lyrShiftBar { display:flex; }
-html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShiftBar { visibility:hidden; }
+html.stage body.ovMain #lyrShiftBar { visibility:hidden; }
 
 /* Verlauf, Rückblick: Veränderung zum Vorjahr */
 .hDelta { font-size:calc(2.4 * var(--vw)); opacity:.45; margin-top:calc(.5 * var(--vw)); white-space:nowrap; }

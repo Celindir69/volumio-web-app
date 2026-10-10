@@ -445,6 +445,7 @@ function histLastfm(st, seq) {
     info.textContent = st.user ? T('hist.lastfm.expired') : T('hist.lastfm.notConnected');
     btns.appendChild(histLastfmBtn(T('hist.lastfm.connect'), function(b){
       var win = window.open('about:blank', '_blank');          /* gleich öffnen, sonst blockiert der Browser das Fenster */
+      if (win) win.opener = null;                             /* Last.fm-Seite bekommt keinen Zugriff auf die App */
       histLastfmAction('connect').then(function(r){
         b.disabled = false;
         if (!r || !r.ok) { if (win) win.close(); return; }

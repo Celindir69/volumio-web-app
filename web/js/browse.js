@@ -480,9 +480,10 @@ function browseAlbum(e, seq) {
 
 /* ---------- Titel einer Playlist ---------- */
 /* Tipp auf einen Titel: die ganze Playlist wird zur Warteschlange und läuft ab diesem Titel */
-var lastPlayedPlaylist = '';
+var lastPlayedPlaylist = '', playlistJump = 0;
 function playlistPlay(e, tracks, from) {
   lastPlayedPlaylist = e.uri;
+  var jump = ++playlistJump;                       /* inzwischen etwas anderes gestartet: nicht mehr springen */
   socket.emit('replaceAndPlay', {uri:e.uri, title:e.name, albumart:null, service:e.service || 'mpd', type:e.type || undefined});
   closeAllOverlays();
   browseOrigin = null;
@@ -490,8 +491,13 @@ function playlistPlay(e, tracks, from) {
   var tries = 0;
   (function waitForQueue() {                       /* warten, bis die Warteschlange vollständig ist, dann springen */
     setTimeout(function(){
+      if (jump !== playlistJump || lastPlayedPlaylist !== e.uri) return;
       fetch('/api/v1/getQueue').then(function(r){ return r.json(); }).then(function(j){
-        var n = (j && j.queue) ? j.queue.length : 0;
+        if (jump !== playlistJump) return;
+        var q = (j && j.queue) || [], n = q.length;
+        function tail(u) { return String(u || '').split('/').pop(); }   /* Präfixe (music-library/, mnt/) unterscheiden sich */
+        var t0 = tracks[0] && tail(tracks[0].uri), q0 = q[0] && tail(q[0].uri);
+        if (t0 && q0 && t0 !== q0) return;            /* Warteschlange gehört nicht (mehr) zu dieser Playlist */
         if (n >= tracks.length) socket.emit('play', {value:from});
         else if (++tries < 16) waitForQueue();
       }).catch(function(){ if (++tries < 16) waitForQueue(); });

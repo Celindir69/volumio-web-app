@@ -510,6 +510,31 @@ function tagSelect(list, value) {
 function tagGetJson(route) {
   return fetch(TAGS + route).then(function(r){ return r.json(); });
 }
+
+/* whenTags(fn): fn(health), sobald der Tag-Dienst antwortet. Eine gemeinsame Abfrage für alle Teile; ohne Antwort
+   später erneut (5 s, 10 s, … bis 1 min) und beim Zurückkehren zur Seite, z. B. wenn das iPad nach einem Stromausfall
+   schneller lädt als der Player */
+var tagsHealth = null, tagsWaiters = [], tagsChecking = false, tagsRetry = null, tagsTries = 0;
+function whenTags(fn) {
+  if (tagsHealth) return fn(tagsHealth);
+  tagsWaiters.push(fn);
+  tagsCheck();
+}
+function tagsCheck() {
+  if (tagsHealth || tagsChecking) return;
+  tagsChecking = true; clearTimeout(tagsRetry);
+  withTimeout(tagGetJson('/health'), 5000).then(function(r){
+    tagsChecking = false;
+    if (!r || !r.ok) throw new Error('kein Tag-Dienst');
+    tagsHealth = r;
+    var list = tagsWaiters; tagsWaiters = [];
+    list.forEach(function(f){ try { f(r); } catch (e) { console.error(e); } });
+  }).catch(function(){
+    tagsChecking = false;
+    if (!tagsHealth) tagsRetry = setTimeout(tagsCheck, Math.min(60000, 5000 * Math.pow(2, tagsTries++)));
+  });
+}
+document.addEventListener('visibilitychange', function(){ if (!document.hidden && !tagsHealth && tagsWaiters.length) { tagsTries = 0; tagsCheck(); } });
 /* JSON an den Tag-Dienst (als text/plain: kein Vorab-Request des Browsers nötig) */
 function tagPostJson(route, body) {
   return fetch(TAGS + route, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, body: JSON.stringify(body)})

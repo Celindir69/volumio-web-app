@@ -21,8 +21,12 @@ function resetSwipe() {
   swipe = null;
 }
 
+var queueSeq = 0;              /* nur die Antwort der letzten Anfrage zeichnen (ältere kämen sonst mit veralteten Positionen) */
 function loadQueue() {
+  var seq = ++queueSeq;
   fetch('/api/v1/getQueue').then(function(r){ return r.json(); }).then(function(j){
+    if (seq !== queueSeq) return;
+    if (drag) { setTimeout(loadQueue, 500); return; }     /* nicht unter dem Finger neu aufbauen */
     queueData = (j && j.queue) ? j.queue : [];
     while (queueList.firstChild) queueList.removeChild(queueList.firstChild);
 
@@ -44,6 +48,8 @@ function loadQueue() {
 
       var img = document.createElement('img');
       img.className = 'qCover';
+      img.loading = 'lazy';                              /* lange Listen: Bilder erst, wenn sichtbar */
+      img.decoding = 'async';
       if (t.albumart) img.src = artUrl(t.albumart);
 
       var meta = document.createElement('div');

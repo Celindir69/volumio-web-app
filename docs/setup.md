@@ -8,7 +8,7 @@ Copy `xplorio.html`, `app.html` and `web/` to `/volumio/http/www3/`, then open `
 
 Copy `kioskTV.html` next to `xplorio.html` (the kiosk loads `http://localhost:3000/kioskTV.html`, i.e. from the folder Volumio serves).
 
-After an update, perform a hard reload in the browser. An existing `web/config.local.js` is preserved.
+After an update with `xplorio-deploy`, the browser loads the new files by itself (the script writes `web/build.js` for this); after copying by hand, do a hard reload once. An existing `web/config.local.js` is preserved.
 
 Custom settings (Rotel, enabling/disabling services, language) go into `web/config.local.js`; use `web/config.local.js.example` as the template. The Last.fm credentials do not belong there but in `/data/xplorio/data/keys.json` (see [Last.fm credentials](#lastfm-credentials)).
 

@@ -241,7 +241,7 @@ function lyrCenter(el, animate) {
 }
 
 function updateSyncedLyrics() {
-  if (!lyricLines.length) return;
+  if (!lyricLines.length || document.hidden) return;
 
   var pos = (Number(window.currentSeekMs) || 0) - lyrOffset;
   var active = -1;
@@ -254,8 +254,10 @@ function updateSyncedLyrics() {
     }
   }
 
-  var elements = body.querySelectorAll('.lyric-line');
   var changed = active !== lyrActive;
+  /* nichts Neues: nur prüfen, ob das Overlay gerade aufging (Höhe), sonst nichts anfassen */
+  if (!changed && !lyrPending && area.clientHeight === lyrLastH) return;
+  var elements = body.querySelectorAll('.lyric-line');
 
   if (changed) {
     lyrActive = active;

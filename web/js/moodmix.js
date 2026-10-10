@@ -434,10 +434,9 @@ function mixPlay(tracks, replace) {
 }
 
 /* Reiter nur zeigen, wenn der Tag-Dienst läuft; beim ersten Mal (noch nichts gewählt) mit dem Mix beginnen */
-tagGetJson('/health').then(function(r){
-  if (!r || !r.ok) return;
+whenTags(function(){
   document.getElementById('plTab0').style.display = '';
   var stored = null;
   try { stored = localStorage.getItem('plTab'); } catch (e) { /* egal */ }
   if (stored === null || stored === '0') plTabActive = 0;
-}).catch(function(){});
+});

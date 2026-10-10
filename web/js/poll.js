@@ -31,6 +31,7 @@ function radioArt(st, stationArt) {
   return stationArt;
 }
 
+var playIconShown = null;                              /* zuletzt gezeichnetes Symbol (nur bei Wechsel neu setzen) */
 var pollBusy = false;                                   /* nie mehrere getState gleichzeitig (Volumio hängt z. B. beim Einlesen) */
 function poll() {
   if (document.hidden || pollBusy) return;
@@ -47,9 +48,11 @@ paintTime();
 updateSyncedLyrics();
 
 
-    playIcon.innerHTML = (st.status === 'play')
-      ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'
-      : '<path d="M7 5v14l12-7z"/>';
+    var iconPlay = st.status === 'play';
+    if (iconPlay !== playIconShown) {
+      playIconShown = iconPlay;
+      playIcon.innerHTML = iconPlay ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M7 5v14l12-7z"/>';
+    }
 
     curRadio = (st.trackType === 'webradio');
     curStream = curRadio ? null : streamOf({service: st.service, uri: st.uri});
@@ -64,7 +67,7 @@ updateSyncedLyrics();
     if (art && art !== lastArt) {
       lastArt = art;
       cover.src = art;
-      bg.style.backgroundImage = 'url("' + art + '")';
+      bg.style.backgroundImage = 'url("' + String(art).replace(/["\\\n]/g, encodeURIComponent) + '")';
       updateMood(art);
     }
 
@@ -149,6 +152,15 @@ Promise.all([
   }).catch(function(){ playing = false; })            /* Volumio nicht erreichbar: Zeit nicht weiterlaufen lassen */
     .then(function(){ pollBusy = false; });
 }
+
+/* kleine Zwischenspeicher im Dauerbetrieb (iPad läuft tagelang) begrenzen: älteste Einträge zuerst */
+setInterval(function(){
+  [[radioCovers, 300], [similarCache, 300], [similarAllCache, 300], [streamSimilarCache, 200], [moodCache, 300], [creditCache, 300]]
+    .forEach(function(p){
+      var keys = Object.keys(p[0]);
+      keys.slice(0, Math.max(0, keys.length - p[1])).forEach(function(k){ delete p[0][k]; });
+    });
+}, 30 * 60000);
 
 setInterval(function(){ updateSyncedLyrics(); }, 200);
 setInterval(poll, 2000);

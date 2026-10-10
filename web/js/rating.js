@@ -156,8 +156,7 @@ function rateAlbumPage(seq, e, who, tracks, meta, rows) {
   }).catch(function(){});
 }
 
-tagGetJson('/health').then(function(r){
-  if (!r || !r.ok) return;
+whenTags(function(){
   rateReady = true;
   favRefresh(true);
-}).catch(function(){});
+});
