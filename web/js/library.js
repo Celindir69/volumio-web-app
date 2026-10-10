@@ -1,8 +1,9 @@
 /* Playlisten, Web-Radio und Suche
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 /* ---------- Playlisten / Radio ---------- */
-function renderPlList(items, container, clickFn, tiles) {   /* tiles: Playlisten mit Künstler-Kachel */
+function renderPlList(items, container, clickFn, tiles, note) {   /* tiles: Playlisten mit Künstler-Kachel; note: Hinweis oben */
   while (container.firstChild) container.removeChild(container.firstChild);
+  if (note) container.appendChild(volumioLink(note));
   if (plTileSeen) plTileSeen.disconnect();                 /* alte Kacheln nicht weiter beobachten (läuft sonst tagelang voll) */
   plTileQueue = plTileQueue.filter(function(j){ return document.body.contains(j.icon); });
   if (!items.length) {
@@ -31,6 +32,15 @@ function renderPlList(items, container, clickFn, tiles) {   /* tiles: Playlisten
     row.addEventListener('click', function(){ clickFn(it); });
     container.appendChild(row);
   });
+}
+
+/* Hinweis über der Liste, wie „Tippen: … ab diesem Titel“; ein Tipp öffnet die Volumio-Oberfläche (Zahnrad -> Volumio) */
+function volumioLink(text) {
+  var h = listHint(text);
+  h.classList.add('listLink');
+  h.setAttribute('role', 'button');
+  h.addEventListener('click', function(){ openVolumio(); });
+  return h;
 }
 
 /* ---------- Kachel aus Künstlerfotos statt des Playlist-Symbols ---------- */
@@ -121,7 +131,7 @@ function loadPlaylists() {
                   ? j.navigation.lists[0].items : [];
       renderPlList(items, playlistResults, function(pl){
         openBrowse({kind:'playlist', name:pl.title || pl.name || '', uri:pl.uri, service:pl.service || 'mpd'});   /* Titel der Playlist; zurück-Pfeil führt hierher */
-      }, true);
+      }, true, T('pl.manageHint'));
     }).catch(function(){
       while (playlistResults.firstChild) playlistResults.removeChild(playlistResults.firstChild);
       var err = document.createElement('div');
@@ -172,7 +182,7 @@ function loadMyRadio() {
           service:  it.service || 'webradio'
         });
         closeAllOverlays();
-      });
+      }, false, T('radio.manageHint'));
       radioLogos(items, radioPanel);
     }).catch(function(){
       while (radioPanel.firstChild) radioPanel.removeChild(radioPanel.firstChild);

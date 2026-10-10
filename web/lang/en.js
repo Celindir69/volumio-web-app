@@ -469,6 +469,8 @@ langRegister('en', 'English', {
   'pl.empty': 'Nothing found',
   'pl.loadError': 'Couldn\'t load',
   'pl.loading': 'Loading…',
+  'pl.manageHint': 'Playlists are managed in Volumio',
+  'radio.manageHint': 'Add new stations as favourites in Volumio',
   'pl.tab.mix': 'Mood Mix',
   'pl.tab.playlists': 'Playlists',
   'pl.tab.radio': 'Radio',
