@@ -110,9 +110,10 @@ document.addEventListener('touchend', function(e){
   if (!swipeFromTop) return;
   var dy = e.changedTouches[0].clientY - swipeStartY;
   var dx = e.changedTouches[0].clientX - swipeStartX;
-  if (window.matchMedia('(orientation:landscape)').matches) {      /* Querformat: Seitenleiste, nach rechts wischen */
-    if (dx > 80 && dx > Math.abs(dy) * 1.5) closeAllOverlays();
-  } else if (dy > 80) closeAllOverlays();
+  var land = window.matchMedia('(orientation:landscape)').matches;   /* Querformat: Seitenleiste, nach rechts wischen */
+  if (!(land ? dx > 80 && dx > Math.abs(dy) * 1.5 : dy > 80)) return;
+  if (overlayTags.classList.contains('on')) return overlayTags.classList.remove('on');   /* wie das X: nur der Editor, die Seite darunter bleibt */
+  closeAllOverlays();
 }, {passive:true});
 
 /* ---------- Wiedergabe ---------- */

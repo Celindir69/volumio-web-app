@@ -39,9 +39,10 @@ Store.prototype.save = function() {
 /* q: {artist: Name, album: URI, tracks: [URI, …]} -> {artist: 0|1, album: 0–5, tracks: [0|-1, …]} */
 Store.prototype.get = function(q) {
   var d = this.load(), out = {};
-  if (q.artist) { var a = d.artists[artistKey(q.artist)]; out.artist = a ? 1 : 0; }
-  if (q.album) { var b = d.albums[albumKey(q.album)]; out.album = b ? b.v : 0; }
-  if (Array.isArray(q.tracks)) out.tracks = q.tracks.map(function(u){ var t = d.tracks[trackKey(u)]; return t ? t.v : 0; });
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : null; }   /* „constructor“ u. ä. zählen nicht */
+  if (q.artist) { var a = own(d.artists, artistKey(q.artist)); out.artist = a ? 1 : 0; }
+  if (q.album) { var b = own(d.albums, albumKey(q.album)); out.album = b ? b.v || 0 : 0; }
+  if (Array.isArray(q.tracks)) out.tracks = q.tracks.map(function(u){ var t = own(d.tracks, trackKey(u)); return t ? t.v || 0 : 0; });
   return out;
 };
 

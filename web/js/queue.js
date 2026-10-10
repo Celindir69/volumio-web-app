@@ -234,6 +234,13 @@ document.addEventListener('touchmove', function(e){
   }
 }, {passive:false});
 
+document.addEventListener('touchcancel', function(){    /* iOS bricht ab (Systemgeste): Ziehen beenden, nichts verschieben */
+  if (!drag) return;
+  var d = drag; drag = null;
+  d.row.style.transform = '';
+  d.row.classList.remove('dragging');
+  queueList.querySelectorAll('.qRowWrap').forEach(function(w){ w.classList.remove('dragover'); });
+});
 document.addEventListener('touchend', function(e){
   if (!drag) return;
   var d = drag; drag = null;

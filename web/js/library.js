@@ -3,6 +3,8 @@
 /* ---------- Playlisten / Radio ---------- */
 function renderPlList(items, container, clickFn, tiles) {   /* tiles: Playlisten mit Künstler-Kachel */
   while (container.firstChild) container.removeChild(container.firstChild);
+  if (plTileSeen) plTileSeen.disconnect();                 /* alte Kacheln nicht weiter beobachten (läuft sonst tagelang voll) */
+  plTileQueue = plTileQueue.filter(function(j){ return document.body.contains(j.icon); });
   if (!items.length) {
     var empty = document.createElement('div');
     empty.className = 'plHint'; empty.textContent = T('pl.empty');

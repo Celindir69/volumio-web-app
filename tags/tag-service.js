@@ -226,7 +226,7 @@ function doWrite(body, cb) {
   var items = body.items;
   if (!Array.isArray(items) || !items.length || items.length > MAX_ITEMS) return cb(400, {ok: false, error: 'items fehlt oder zu viele'});
   if (body.batch !== undefined && !BATCH_RE.test(String(body.batch))) return cb(400, {ok: false, error: 'batch ungültig'});
-  writeItems(items, body.batch || Date.now().toString(36), body.scan !== false, cb);
+  writeItems(items, body.batch || newBatch(), body.scan !== false, cb);
 }
 
 function writeItems(items, batch, scan, cb) {
@@ -317,7 +317,10 @@ function doArtist(query, cb) {
 /* POST /check startet die Prüfung im Hintergrund, GET /check liefert Fortschritt und das letzte Ergebnis.
    Das Ergebnis liegt in check.json neben dem Änderungsprotokoll, bis neu geprüft wird. */
 var libcheck = require('./libcheck.js');
+var batchSeq = 0;
+function newBatch() { return Date.now().toString(36) + (++batchSeq % 1296).toString(36); }   /* zwei Aufträge in derselben ms: verschiedene Kennungen */
 var CHECK_FILE = path.join(DATA_DIR, 'check.json');
+function writeCheck(obj) { fs.writeFileSync(CHECK_FILE + '.neu', JSON.stringify(obj)); fs.renameSync(CHECK_FILE + '.neu', CHECK_FILE); }   /* Stromausfall: alte oder neue Datei, nie halbe */
 var checkRun = null;                                     /* {phase, done, total, started} während der Prüfung */
 var checkError = null;
 
@@ -342,7 +345,7 @@ function doCheckStart(body, cb) {
           function(d){ var r = releaseDates.by[d]; return (r && r.d) || ''; }, albums.albumDir);   /* Date-Tag gegen MusicBrainz */
         res.at = Date.now();
         res.seconds = Math.round((res.at - checkRun.started) / 1000);
-        try { fs.writeFileSync(CHECK_FILE, JSON.stringify(res)); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
+        try { writeCheck(res); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
         checkRun = null;
         return;
       }
@@ -379,7 +382,7 @@ function doCheckDone(body, cb) {
   if (checkRun) return cb(200, {ok: false, error: 'Prüfung läuft'});
   last.done = last.done || {};
   last.done[key] = 1;
-  try { fs.writeFileSync(CHECK_FILE, JSON.stringify(last)); } catch (e) { return cb(500, {ok: false, error: e.message}); }
+  try { writeCheck(last); } catch (e) { return cb(500, {ok: false, error: e.message}); }
   cb(200, {ok: true});
 }
 
@@ -388,7 +391,7 @@ function doCheckDone(body, cb) {
    Nur Adressen, die die Suche selbst gefunden hat, werden geladen (über die id). Last.fm-Schlüssel aus web/config*.js. */
 var coversearch = require('./coversearch.js');
 var APP_CONFIG_DIR = process.env.APP_CONFIG_DIR || '/volumio/http/www3/web';
-var coverHits = {}, coverHitIds = [], coverHitSeq = 0;
+var coverHits = Object.create(null), coverHitIds = [], coverHitSeq = 0;   /* ohne Prototyp: ?id=constructor u. ä. treffen nichts */
 
 function appConfig() {
   var ctx = {window: {}};
@@ -414,7 +417,7 @@ function doCoverSearch(query, cb) {
 
 function doCoverImage(query, res) {
   var u = coverHits[String(query.id || '')];
-  if (!u) return send(res, 404, {ok: false, error: 'unbekannt'});
+  if (typeof u !== 'string') return send(res, 404, {ok: false, error: 'unbekannt'});
   coversearch.image(u, function(e, img){
     if (e) return send(res, 404, {ok: false, error: e.message});
     res.writeHead(200, {'Content-Type': img.mime, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=600'});
@@ -1019,7 +1022,8 @@ function readOffsets() { try { return JSON.parse(fs.readFileSync(OFFSET_FILE, 'u
 function doOffsetGet(query, cb) {
   var key = String(query.key || '');
   if (!key || key.length > 400) return cb(400, {ok: false, error: 'key fehlt'});
-  cb(200, {ok: true, ms: readOffsets()[key] || 0});
+  var all = readOffsets();
+  cb(200, {ok: true, ms: Object.prototype.hasOwnProperty.call(all, key) ? Number(all[key]) || 0 : 0});
 }
 function doOffsetSet(body, cb) {
   var key = String(body.key || ''), ms = Math.round(Number(body.ms) || 0);
@@ -1089,7 +1093,7 @@ function doCover(body, cb) {
   var exists = dirs.filter(function(d){ return fs.existsSync(path.join(d.full, FOLDER_JPG)); });
   if (exists.length && !body.overwrite) return cb(200, {ok: false, exists: exists.map(function(d){ return d.rel; })});
 
-  var batch = Date.now().toString(36), bdir = path.join(COVER_DIR, batch), tmp = path.join(bdir, 'neu.jpg');
+  var batch = newBatch(), bdir = path.join(COVER_DIR, batch), tmp = path.join(bdir, 'neu.jpg');
   try { mkdirs(bdir); fs.writeFileSync(tmp, buf); } catch (e) { return cb(500, {ok: false, error: 'Sicherungsordner nicht beschreibbar: ' + e.message}); }
 
   var results = bad.map(function(u){ return {uri: u, ok: false, error: 'Pfad nicht erlaubt oder Datei fehlt'}; });
@@ -1155,7 +1159,7 @@ function doUndo(body, cb) {
       if (!changedRel.length) return cb(200, {ok: true, batch: null, items: results, undone: body.batch});
       return mpdUpdate(changedRel, function(scanned){ cb(200, {ok: true, batch: null, items: results, scan: scanned, undone: body.batch}); });
     }
-    writeItems(textEntries.map(function(e){ return {uri: e.uri, tags: e.before}; }), Date.now().toString(36), true, function(code, res){
+    writeItems(textEntries.map(function(e){ return {uri: e.uri, tags: e.before}; }), newBatch(), true, function(code, res){
       res.items = results.concat(res.items || []);
       if (changedRel.length) mpdUpdate(changedRel, function(){});
       res.undone = body.batch; cb(code, res);
@@ -1213,6 +1217,13 @@ function send(res, code, obj) {
 }
 
 var server = http.createServer(function(req, res){
+  try { handle(req, res); }
+  catch (e) {                                           /* ein Fehler in einer Anfrage reißt nicht den ganzen Dienst mit */
+    console.error('Anfrage ' + req.method + ' ' + req.url.split('?')[0] + ' gescheitert: ' + (e && e.stack || e));
+    if (!res.headersSent) send(res, 500, {ok: false, error: 'interner Fehler'});
+  }
+});
+function handle(req, res) {
   var route = req.url.split('?')[0];
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (req.method === 'GET' && route === '/health')  return send(res, 200, {ok: true, lastfm: !!keys.lastfm().key, keysInWeb: keys.inWeb()});
@@ -1254,9 +1265,10 @@ var server = http.createServer(function(req, res){
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
     var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet, '/randommix': doRandomMix, '/ratings': doRatings, '/rate': doRate}[route];
-    fn(body || {}, function(c, o){ send(res, c, o); });
+    try { fn(body || {}, function(c, o){ send(res, c, o); }); }
+    catch (e) { console.error('Anfrage ' + route + ' gescheitert: ' + (e && e.stack || e)); if (!res.headersSent) send(res, 500, {ok: false, error: 'interner Fehler'}); }
   });
-});
+}
 
 if (require.main === module) {
   server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
