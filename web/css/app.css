@@ -801,9 +801,6 @@ html.stage body.ovMain #lyrShiftBar { visibility:hidden; }
 .dDice.roll svg { animation:dRoll .45s ease-out; }
 .dHeadBtns { display:flex; gap:calc(2 * var(--vw)); }
 .dDice.dReroll.roll svg { animation:dSpin .5s ease-out; }
-/* Würfel (Zufallsmix mit 25 Titeln) überall in der Akzentfarbe; ↻ (neue Auswahl) bleibt neutral */
-.dDice:not(.dReroll), .mixDice, .mxChip.dMixChip { background:var(--accent, var(--fg)); border-color:transparent; }
-.dDice:not(.dReroll) svg, .mixDice svg, .mxChip.dMixChip svg { fill:var(--on-accent); }
 @keyframes dSpin { from { transform:rotate(0); } to { transform:rotate(360deg); } }
 @keyframes dRoll { from { transform:rotate(-200deg) scale(.7); } to { transform:none; } }
 .dRand { display:flex; flex-direction:column; align-items:center; text-align:center; }
