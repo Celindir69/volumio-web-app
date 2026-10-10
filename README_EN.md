@@ -60,6 +60,7 @@ track and displays station logos in the station list.
 <p>
   <img src="docs/bilder/entdecken.jpg" width="200" alt="discover in search">
   <img src="docs/bilder/album.jpg" width="200" alt="album page with stars and thumbs">
+  <img src="docs/bilder/album-entdecken.jpg" width="200" alt="album page: discover">
 </p>
 
 ### Mood Mix
@@ -86,10 +87,11 @@ weekday, and genre, and an annual review with a comparison to the previous year,
 Tapping a month displays the rankings for that month.
 
 <p>
+  <img src="docs/bilder/begruessung.jpg" width="200" alt="Welcome screen">
   <img src="docs/bilder/menue.jpg" width="200" alt="Menu behind the gear">
-  <img src="docs/bilder/verlauf.jpg" width="200" alt="Recently Played">
-  <img src="docs/bilder/statistik.jpg" width="200" alt="Statistics">
-  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Review">
+  <img src="docs/bilder/verlauf.jpg" width="200" alt="Recent">
+  <img src="docs/bilder/statistik.jpg" width="200" alt="Stats">
+  <img src="docs/bilder/rueckblick.jpg" width="200" alt="Year in review">
 </p>
 
 ### Tag Editor and Library Check

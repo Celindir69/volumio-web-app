@@ -57,6 +57,7 @@ zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 <p>
   <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
   <img src="docs/bilder/album.jpg" width="200" alt="Albumseite mit Sternen und Daumen">
+  <img src="docs/bilder/album-entdecken.jpg" width="200" alt="Albumseite: Entdecken">
 </p>
 
 ### Stimmungs-Mix
@@ -79,6 +80,7 @@ und ein Jahresrückblick mit Vergleich zum Vorjahr, Top-Genres und neu entdeckte
 die Ranglisten für diesen Monat.
 
 <p>
+  <img src="docs/bilder/begruessung.jpg" width="200" alt="Begrüßung">
   <img src="docs/bilder/menue.jpg" width="200" alt="Menü hinter dem Zahnrad">
   <img src="docs/bilder/verlauf.jpg" width="200" alt="Zuletzt gehört">
   <img src="docs/bilder/statistik.jpg" width="200" alt="Statistik">
