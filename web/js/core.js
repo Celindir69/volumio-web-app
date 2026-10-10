@@ -48,9 +48,25 @@ function audioErrorText(m) {
   if (/failed to open|alsa|no such device|output device/i.test(s)) return T('audio.unreachable');
   return '';
 }
+/* Ausgabegerät getrennt: Volumio öffnet dazu ein Fenster mit Bestätigung (openModal, Titel „Kein Audio-Gerät
+   verfügbar“ bzw. „Das Audiogerät ist nicht verfügbar“, Volumio auf Deutsch oder Englisch); hier nur ein kurzer
+   Hinweis. Wieder da: Volumio meldet das nur beim USB-DAC („USB DAC verbunden“) und schließt dann seine Fenster. */
+var AUDIO_GONE_TITLES = /^(kein audio-gerät verfügbar|das audiogerät ist nicht verfügbar|no audio output available|the selected output device is not available)$/i;
+var AUDIO_BACK_TITLES = /^usb dac (verbunden|connected)$/i;
+var audioGone = false;
+function audioToast(key) { if (typeof showToast === 'function') showToast(T(key)); }
 socket.on('pushToastMessage', function(m){
+  if (m && m.type === 'success' && AUDIO_BACK_TITLES.test(String(m.title || '').trim())) { audioGone = false; return audioToast('audio.connected'); }
   var t = audioErrorText(m);
   if (t && typeof showToast === 'function') showToast(t);
+});
+socket.on('openModal', function(m){
+  if (!m || !AUDIO_GONE_TITLES.test(String(m.title || '').trim())) return;
+  audioGone = true;
+  audioToast('audio.disconnected');
+});
+socket.on('closeAllModals', function(){
+  if (audioGone) { audioGone = false; audioToast('audio.connected'); }
 });
 socket.on('pushState', function(st){
   if (typeof showVolumio === 'function') showVolumio(st);
