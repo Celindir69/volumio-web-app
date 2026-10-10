@@ -85,6 +85,15 @@ t('Zufallsmix für mehrere Künstler (ähnliche Künstler): jeder etwa gleich of
   m.forEach(function(x){ assert.ok(!files[x[2]]); files[x[2]] = true; });
 });
 
+t('Zufallsmix für mehrere Künstler: Sampler ("Various Artists") zählen nach dem Künstler des Titels', function(){
+  var sam = [], list2 = albumList.concat([{dir: 'USB/Sampler/Relax', al: 'Relax', ar: 'Various Artists'}]);
+  for (var j = 0; j < 6; j++) sam.push([j % 2 ? 'A2' : 'A1', 'Hit ' + j, 'USB/Sampler/Relax/' + j + '.flac', 200, 'Relax']);
+  var only = sam.concat(tracks.filter(function(x){ return x[0] === 'A1'; }).slice(0, 3));   /* A1 eigenes Album + Sampler */
+  var m = d.mixBalanced(only, 6, list2, rnd), per = {};
+  m.forEach(function(x, j){ per[x[0]] = (per[x[0]] || 0) + 1; if (j) assert.notStrictEqual(x[0], m[j - 1][0], 'zweimal ' + x[0]); });
+  assert.deepStrictEqual(per, {A1: 3, A2: 3});
+});
+
 t('Zufallsmix für mehrere Künstler: geht einem die Musik aus, füllen die anderen auf', function(){
   var pool = d.mixPool(tracks, albumList, {artists: ['A1', 'A2']}).slice(0, 14);   /* A1 hat 12, A2 nur 2 */
   var m = d.mixBalanced(pool, 25, albumList, rnd);
