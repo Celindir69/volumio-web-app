@@ -467,6 +467,8 @@ langRegister('de', 'Deutsch', {
   'pl.empty': 'Keine Einträge gefunden',
   'pl.loadError': 'Fehler beim Laden',
   'pl.loading': 'Laden…',
+  'pl.manageHint': 'Verwaltung der Playlisten erfolgt in Volumio',
+  'radio.manageHint': 'Neue Sender in Volumio als Lieblingssender hinzufügen',
   'pl.tab.mix': 'Stimmungs-Mix',
   'pl.tab.playlists': 'Playlisten',
   'pl.tab.radio': 'Radio',

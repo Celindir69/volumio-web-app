@@ -449,6 +449,7 @@
     overflow:hidden; text-overflow:ellipsis; margin-top:calc(.8 * var(--vw)); }
   .sHint { font-size:calc(2.8 * var(--vw)); opacity:.4; text-align:center; padding:calc(4 * var(--vw)) 0; }
   .sHint.listHint { padding:calc(2 * var(--vw)) 0 calc(1 * var(--vw)); }
+  .sHint.listLink { cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
   .sHint.simSeed { text-align:left; opacity:.55; padding:0 0 calc(3 * var(--vw)); }
 
 
