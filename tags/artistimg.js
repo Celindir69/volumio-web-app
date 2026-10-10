@@ -16,13 +16,31 @@ function norm(s) {
 }
 
 /* dir: Ablage; opts.lookup(name, cb(Bild oder null, vorübergehend?), extra) ersetzt die Deezer-Künstlersuche,
-   opts.noneTtl: so lange gilt "nichts gefunden" */
+   opts.noneTtl: so lange gilt "nichts gefunden", opts.max: höchstens so viele Dateien (älteste fliegen raus) */
 function Store(dir, opts) {
-  this.dir = dir; this.waiting = {}; this.queue = []; this.running = 0;
+  this.dir = dir; this.waiting = {}; this.queue = []; this.running = 0; this.writes = 0;
   opts = opts || {};
   if (opts.lookup) this.lookup = opts.lookup;
   this.noneTtl = opts.noneTtl || NONE_TTL;
+  this.max = opts.max || 0;
+  if (this.max) this.prune();
 }
+
+/* Ablage begrenzen: die ältesten Dateien löschen, bis höchstens max übrig sind */
+Store.prototype.prune = function() {
+  var dir = this.dir, max = this.max, list;
+  if (!max) return 0;
+  try { list = fs.readdirSync(dir); } catch (e) { return 0; }
+  if (list.length <= max) return 0;
+  list = list.map(function(n){
+    try { return {n: n, t: fs.statSync(path.join(dir, n)).mtime.getTime()}; } catch (e) { return null; }
+  }).filter(Boolean).sort(function(a, b){ return a.t - b.t; });
+  var gone = 0;
+  list.slice(0, list.length - max).forEach(function(f){
+    try { fs.unlinkSync(path.join(dir, f.n)); gone++; } catch (e) { /* schon weg */ }
+  });
+  return gone;
+};
 
 Store.prototype.files = function(name) {
   var h = crypto.createHash('sha1').update(norm(name) || String(name)).digest('hex');
@@ -45,6 +63,7 @@ Store.prototype.get = function(name, cb, extra) {
         try {
           if (buf) fs.writeFileSync(f.img, buf); else if (!temporary) fs.writeFileSync(f.none, '');   /* Netzfehler nicht merken */
         } catch (x) { /* nächstes Mal neu */ }
+        if (self.max && ++self.writes % 50 === 0) self.prune();
         var list = self.waiting[f.img]; delete self.waiting[f.img];
         list.forEach(function(c){ c(null, buf); });
         done();

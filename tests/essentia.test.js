@@ -94,6 +94,16 @@ var svc = require('../tags/tag-service.js');
 svc.server.listen(0, function(){
   var port = svc.server.address().port;
   var body = rows.slice(0, 3).join('\n') + '\n';
+  /* abgebrochener Upload: keine halbe Datei, der nächste Upload geht */
+  var ab = http.request({port: port, method: 'POST', path: '/essentia', headers: {'Content-Type': 'application/x-ndjson', 'Content-Length': 100000}});
+  ab.on('error', function(){});
+  ab.write(rows[0] + '\n');
+  setTimeout(function(){ ab.destroy(); setTimeout(upload, 200); }, 100);
+  function upload() {
+  t('abgebrochener Upload hinterlässt keine Datei', function(){
+    assert.ok(!fs.existsSync(path.join(dir, 'svc', 'essentia.jsonl.neu')));
+    assert.ok(!fs.existsSync(path.join(dir, 'svc', 'essentia.jsonl')));
+  });
   var req = http.request({port: port, method: 'POST', path: '/essentia', headers: {'Content-Type': 'application/x-ndjson'}}, function(res){
     var d = '';
     res.on('data', function(c){ d += c; });
@@ -119,4 +129,5 @@ svc.server.listen(0, function(){
     });
   });
   req.end(body);
+  }
 });

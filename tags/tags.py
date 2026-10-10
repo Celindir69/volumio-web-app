@@ -20,6 +20,7 @@ Mehrere Aufträge in einem Aufruf (spart den Python-Start je Datei, wichtig bei 
 import base64
 import json
 import os
+import signal
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor'))
@@ -59,6 +60,11 @@ def fail(msg):
 
 def txt(v):
     return v if isinstance(v, text_type) else text_type(v)
+
+
+def plain(v):
+    # nur Text und Zahlen als Tag-Wert; null, Listen o. Ä. würden sonst als "None" bzw. "[...]" geschrieben
+    return isinstance(v, (text_type, str, int, float)) and not isinstance(v, bool)
 
 
 def join(values):
@@ -283,7 +289,7 @@ def run_job(job):
         before = read_tags(audio, kind)
         if op == 'read':
             return {'ok': True, 'format': kind, 'tags': before}
-        new = dict((f, v) for f, v in (job.get('tags') or {}).items() if f in FIELDS)
+        new = dict((f, v) for f, v in (job.get('tags') or {}).items() if f in FIELDS and plain(v))
         new = dict((f, v) for f, v in new.items() if txt(v).strip() != before[f])
         if not new:
             return {'ok': True, 'changed': False, 'before': {}, 'after': {}}
@@ -299,7 +305,18 @@ def run_job(job):
         fail(txt(e))
 
 
+# SIGTERM vom Tag-Dienst (Zeitüberschreitung): die laufende Datei fertig schreiben, die übrigen auslassen.
+# Hartes Abbrechen könnte eine m4a- oder mp3-Datei halb geschrieben zurücklassen.
+STOP = []
+
+
+def on_term(signum, frame):
+    STOP.append(signum)
+
+
 def safe_job(job):
+    if STOP:
+        return {'ok': False, 'error': 'abgebrochen (Zeitüberschreitung)'}
     try:
         return run_job(job if isinstance(job, dict) else {})
     except JobError as e:
@@ -309,6 +326,7 @@ def safe_job(job):
 
 
 def main():
+    signal.signal(signal.SIGTERM, on_term)
     try:
         job = json.loads(sys.stdin.read())
     except ValueError:

@@ -31,6 +31,7 @@ var fake = http.createServer(function(req, res){
 fake.listen(0, function(){
   var base = 'http://127.0.0.1:' + fake.address().port;
   process.env.ITUNES_URL = base; process.env.DEEZER_URL = base; process.env.RADIOBROWSER_URL = base;
+  process.env.RADIO_ALLOW_LOCAL = '1';                 /* Testserver läuft auf 127.0.0.1 */
   var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radio-'));
   process.env.TAGS_LOG = path.join(dir, 'changes.jsonl');
   process.env.APP_CONFIG_DIR = dir;
@@ -62,8 +63,16 @@ fake.listen(0, function(){
                 });
                 get('/radiocover?artist=Falco&title=Jeanny', function(r7){
                   t('zweites Mal vom Player', function(){ assert.strictEqual(r7.statusCode, 200); });
-                  console.log(n + ' Prüfungen');
-                  svc.close(); fake.close();
+                  delete process.env.RADIO_ALLOW_LOCAL;
+                  var swrBefore = calls.filter(function(c){ return c === '/img/swr.png'; }).length;
+                  get('/stationlogo?name=' + encodeURIComponent('Heimnetz FM') + '&url=' + encodeURIComponent(base + '/img/swr.png'), function(r8){
+                    t('Senderlogo-Adresse im eigenen Netz wird nicht geladen', function(){
+                      assert.strictEqual(r8.statusCode, 404);
+                      assert.strictEqual(calls.filter(function(c){ return c === '/img/swr.png'; }).length, swrBefore);
+                    });
+                    console.log(n + ' Prüfungen');
+                    svc.close(); fake.close();
+                  });
                 });
               });
             });

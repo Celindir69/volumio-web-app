@@ -52,13 +52,20 @@ function Keys(dir, appConfig, log) {
   this.appConfig = appConfig;
   this.log = log || function(){};
 }
+/* neu gelesen nur, wenn sich keys.json geändert hat */
 Keys.prototype.read = function() {
-  try { var k = JSON.parse(fs.readFileSync(this.file, 'utf8')); return k && typeof k === 'object' ? k : {}; }
-  catch (e) { return {}; }
+  var stamp = '-';
+  try { var st = fs.statSync(this.file); stamp = st.mtime.getTime() + ':' + st.size; } catch (e) { /* fehlt */ }
+  if (this.cache && this.stamp === stamp) return this.cache;
+  var k = {};
+  try { k = JSON.parse(fs.readFileSync(this.file, 'utf8')); if (!k || typeof k !== 'object') k = {}; } catch (e) { k = {}; }
+  this.cache = k; this.stamp = stamp;
+  return k;
 };
 Keys.prototype.write = function(k) {
   fs.writeFileSync(this.file + '.neu', JSON.stringify(k, null, 2) + '\n', {mode: 384});   /* 0600 */
   fs.renameSync(this.file + '.neu', this.file);
+  this.cache = null;
 };
 /* einmal beim Start: Werte aus config.local.js übernehmen, wenn keys.json sie noch nicht hat */
 Keys.prototype.migrate = function() {

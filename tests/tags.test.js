@@ -85,6 +85,11 @@ else {
     run({op: 'write', path: dsf, tags: {title: ''}});
     assert.strictEqual(run({op: 'read', path: dsf}).tags.title, '');
   });
+  t('tags.py: null und Listen werden nicht als Text geschrieben', function(){
+    var r = run({op: 'write', path: dsf, tags: {title: null, artist: ['a'], album: true}});
+    assert.ok(r.ok); assert.strictEqual(r.changed, false);
+    assert.strictEqual(run({op: 'read', path: dsf}).tags.title, '');
+  });
   t('tags.py: nicht unterstützte Endung und fehlende Datei', function(){
     assert.strictEqual(run({op: 'read', path: path.join(root, 'USB', 'notes.txt')}).ok, false);
     assert.strictEqual(run({op: 'read', path: path.join(root, 'USB', 'nix.flac')}).ok, false);
@@ -160,6 +165,15 @@ else {
           });
           post(port, '/cover', {uris: ['USB/t.dsf'], image: 'kein-jpeg', folder: true}, function(r3){
             t('Dienst: Nicht-JPEG wird abgelehnt', function(){ assert.strictEqual(r3.ok, false); });
+            var other = path.join(root, 'fremd.jpg');
+            fs.writeFileSync(other, 'nicht überschreiben');
+            fs.renameSync(folderJpg, folderJpg + '.echt'); fs.symlinkSync(other, folderJpg);
+            post(port, '/cover', {uris: ['USB/t.dsf'], image: fs.readFileSync(jpgB).toString('base64'), folder: true, overwrite: true}, function(r5){
+            t('Dienst: folder.jpg als Verweis wird nicht überschrieben', function(){
+              assert.strictEqual(r5.folders[0].ok, false);
+              assert.strictEqual(fs.readFileSync(other, 'utf8'), 'nicht überschreiben');
+            });
+            fs.unlinkSync(folderJpg); fs.renameSync(folderJpg + '.echt', folderJpg);
             post(port, '/undo', {batch: r1.batch}, function(r4){
               t('Dienst: Rückgängig entfernt folder.jpg und eingebettetes Cover', function(){
                 assert.ok(r4.ok); assert.ok(!fs.existsSync(folderJpg));
@@ -220,6 +234,7 @@ else {
               });
             });
           });
+            });
         });
       });
     });

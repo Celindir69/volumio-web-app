@@ -48,8 +48,10 @@ t('artistKey', function(){
 var root = fs.mkdtempSync(path.join(os.tmpdir(), 'lc-'));
 ['USB/A/Album1', 'USB/C/NDW'].forEach(function(d){ fs.mkdirSync(path.join(root, d), {recursive: true}); });
 fs.writeFileSync(path.join(root, 'USB/A/Album1/folder.JPG'), 'x');
-t('Ordner ohne Bilddatei', function(){
-  assert.deepStrictEqual(lc.dirsWithoutImage(songs.slice(0, 4), root), [{dir: 'USB/C/NDW', file: 'USB/C/NDW/01.flac'}]);
+lc.dirsWithoutImage(songs.slice(0, 4), root, function(list){
+  t('Ordner ohne Bilddatei (asynchron)', function(){
+    assert.deepStrictEqual(list, [{dir: 'USB/C/NDW', file: 'USB/C/NDW/01.flac'}]);
+  });
 });
 
 /* nachgebauter MPD: lsinfo je Ordner */

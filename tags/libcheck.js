@@ -167,18 +167,28 @@ function analyze(songs, hasCover, audioOf) {
   return res;
 }
 
-/* Ordner ohne Bilddatei (folder.jpg, cover.jpg, …); eingebettete Cover prüft der Aufrufer danach */
-function dirsWithoutImage(songs, musicRoot) {
-  var seen = {}, out = [];
+/* Ordner ohne Bilddatei (folder.jpg, cover.jpg, …); eingebettete Cover prüft der Aufrufer danach.
+   Liest asynchron, wenige Ordner gleichzeitig: Der Dienst bleibt währenddessen ansprechbar. cb(Liste in Song-Reihenfolge) */
+function dirsWithoutImage(songs, musicRoot, cb) {
+  var seen = Object.create(null), dirs = [];
   songs.forEach(function(s){
     var d = path.dirname(s.file);
-    if (seen[d]) return;
-    seen[d] = true;
-    var names = [];
-    try { names = fs.readdirSync(path.join(musicRoot, d)); } catch (e) { /* Ordner fehlt: als ohne Bild zählen */ }
-    if (!names.some(function(n){ return IMG_RE.test(n); })) out.push({dir: d, file: s.file});
+    if (!seen[d]) { seen[d] = true; dirs.push({dir: d, file: s.file}); }
   });
-  return out;
+  var missing = [], i = 0, running = 0, left = dirs.length;
+  if (!left) return cb([]);
+  function next() {
+    while (running < 4 && i < dirs.length) (function(k){
+      running++; i++;
+      fs.readdir(path.join(musicRoot, dirs[k].dir), function(e, names){   /* Ordner fehlt: als ohne Bild zählen */
+        if (!(names || []).some(function(n){ return IMG_RE.test(n); })) missing[k] = true;
+        running--; left--;
+        if (!left) return cb(dirs.filter(function(d, j){ return missing[j]; }));
+        next();
+      });
+    })(i);
+  }
+  next();
 }
 
 module.exports = {mpdWalk: mpdWalk, mpdCommand: mpdCommand, analyze: analyze, artistKey: artistKey, dirsWithoutImage: dirsWithoutImage};

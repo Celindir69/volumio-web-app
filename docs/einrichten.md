@@ -134,7 +134,7 @@ im Netz laden. `curl -s localhost:8766/health` zeigt `"keysInWeb":true`, solange
 `tags.py` läuft mit Python 2.7 und 3 und bringt mutagen selbst mit; gibt es kein `python`, nimmt der Dienst `python3`.
 
 Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`. Alte Werte für „Rückgängig“ stehen in
-`/data/xplorio/data/changes.jsonl`. Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
+`/data/xplorio/data/changes.jsonl` (die letzten 200 Änderungen; ältere Einträge und ihre Cover-Sicherungen räumt der Dienst selbst auf). Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
 Spiegelung die Änderungen am Player. Nach Änderungen liest MPD die betroffenen Ordner neu ein, gesammelt 15 Sekunden
 nach der letzten Änderung und nie, solange MPD noch einliest; bei mehr als drei Ordnern ein Scan des gemeinsamen
 Elternordners. Solange der Bibliotheks-Check offen ist, wird nur gesammelt und beim Schließen einmal eingelesen
@@ -143,7 +143,7 @@ Elternordners. Solange der Bibliotheks-Check offen ist, wird nur gesammelt und b
 Albumliste neu auf (rund eine Minute Last je Album, bei vielen Alben hintereinander bis zum Hänger). Empfehlung:
 `auto_update "no"` (auch in der Vorlage unter `/volumio/app/plugins/music_service/mpd/`, falls dort vorhanden) und
 `sudo systemctl restart mpd`; neue Musik dann wie gewohnt mit „Bibliothek aktualisieren“ einlesen (im Volumio-Menü „Aktualisieren“, nicht „Neu
-einlesen“, oder mit dem Knopf oben im Bibliotheks-Check; dort gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
+einlesen“, oder mit dem Knopf oben im Bibliotheks-Check; dort gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar, nimmt Aufträge aber nur von der Oberfläche an (siehe Zugriffsschutz oben).
 
 ### Cover online suchen
 Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Key aus `keys.json`) und im

@@ -32,16 +32,19 @@ function parse(q) {
 }
 
 /* alle eingeordneten Titel mit Ergebnis; neu nur, wenn sich Bibliothek oder Tags geändert haben */
+var REBUILD_MS = 5 * 60000;
 function index(coll) {
-  var lib = coll.loadLib(), stamp = coll.libAt + ':' + coll.fetched + ':' + lib.length + ':' + (coll.audio ? (coll.audio.reload(), coll.audio.mtime) : 0);
-  if (coll._mixIdx && coll._mixIdx.stamp === stamp) return coll._mixIdx.list;
+  var lib = coll.loadLib(), stamp = coll.libAt + ':' + lib.length + ':' + (coll.audio ? (coll.audio.reload(), coll.audio.mtime) : 0);
+  var old = coll._mixIdx, now = Date.now();
+  /* neu gesammelte Stimmungs-Tags (fetched) erst nach ein paar Minuten einrechnen: beim Sammeln ändert sich der Zähler ständig */
+  if (old && old.stamp === stamp && (old.fetched === coll.fetched || now - old.at < REBUILD_MS)) return old.list;
   var out = [];
   lib.forEach(function(it){
     if (!it.f) return;
     var r = coll.moodOf(it.ar, it.ti, it.al);
     if (r) out.push({it: it, r: r});
   });
-  coll._mixIdx = {stamp: stamp, list: out};
+  coll._mixIdx = {stamp: stamp, fetched: coll.fetched, at: now, list: out};
   return out;
 }
 

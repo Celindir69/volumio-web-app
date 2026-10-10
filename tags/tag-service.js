@@ -30,7 +30,8 @@ var MAX_ITEMS   = 500;                                   /* Dateien je Anfrage *
 var MAX_ARTIST  = 3000;                                  /* Dateien je Künstler (/artist) */
 var PY_BATCH    = 20;                                    /* Dateien je Python-Aufruf */
 var MAX_BODY    = 12 * 1024 * 1024;                     /* Cover-Bilder kommen als base64 mit */
-var JOB_TIMEOUT = 120000;
+var JOB_TIMEOUT = 180000;
+var KILL_GRACE  = 120000;                               /* nach SIGTERM: so lange darf die laufende Datei noch fertig werden */
 var COVER_DIR   = path.join(DATA_DIR, 'covers');   /* Sicherungen alter Cover (für Rückgängig) */
 var FOLDER_JPG  = 'folder.jpg';
 
@@ -91,8 +92,16 @@ function next() {
     done = true; clearTimeout(timer); busy = false;
     q.cb(res); next();
   }
-  var limit = Math.max(JOB_TIMEOUT, (q.job.jobs ? q.job.jobs.length : 1) * 15000);   /* m4a-Umschreiben kann je Datei dauern */
-  var timer = setTimeout(function(){ child.kill('SIGKILL'); finish({ok: false, error: 'Zeitüberschreitung'}); }, limit);
+  var limit = Math.max(JOB_TIMEOUT, (q.job.jobs ? q.job.jobs.length : 1) * 30000);   /* m4a-Umschreiben kann je Datei dauern */
+  /* Zeitüberschreitung: erst bitten (tags.py schreibt die laufende Datei fertig und meldet, was erledigt ist),
+     nur wenn es dann noch hängt, hart beenden */
+  var timer = setTimeout(function(){
+    try { child.kill('SIGTERM'); } catch (e) { /* schon beendet */ }
+    timer = setTimeout(function(){
+      try { child.kill('SIGKILL'); } catch (e) { /* schon beendet */ }
+      finish({ok: false, error: 'Zeitüberschreitung'});
+    }, KILL_GRACE);
+  }, limit);
   child.stdout.on('data', function(d){ out += d; });
   child.stderr.on('data', function(d){ err += d; });
   child.on('error', function(e){ finish({ok: false, error: 'Python nicht startbar: ' + e.message}); });
@@ -110,11 +119,42 @@ function next() {
 
 /* ---------- Protokoll der Änderungen (für Rückgängig) ---------- */
 
+var logAppends = 0;
 function logEntry(entry) {
   try {
     fs.mkdirSync(path.dirname(LOG_FILE));
   } catch (e) { /* existiert schon */ }
-  try { fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n'); return true; } catch (e) { return false; }
+  try { fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n'); } catch (e) { return false; }
+  if (++logAppends % 500 === 0) setTimeout(pruneLog, 0);
+  return true;
+}
+
+/* Protokoll und Cover-Sicherungen begrenzen: nur die letzten KEEP_BATCHES Aufträge bleiben rückgängig machbar
+   (die Oberfläche bietet Rückgängig ohnehin nur für den letzten an) */
+var KEEP_BATCHES = 200;
+function pruneLog() {
+  var list = readLog(), order = [], seen = {};
+  list.forEach(function(e){ if (e.batch && !seen[e.batch]) { seen[e.batch] = true; order.push(e.batch); } });
+  var keep = {};
+  order.slice(-KEEP_BATCHES).forEach(function(b){ keep[b] = true; });
+  if (order.length > KEEP_BATCHES) {
+    try {
+      fs.writeFileSync(LOG_FILE + '.neu', list.filter(function(e){ return keep[e.batch]; })
+        .map(function(e){ return JSON.stringify(e) + '\n'; }).join(''));
+      fs.renameSync(LOG_FILE + '.neu', LOG_FILE);
+    } catch (e) { console.error('Protokoll nicht gekürzt: ' + e.message); return; }
+  }
+  var dirs;
+  try { dirs = fs.readdirSync(COVER_DIR); } catch (e) { return; }
+  dirs.forEach(function(d){
+    if (keep[d] || !BATCH_RE.test(d)) return;
+    var full = path.join(COVER_DIR, d);
+    try {
+      if (Date.now() - fs.statSync(full).mtime.getTime() < 3600000) return;   /* Auftrag läuft vielleicht noch */
+      fs.readdirSync(full).forEach(function(f){ fs.unlinkSync(path.join(full, f)); });
+      fs.rmdirSync(full);
+    } catch (e) { /* nächstes Mal */ }
+  });
 }
 function readLog() {
   var txt;
@@ -321,7 +361,16 @@ var libcheck = require('./libcheck.js');
 var batchSeq = 0;
 function newBatch() { return Date.now().toString(36) + (++batchSeq % 1296).toString(36); }   /* zwei Aufträge in derselben ms: verschiedene Kennungen */
 var CHECK_FILE = path.join(DATA_DIR, 'check.json');
-function writeCheck(obj) { fs.writeFileSync(CHECK_FILE + '.neu', JSON.stringify(obj)); fs.renameSync(CHECK_FILE + '.neu', CHECK_FILE); }   /* Stromausfall: alte oder neue Datei, nie halbe */
+function writeCheck(obj) { fs.writeFileSync(CHECK_FILE + '.neu', JSON.stringify(obj)); fs.renameSync(CHECK_FILE + '.neu', CHECK_FILE); checkCache = null; }   /* Stromausfall: alte oder neue Datei, nie halbe */
+/* letztes Ergebnis (kann einige MB groß sein): nur neu lesen, wenn sich die Datei geändert hat; null = noch nie geprüft */
+var checkCache = null, checkStamp = '';
+function readCheck() {
+  var stamp;
+  try { var st = fs.statSync(CHECK_FILE); stamp = st.mtime.getTime() + ':' + st.size; } catch (e) { return null; }
+  if (checkCache && stamp === checkStamp) return checkCache;
+  try { checkCache = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); checkStamp = stamp; } catch (e) { checkCache = null; }
+  return checkCache;
+}
 var checkRun = null;                                     /* {phase, done, total, started} während der Prüfung */
 var checkError = null;
 
@@ -333,43 +382,44 @@ function doCheckStart(body, cb) {
   libcheck.mpdWalk({host: MPD_HOST, port: MPD_PORT}, function(err, songs){
     if (err) { checkError = 'MPD: ' + err.message; checkRun = null; return; }
     checkRun.phase = 'cover';
-    var cand = libcheck.dirsWithoutImage(songs, MUSIC_ROOT), noCover = {};
-    checkRun.done = 0; checkRun.total = cand.length;
-    var jobs = cand.map(function(c){ return {op: 'cover_has', path: path.join(MUSIC_ROOT, c.file)}; });
-    var i = 0, results = [];
-    (function step() {                                   /* in Teilen, damit der Fortschritt mitläuft */
-      if (i >= jobs.length) {
-        cand.forEach(function(c, k){ if (!(results[k] && results[k].ok && results[k].has)) noCover[c.dir] = true; });
-        var res = libcheck.analyze(songs, function(d){ return !noCover[d]; },
-          function(s){ return audioStore.get(s.artist, s.title, s.album); });
-        res.releaseDate = releasedates.diffs(albums.fromSongs(songs), songs,
-          function(d){ var r = releaseDates.by[d]; return (r && r.d) || ''; }, albums.albumDir);   /* Date-Tag gegen MusicBrainz */
-        res.at = Date.now();
-        res.seconds = Math.round((res.at - checkRun.started) / 1000);
-        try { writeCheck(res); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
-        checkRun = null;
-        return;
-      }
-      var part = jobs.slice(i, i + PY_BATCH);
-      i += part.length;
-      runPyMany(part, function(r){ results = results.concat(r); checkRun.done = i; step(); });
-    })();
+    libcheck.dirsWithoutImage(songs, MUSIC_ROOT, function(cand){ checkCovers(songs, cand); });
   }, function(done, total){ checkRun.done = done; checkRun.total = total; });
+}
+function checkCovers(songs, cand) {
+  var noCover = {};
+  checkRun.done = 0; checkRun.total = cand.length;
+  var jobs = cand.map(function(c){ return {op: 'cover_has', path: path.join(MUSIC_ROOT, c.file)}; });
+  var i = 0, results = [];
+  (function step() {                                   /* in Teilen, damit der Fortschritt mitläuft */
+    if (i >= jobs.length) {
+      cand.forEach(function(c, k){ if (!(results[k] && results[k].ok && results[k].has)) noCover[c.dir] = true; });
+      var res = libcheck.analyze(songs, function(d){ return !noCover[d]; },
+        function(s){ return audioStore.get(s.artist, s.title, s.album); });
+      res.releaseDate = releasedates.diffs(albums.fromSongs(songs), songs,
+        function(d){ var r = releaseDates.by[d]; return (r && r.d) || ''; }, albums.albumDir);   /* Date-Tag gegen MusicBrainz */
+      res.at = Date.now();
+      res.seconds = Math.round((res.at - checkRun.started) / 1000);
+      try { writeCheck(res); } catch (e) { checkError = 'Ergebnis nicht speicherbar: ' + e.message; }
+      checkRun = null;
+      return;
+    }
+    var part = jobs.slice(i, i + PY_BATCH);
+    i += part.length;
+    runPyMany(part, function(r){ results = results.concat(r); checkRun.done = i; step(); });
+  })();
 }
 
 /* GET /genres?dir=… -> Oberkategorie und Unterstile eines Albums aus der Audio-Analyse (Stand des letzten Checks);
    ohne dir alle Alben. Die Unterstile stehen nur hier, in die Dateien schreibt der Check nur die Oberkategorie. */
 function doGenres(query, cb) {
-  var last = null;
-  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { /* noch nie geprüft */ }
+  var last = readCheck();
   var all = (last && last.genreStyles) || {};
   if (query.dir !== undefined) return cb(200, {ok: true, album: all[String(query.dir)] || null});
   cb(200, {ok: true, albums: all, at: last ? last.at : null});
 }
 
 function doCheckGet(cb) {
-  var last = null;
-  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { /* noch nie geprüft */ }
+  var last = readCheck();
   cb(200, {ok: true, running: checkRun, error: checkError, result: last});
 }
 
@@ -378,8 +428,8 @@ function doCheckGet(cb) {
 function doCheckDone(body, cb) {
   var key = body && body.key;
   if (typeof key !== 'string' || !key || key.length > 1000) return cb(400, {ok: false, error: 'key fehlt'});
-  var last;
-  try { last = JSON.parse(fs.readFileSync(CHECK_FILE, 'utf8')); } catch (e) { return cb(200, {ok: false, error: 'noch nicht geprüft'}); }
+  var last = readCheck();
+  if (!last) return cb(200, {ok: false, error: 'noch nicht geprüft'});
   if (checkRun) return cb(200, {ok: false, error: 'Prüfung läuft'});
   last.done = last.done || {};
   last.done[key] = 1;
@@ -394,13 +444,21 @@ var coversearch = require('./coversearch.js');
 var APP_CONFIG_DIR = process.env.APP_CONFIG_DIR || '/volumio/http/www3/web';
 var coverHits = Object.create(null), coverHitIds = [], coverHitSeq = 0;   /* ohne Prototyp: ?id=constructor u. ä. treffen nichts */
 
+/* neu gelesen nur, wenn sich eine der beiden Dateien geändert hat (wird sehr oft gefragt) */
+var appConfigCache = null, appConfigStamp = '';
 function appConfig() {
+  var files = ['config.js', 'config.local.js'];
+  var stamp = files.map(function(f){
+    try { var st = fs.statSync(path.join(APP_CONFIG_DIR, f)); return st.mtime.getTime() + ':' + st.size; } catch (e) { return '-'; }
+  }).join('|');
+  if (appConfigCache && stamp === appConfigStamp) return appConfigCache;
   var ctx = {window: {}};
-  ['config.js', 'config.local.js'].forEach(function(f){
+  files.forEach(function(f){
     try { vm.runInNewContext(fs.readFileSync(path.join(APP_CONFIG_DIR, f), 'utf8'), ctx, {filename: f, timeout: 1000}); }
     catch (e) { /* Datei fehlt oder ist fehlerhaft: Standardwerte */ }
   });
-  return ctx.window.APP_CONFIG || {};
+  appConfigCache = ctx.window.APP_CONFIG || {}; appConfigStamp = stamp;
+  return appConfigCache;
 }
 
 function doCoverSearch(query, cb) {
@@ -556,7 +614,8 @@ function albumsEnsure(cb) {
 var moodtags = require('./moodtags.js');
 var essentia = require('./essentia.js');
 var ESSENTIA_FILE = path.join(DATA_DIR, 'essentia.jsonl');      /* Audio-Analyse vom Mac (tools/essentia), per POST /essentia oder scp */
-var ESSENTIA_MAX = 300 * 1024 * 1024;
+var ESSENTIA_MAX = 100 * 1024 * 1024;             /* rund 1 kB je Titel: reicht für weit über 50 000 Titel */
+var essentiaBusy = false;
 var audioStore = new essentia.Store(ESSENTIA_FILE);
 var moodCollector = new moodtags.Collector({
   dir: path.join(DATA_DIR, 'moodtags'), libFile: TRACKS_FILE, audio: audioStore,
@@ -633,18 +692,25 @@ function strip(o) { var r = {}; Object.keys(o).forEach(function(k){ if (k.charAt
 
 /* POST /essentia: Ergebnisdatei des Analyse-Skripts (JSON Lines) ersetzt die bisherige */
 function doEssentiaUpload(req, res) {
+  if (essentiaBusy) { req.resume(); return send(res, 409, {ok: false, error: 'es läuft schon ein Upload'}); }
+  if (Number(req.headers['content-length']) > ESSENTIA_MAX) { req.resume(); return send(res, 413, {ok: false, error: 'Datei zu groß'}); }
   try { mkdirs(DATA_DIR); } catch (e) { /* existiert */ }
-  var tmp = ESSENTIA_FILE + '.neu', out = fs.createWriteStream(tmp), size = 0, failed = false;
+  essentiaBusy = true;
+  var tmp = ESSENTIA_FILE + '.neu', out = fs.createWriteStream(tmp), size = 0, failed = false, ended = false;
   function fail(code, msg) {
-    if (failed) return; failed = true;
-    out.destroy(); try { fs.unlinkSync(tmp); } catch (e) { /* schon weg */ }
-    send(res, code, {ok: false, error: msg});
+    if (failed) return; failed = true; essentiaBusy = false;
+    req.unpipe(out); out.destroy(); try { fs.unlinkSync(tmp); } catch (e) { /* schon weg */ }
+    if (!res.headersSent) send(res, code, {ok: false, error: msg});
   }
   req.on('data', function(d){ size += d.length; if (size > ESSENTIA_MAX) { fail(413, 'Datei zu groß'); req.destroy(); } });
+  req.on('end', function(){ ended = true; });
   req.on('error', function(){ fail(400, 'Übertragung abgebrochen'); });
+  req.on('aborted', function(){ fail(400, 'Übertragung abgebrochen'); });
+  req.on('close', function(){ if (!ended) fail(400, 'Übertragung abgebrochen'); });     /* Verbindung weg: Datei nicht offen lassen */
   out.on('error', function(e){ fail(500, 'Schreiben fehlgeschlagen: ' + e.message); });
   out.on('finish', function(){
     if (failed) return;
+    essentiaBusy = false;
     try { fs.renameSync(tmp, ESSENTIA_FILE); } catch (e) { return fail(500, 'Speichern fehlgeschlagen'); }
     audioStore.reload(true);
     var st = audioStore.status(), lib = moodCollector.loadLib(), matched = 0;
@@ -812,11 +878,13 @@ function doWelcome(query, cb) {
   var day = /^\d{4}-\d\d-\d\d$/.test(query.day || '') ? query.day : new Date().toISOString().slice(0, 10);
   albumsEnsure(function(list){
     if (!list || !list.length) return cb(200, {ok: false, building: albumBuilding});
-    var pl = playStore.load(), now = Math.floor(Date.now() / 1000), yearOf = albums.yearIndex(list);
+    var pl = playStore.load(), now = Math.floor(Date.now() / 1000);
+    if (!albumYear || albumYear.list !== list) albumYear = {list: list, fn: albums.yearIndex(list)};
+    if (!albumLast || albumLast.n !== pl.length) albumLast = {n: pl.length, fn: albums.lastIndex(pl)};
+    var yearOf = albumYear.fn, last = albumLast.fn;
     if (!welcomeDay) { try { welcomeDay = JSON.parse(fs.readFileSync(WELCOME_FILE, 'utf8')); } catch (e) { welcomeDay = {}; } }
     var pick = null;
     if (welcomeDay.day === day) list.some(function(a){ return a.dir === welcomeDay.dir && (pick = a); });
-    var last = albums.lastIndex(pl);
     if (pick) pick = {dir: pick.dir, al: pick.al, ar: pick.ar, y: pick.y, last: last(pick)};
     else {
       pick = albums.dayAlbum(list, day, last, now);
@@ -995,8 +1063,8 @@ function doArtistImage(query, res) {
 /* Webradio: GET /radiocover?artist=…&title=… (Cover zum laufenden Titel) und GET /stationlogo?name=…[&url=…] (Senderlogo);
    beides auf dem Player gespeichert unter radio-covers/ bzw. stations/; 404 ohne Bild */
 var radio = require('./radio.js');
-var radioCovers = new artistimg.Store(path.join(DATA_DIR, 'radio-covers'), {lookup: radio.songLookup, noneTtl: 7 * 86400000});
-var stationLogos = new artistimg.Store(path.join(DATA_DIR, 'stations'), {lookup: radio.logoLookup});
+var radioCovers = new artistimg.Store(path.join(DATA_DIR, 'radio-covers'), {lookup: radio.songLookup, noneTtl: 7 * 86400000, max: 3000});
+var stationLogos = new artistimg.Store(path.join(DATA_DIR, 'stations'), {lookup: radio.logoLookup, max: 1000});
 
 function sendImage(res, buf) {
   var type = buf && radio.mime(buf);
@@ -1044,6 +1112,16 @@ function mkdirs(dir) {
     cur = i ? path.join(cur, p) : (p || path.sep);
     try { fs.mkdirSync(cur); } catch (e) { /* existiert schon */ }
   });
+}
+
+/* folder.jpg schreiben: keinem Verweis folgen (könnte aus dem Musikordner hinaus zeigen) und atomar
+   (Stromausfall: altes oder neues Bild, nie ein halbes) */
+function writeFolderJpg(target, buf) {
+  var st = null;
+  try { st = fs.lstatSync(target); } catch (e) { /* noch keins */ }
+  if (st && !st.isFile()) throw new Error(FOLDER_JPG + ' ist ein Verweis oder Ordner');
+  fs.writeFileSync(target + '.neu', buf);
+  fs.renameSync(target + '.neu', target);
 }
 
 /* Ordner der Dateien (ohne Doppelte), als {rel, full} */
@@ -1102,8 +1180,11 @@ function doCover(body, cb) {
   dirs.forEach(function(d, i){                                  /* folder.jpg zuerst (schnell, ohne Python) */
     var target = path.join(d.full, FOLDER_JPG), backup = null;
     try {
-      if (fs.existsSync(target)) { backup = path.join(bdir, 'folder-' + i + '.jpg'); fs.writeFileSync(backup, fs.readFileSync(target)); }
-      fs.writeFileSync(target, buf);
+      var lst = null;
+      try { lst = fs.lstatSync(target); } catch (e) { /* noch keins */ }
+      if (lst && !lst.isFile()) throw new Error(FOLDER_JPG + ' ist ein Verweis oder Ordner');
+      if (lst) { backup = path.join(bdir, 'folder-' + i + '.jpg'); fs.writeFileSync(backup, fs.readFileSync(target)); }
+      writeFolderJpg(target, buf);
       logEntry({batch: batch, time: new Date().toISOString(), folder: d.rel, cover: {backup: backup}});
       folders.push({dir: d.rel, ok: true});
     } catch (e) { folders.push({dir: d.rel, ok: false, error: e.message}); }
@@ -1142,7 +1223,7 @@ function doUndo(body, cb) {
     var dir = path.join(MUSIC_ROOT, e.folder), target = path.join(dir, FOLDER_JPG);
     try {
       if (e.folder.split('/').indexOf('..') >= 0) throw new Error('Pfad nicht erlaubt');
-      if (e.cover.backup) fs.writeFileSync(target, fs.readFileSync(e.cover.backup)); else fs.unlinkSync(target);
+      if (e.cover.backup) writeFolderJpg(target, fs.readFileSync(e.cover.backup)); else fs.unlinkSync(target);
       results.push({folder: e.folder, ok: true, changed: true});
     } catch (err) { results.push({folder: e.folder, ok: false, error: err.message}); }
   });
@@ -1283,10 +1364,11 @@ if (require.main === module) {
   server.listen(HTTP_PORT, function(){ console.log('tag-service auf Port ' + HTTP_PORT + ', Musik unter ' + MUSIC_ROOT); });
   if (process.env.HISTORY !== '0' && appConfig().HISTORY !== false) { recording = true; watchPlayer(); lfm.flush(); }
   setTimeout(function(){ albumsEnsure(); }, 90000);       /* Albenliste fürs Zufallsalbum vorbereiten */
+  setTimeout(pruneLog, 30000);                            /* alte Rückgängig-Daten aufräumen */
   if (process.env.RELEASEDATES !== '0' && appConfig().RELEASEDATES !== false) releaseDates.start();   /* Geburtstage: MusicBrainz */
   if (process.env.MOODTAGS !== '0' && appConfig().MOODTAGS !== false) {
     moodCollector.start();
     setInterval(function(){ albumsEnsure(); }, 3600000);  /* Titelliste aktuell halten (liest nur neu, wenn MPD sich geändert hat) */
   }
 }
-module.exports = {resolveUri: resolveUri, scanDirs: scanDirs, server: server, tracker: tracker, playStore: playStore, lastfm: lfm, moodtags: moodCollector};
+module.exports = {pruneLog: pruneLog, resolveUri: resolveUri, scanDirs: scanDirs, server: server, tracker: tracker, playStore: playStore, lastfm: lfm, moodtags: moodCollector};
