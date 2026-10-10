@@ -176,7 +176,7 @@
   .credit-link { cursor:pointer; }
   .bgStory { font-size:calc(3.6 * var(--vw)); line-height:1.65; white-space:pre-wrap; padding-bottom:2vh; }
   .credit-more:empty { display:none; }
-  .credit-info { padding:calc(2 * var(--vw)) 0 calc(3 * var(--vw)); border-bottom:1px solid rgba(var(--fg-rgb),.15);
+  .credit-info { cursor:pointer; padding:calc(2 * var(--vw)) 0 calc(3 * var(--vw)); border-bottom:1px solid rgba(var(--fg-rgb),.15);
     font-size:calc(3.4 * var(--vw)); line-height:1.6; white-space:pre-wrap; }
   .credit-info-name { font-size:calc(2.8 * var(--vw)); letter-spacing:.14em; opacity:.5; margin-bottom:calc(1 * var(--vw)); }
   .infoSection { margin:calc(5 * var(--vw)) 0 calc(1 * var(--vw)); font-size:calc(2.8 * var(--vw)); letter-spacing:.14em; opacity:.5; }
