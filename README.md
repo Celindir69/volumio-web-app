@@ -24,7 +24,8 @@ Großes Cover, Titel und Album, Abzeichen für die Klangqualität (Hi-Res, Abtas
 Lautstärke und die üblichen Knöpfe. Die Hintergrundfarbe und der Akzent kommen aus dem Cover. Lyrics laufen synchron mit
 (lrclib.net); passt der Text nicht genau zur Aufnahme, verschieben „−“ und „+“ ihn in Schritten von 0,5 s, und der Wert
 gilt dann für diesen Titel auf allen Geräten. Die Info-Seite zeigt Album, Künstler, Mitwirkende und was von diesem
-Künstler in der Sammlung liegt. Liefert Volumio keinen Album- oder Künstlertext (Volumio 4 nur mit Abo), holt die App
+Künstler in der Sammlung liegt. Verlinkte Mitwirkende (Personen, Studios, Labels) klappen beim Antippen ihre eigenen
+Infos direkt darunter auf. Liefert Volumio keinen Album- oder Künstlertext (Volumio 4 nur mit Abo), holt die App
 ihn bei Last.fm bzw. Wikipedia. Gibt es dort einen Text zum laufenden Titel (meist bei Singles), erscheint zusätzlich
 ein Reiter „Titel“.
 

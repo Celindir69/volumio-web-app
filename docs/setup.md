@@ -258,6 +258,10 @@ If the app is set to a different language than Volumio via `LANGUAGE` or `?lang=
 
 The source is shown below the text. There is no fallback for contributors.
 
+Contributors that Volumio delivers with a MusicBrainz ID are underlined. Tapping one expands its text below, tapping again
+collapses it. For people the same order as for artists applies (Volumio, then Last.fm and Wikipedia); studios and labels
+come from Volumio only.
+
 For the current track the app looks for a text of its own in the same order (Last.fm `track.getInfo`, then a Wikipedia article whose name is the song name, which describes itself as a song or single and names the artist). Additions such as "(Remastered 2011)" are ignored for this. Only if something is found does a "Track" tab appear after "Album", or as the first tab for web radio. The browser remembers the result per track, including "nothing found" (the last 400).
 
 ### Lyrics Offset

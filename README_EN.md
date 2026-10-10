@@ -24,7 +24,8 @@ Large cover art, track and album information, badges for audio quality (Hi-Res, 
 volume, and the usual controls. The background color and accent are derived from the cover art. Lyrics are synchronized
 (lrclib.net); if the lyrics do not perfectly match the recording, "−" and "+" shift them in 0.5-second increments, and the
 offset then applies to that track on all devices. The information page shows the album, artist, contributors, and which
-releases by that artist are available in the collection. If Volumio does not provide album or artist information
+releases by that artist are available in the collection. Tapping a linked contributor (person, studio, label) expands
+its own information right below. If Volumio does not provide album or artist information
 (Volumio 4 only provides it with a subscription), the app retrieves it from Last.fm or Wikipedia. If one of them has a text about the current track (usually for
 singles), an extra "Track" tab appears.
 
