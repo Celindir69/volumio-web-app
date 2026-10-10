@@ -14,11 +14,23 @@ function paintQuality(st) {
 /* Webradio: zeigt der Player ein Senderlogo (Adresse von Volumio), es dem Tag-Dienst für die Senderliste melden.
    Den Namen kennt die Senderliste (radioNames in library.js); einmal je Sender und Adresse */
 var radioLogoSent = {};
+/* Sendername zum laufenden Stream: aus der Senderliste (gleiche Adresse, auch ohne / am Ende oder http/https),
+   sonst das, was Volumio bei Webradio als Künstler meldet (meist der Sendername, z. B. bei TuneIn) */
+function radioUriKey(u) { return String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/[\/;]+$/, ''); }
+function radioStationName(st) {
+  var names = typeof radioNames === 'function' ? radioNames() : {};
+  if (names[st.uri]) return names[st.uri];
+  var k = radioUriKey(st.uri), hit = '';
+  Object.keys(names).some(function(u){ if (radioUriKey(u) === k) { hit = names[u]; return true; } return false; });
+  if (hit) return hit;
+  var ar = String(st.artist || '').trim(), ti = String(st.title || '');
+  return ar && ti.indexOf(ar + ' - ') !== 0 ? ar : '';         /* „Künstler - Titel“ mit demselben Künstler: kein Sendername */
+}
 function radioLogoLearn(st) {
   if (st.trackType !== 'webradio' || typeof TAGS === 'undefined' || !st.uri) return;
   var a = String(st.albumart || '');
   if (!/^https?:\/\//.test(a)) return;
-  var name = (typeof radioNames === 'function' && radioNames()[st.uri]) || '';
+  var name = radioStationName(st);
   if (!name || radioLogoSent[st.uri] === a) return;
   radioLogoSent[st.uri] = a;
   new Image().src = TAGS + '/stationlogo?name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(a);
