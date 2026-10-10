@@ -108,6 +108,15 @@ Wenn nicht, `Environment=USE_SUDO=1` einkommentieren (dann läuft nur `tags.py` 
 Nach einem Update: `sudo systemctl restart tag-service`. Log: `journalctl -u tag-service -e`.
 Weitere Variablen: `HTTP_PORT`, `MUSIC_ROOT` (`/mnt`), `PYTHON`, `MPC`, `TAGS_DATA` (Datenordner, Standard `/data/xplorio/data`).
 
+**Zugriffsschutz:** Tag-Dienst und Rotel-Bridge nehmen Aufträge nur von der Oberfläche auf demselben Gerät an.
+Eine andere Webseite, die gerade im Browser offen ist, kann dort weder Tags schreiben noch den Verstärker schalten
+oder den Verlauf lesen. Die Dienste antworten nur, wenn der Player über seine IP-Adresse, einen Namen ohne Punkt
+(`volumio`) oder einen Namen auf `.local`, `.lan`, `.home`, `.internal`, `.home.arpa` oder `.fritz.box` aufgerufen wird.
+Weitere Namen in `web/config.local.js` eintragen und beide Dienste neu starten:
+`window.APP_CONFIG.ALLOWED_HOSTS = ['player.example.net'];` (oder Umgebungsvariable `XPLORIO_HOSTS`, mit Komma getrennt).
+Eigene Skripte, die ohne Browser schreiben (etwa mit `curl`), schicken den Kopf `X-Xplorio: 1` mit;
+`curl -s localhost:8766/health` und andere Abfragen gehen wie bisher.
+
 **Datenordner:** Das Programm liegt in `/data/xplorio/tags/`, alles, was der Dienst anlegt (Verlauf, Last.fm-Sitzung,
 Check-Ergebnis, Cover, Analyse …), in `/data/xplorio/data/`. Der Ordner ist nur für `volumio` lesbar und liegt weder im
 Webordner noch in `/data/INTERNAL`, das Volumio im Netzwerk freigeben kann. Ältere Installationen hatten die Daten neben
