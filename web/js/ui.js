@@ -166,3 +166,11 @@ function showToast(text) {
   }
   sync();
 })();
+
+/* Esc (Desktop, iPad mit Tastatur): Tag-Editor schließen, in der Album-/Künstleransicht eine Stufe zurück, sonst alles zu */
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape' && e.key !== 'Esc') return;
+  if (overlayTags && overlayTags.classList.contains('on')) { overlayTags.classList.remove('on'); return; }
+  if (overlayBrowse.classList.contains('on') && browseStack.length > 1) { browseBack.click(); return; }
+  closeAllOverlays();
+});

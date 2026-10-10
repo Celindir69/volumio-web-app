@@ -104,6 +104,7 @@ function welcomeRender(r) {
 function openWelcome(auto) {
   var seq = ++welcomeSeq;
   document.getElementById('welcomeTitle').textContent = welcomeGreeting();
+  document.getElementById('welcomeBack').style.display = auto ? 'none' : '';     /* aus dem Menü geöffnet */
   if (!auto) { closeAllOverlays(); welcomeBody.textContent = ''; welcomeBody.appendChild(browseNote(T('browse.loading'))); overlayWelcome.classList.add('on'); }
   tagGetJson('/welcome?day=' + discoverToday()).then(function(r){
     if (seq !== welcomeSeq) return;
@@ -119,6 +120,7 @@ function openWelcome(auto) {
 }
 
 document.getElementById('closeWelcome').addEventListener('click', closeAllOverlays);
+document.getElementById('welcomeBack').addEventListener('click', function(){ openMenu(); });
 overlayWelcome.addEventListener('click', function(ev){ if (ev.target === overlayWelcome) closeAllOverlays(); });   /* Tipp auf den Rand */
 
 (function(){

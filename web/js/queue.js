@@ -219,9 +219,20 @@ function loadQueue() {
         : T('queue.hintTouch');
       queueList.appendChild(hint);
     }
+    if (!queueData.length) {                           /* leer: Hinweis und Weg zur Suche statt einer leeren Fläche */
+      queueList.appendChild(browseNote(T('queue.empty')));
+      var go = document.createElement('button');
+      go.className = 'ckBtn qEmptyBtn'; go.textContent = T('queue.emptySearch');
+      go.addEventListener('click', function(){ btnSearch.click(); });
+      queueList.appendChild(go);
+    }
     var cur = queueList.querySelector('.cur');
     if (cur) cur.scrollIntoView({block:'center', behavior:'smooth'});
-  }).catch(function(){});
+  }).catch(function(){
+    if (seq !== queueSeq) return;
+    while (queueList.firstChild) queueList.removeChild(queueList.firstChild);
+    queueList.appendChild(browseNote(T('queue.error')));
+  });
 }
 
 document.addEventListener('touchmove', function(e){

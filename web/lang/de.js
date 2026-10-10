@@ -431,6 +431,9 @@ langRegister('de', 'Deutsch', {
   'queue.hintMouse': 'Klicken: Abspielen  ·  Papierkorb: Entfernen  ·  Handle: Sortieren',
   'queue.hintTouch': 'tippen: Abspielen  ·  ← wischen: Löschen  ·  Handle: Sortieren',
   'queue.remove': 'Aus Warteschlange entfernen',
+  'queue.empty': 'Die Warteschlange ist leer.',
+  'queue.emptySearch': 'Musik suchen',
+  'queue.error': 'Die Warteschlange ließ sich nicht laden. Ist Volumio erreichbar?',
 
   'search.local': 'Lokal',
   'search.minChars': 'Mind. 2 Zeichen eingeben und Los tippen',

@@ -689,7 +689,9 @@ html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { d
 .tagOnline .tagPick.on { outline-color:var(--accent, #4bbe87); }
 
 /* Verlauf und Statistik */
-#historyBack { cursor:pointer; opacity:.7; display:flex; }
+.qEmptyBtn { display:block; margin:2vh auto; }
+#historyBack, #welcomeBack { cursor:pointer; opacity:.7; display:flex; }
+#welcomeBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
 #historyBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 

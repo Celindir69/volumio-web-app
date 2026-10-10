@@ -95,8 +95,11 @@ function loadStreamSimilar(svc, artist, localNames) {
 }
 
 function openBrowse(entry) {
-  var cur = document.querySelector('.overlay.on');
-  if (cur && cur !== overlayBrowse) browseOrigin = cur;
+  var ow = document.getElementById('overlayWelcome');
+  var cur = document.querySelector('.overlay.on') || (ow && ow.classList.contains('on') ? ow : null);
+  /* schon in der Ansicht (z. B. Stimmung, Jahr, ähnliches Album unter Entdecken): weiterblättern, Zurück führt hierher */
+  if (cur === overlayBrowse) { browseStack.push(entry); browseRender(); return; }
+  if (cur) browseOrigin = cur;
   else if (!cur) browseOrigin = null;
   closeAllOverlays();
   browseStack = [entry];

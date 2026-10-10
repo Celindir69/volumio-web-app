@@ -433,6 +433,9 @@ langRegister('en', 'English', {
   'queue.hintMouse': 'Click: play  ·  Trash: remove  ·  Handle: reorder',
   'queue.hintTouch': 'Tap: play  ·  ← swipe: delete  ·  Handle: reorder',
   'queue.remove': 'Remove from queue',
+  'queue.empty': 'The queue is empty.',
+  'queue.emptySearch': 'Find music',
+  'queue.error': 'Could not load the queue. Is Volumio reachable?',
 
   'search.local': 'Local',
   'search.minChars': 'Enter at least 2 characters and tap Go',
