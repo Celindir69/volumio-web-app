@@ -209,6 +209,14 @@ Erscheinen der Release-Group, eine Anfrage je 1,5 Sekunden, Sampler ausgenommen)
 das beim ersten Mal einige Stunden; solange kaum Daten da sind und noch kein Geburtstag gefunden ist, zeigt Entdecken den Stand. Ausschalten: `RELEASEDATES: false` in
 `web/config.local.js`, dann den Tag-Dienst neu starten.
 
+### System
+Im Menü unter „System“: die aktuelle Prozessorlast (alle 2 Sekunden neu, mit den letzten 3 Minuten und je Kern), ein Verlauf
+der letzten 24 Stunden (Last, Temperatur oder Arbeitsspeicher, je Minute gemittelt), Temperatur, Arbeitsspeicher, die Belegung
+jedes Laufwerks (interne Karte, USB und jede Verbindung unter `/mnt/NAS/` einzeln; eine nicht erreichbare Verbindung steht als
+„nicht erreichbar“ da), Volumio-Version, Kernel, Laufzeit und die gerade gespielte Datei. Die Werte liest der Tag-Dienst aus
+`/proc`, `/sys` und `df`; er misst alle 2 Sekunden (eine kleine Datei, ohne spürbare Last) und sichert den Verlauf alle
+10 Minuten in `/data/xplorio/data/sysinfo.json`.
+
 ### Verlauf und Statistik
 Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag, Top-8-Genres; ein Genre antippen öffnet seine Alben) und **Rückblick**

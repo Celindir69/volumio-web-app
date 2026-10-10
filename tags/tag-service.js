@@ -1085,6 +1085,13 @@ function doStationLogo(query, res) {
   stationLogos.get(name, function(e, buf){ sendImage(res, buf); }, u);
 }
 
+/* GET /sysinfo[?full=1]: Systemwerte für die Seite „System“ (sysinfo.js) */
+var sysinfo = require('./sysinfo.js');
+var sysInfo = new sysinfo.Sysinfo({file: path.join(DATA_DIR, 'sysinfo.json')});
+function doSysinfo(query, res) {
+  sysInfo.report(query.full === '1', function(r){ send(res, 200, r); });
+}
+
 /* GET /lyricsoffset?key=… -> {ok, ms}; POST /lyricsoffset {key, ms}: Versatz der synchronen Lyrics je Titel
    (in ms, positiv = Text kommt später), für alle Geräte gemeinsam in lyrics-offsets.json */
 var OFFSET_FILE = path.join(DATA_DIR, 'lyrics-offsets.json');
@@ -1331,6 +1338,7 @@ function handle(req, res) {
   if (req.method === 'GET' && route === '/genres')  return doGenres(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/sysinfo') return doSysinfo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodalbums') return doMoodAlbums(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
@@ -1367,6 +1375,7 @@ if (require.main === module) {
   if (process.env.HISTORY !== '0' && appConfig().HISTORY !== false) { recording = true; watchPlayer(); lfm.flush(); }
   setTimeout(function(){ albumsEnsure(); }, 90000);       /* Albenliste fürs Zufallsalbum vorbereiten */
   setTimeout(pruneLog, 30000);                            /* alte Rückgängig-Daten aufräumen */
+  sysInfo.start();                                        /* CPU-Last messen (Seite „System“) */
   if (process.env.RELEASEDATES !== '0' && appConfig().RELEASEDATES !== false) releaseDates.start();   /* Geburtstage: MusicBrainz */
   if (process.env.MOODTAGS !== '0' && appConfig().MOODTAGS !== false) {
     moodCollector.start();
