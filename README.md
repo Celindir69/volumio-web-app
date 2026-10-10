@@ -57,6 +57,7 @@ zum laufenden Titel und zeigt Senderlogos in der Senderliste.
 <p>
   <img src="docs/bilder/entdecken.jpg" width="200" alt="Entdecken in der Suche">
   <img src="docs/bilder/album.jpg" width="200" alt="Albumseite mit Sternen und Daumen">
+  <img src="docs/bilder/album-entdecken.jpg" width="200" alt="Albumseite: Entdecken">
 </p>
 
 ### Stimmungs-Mix
@@ -79,6 +80,7 @@ und ein Jahresrückblick mit Vergleich zum Vorjahr, Top-Genres und neu entdeckte
 die Ranglisten für diesen Monat.
 
 <p>
+  <img src="docs/bilder/begruessung.jpg" width="200" alt="Begrüßung">
   <img src="docs/bilder/menue.jpg" width="200" alt="Menü hinter dem Zahnrad">
   <img src="docs/bilder/verlauf.jpg" width="200" alt="Zuletzt gehört">
   <img src="docs/bilder/statistik.jpg" width="200" alt="Statistik">
@@ -89,7 +91,7 @@ die Ranglisten für diesen Monat.
 Tags einzelner Titel, ganzer Alben oder aller Titel eines Künstlers bearbeiten, mit Textfunktionen wie Groß-/Kleinschreibung,
 Rückgängig und Cover (Datei wählen, online suchen, eingebettetes Cover als `folder.jpg`). Der Bibliotheks-Check findet
 Alben ohne Cover, fehlende oder uneinheitliche Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche
-Albumnamen oder Jahre und Titel ohne Tracknummer und schlägt je Album ein Genre vor (Discogs-Oberkategorien, aus
+Albumnamen oder Jahre, Titel ohne Tracknummer und Erscheinungsdaten, die von MusicBrainz abweichen, und schlägt je Album ein Genre vor (Discogs-Oberkategorien, aus
 vorhandenen Genre-Tags und der Audio-Analyse); jeder Eintrag öffnet direkt den passenden Editor und bleibt danach bis zur nächsten Prüfung ausgegraut. Dort steht auch der
 Fortschritt der Stimmungs-Tags.
 
