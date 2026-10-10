@@ -231,7 +231,6 @@
     .qRow:hover .qTrash { opacity:.8; }
     .qTrash:hover { opacity:1; }
     .qTrash:hover svg { fill:#ff6b6b; }
-    .qRow:hover { background:rgba(var(--fg-rgb),.05); }
     .qRow.dragging { cursor:grabbing; }
   }
   .qHint { font-size:calc(2.8 * var(--vw)); opacity:.4; margin:calc(2 * var(--vw)) calc(5 * var(--vw));
@@ -270,7 +269,7 @@
   .bGenre:hover, .bGenre:active, .bLink:hover, .bLink:active { opacity:1; }
   .bAllDecRow { margin:0 0 calc(3 * var(--vw)); }
 .bYear { font-weight:400; opacity:.6; cursor:pointer; white-space:nowrap; }
-  .bYear:hover, .bYear:active { opacity:1; text-decoration:underline; }
+  .bYear:hover, .bYear:active { opacity:1; }
   #browseAlbumHead .bArtist { white-space:normal; margin-bottom:calc(.5 * var(--vw)); }
   #browseAlbumHead .bGenreHead { margin-top:calc(.5 * var(--vw)); }
   .bGenreHead:empty { display:none; }
@@ -284,7 +283,6 @@
   .bNum { flex:0 0 calc(8 * var(--vw)); text-align:right; padding-right:calc(3.5 * var(--vw)); opacity:.4;
     font-size:calc(3.2 * var(--vw)); }
   .bDur { flex:0 0 auto; margin-left:calc(3 * var(--vw)); opacity:.5; font-size:calc(3.2 * var(--vw)); }
-  @media (hover:hover) and (pointer:fine) { .sRow:hover { background:rgba(var(--fg-rgb),.06); border-radius:calc(2 * var(--vw)); } }
   /* Tag-Editor */
   .browseEditBtn { flex:0 0 calc(10 * var(--vw)); height:calc(10 * var(--vw)); max-width:44px; max-height:44px;
     margin-left:calc(3 * var(--vw)); border-radius:50%; background:rgba(var(--fg-rgb),.15); cursor:pointer;
@@ -439,7 +437,6 @@
   .sRow { display:flex; align-items:center; padding:calc(2.5 * var(--vw)) 0;
     border-bottom:1px solid rgba(var(--fg-rgb),.12); cursor:pointer; }
   .sRow:last-child { border-bottom:none; }
-  .sRow:active { background:rgba(var(--fg-rgb),.08); border-radius:calc(2 * var(--vw)); }
   .sCover { flex:0 0 calc(12 * var(--vw)); height:calc(12 * var(--vw)); object-fit:cover;
     border-radius:calc(1.5 * var(--vw)); margin-right:calc(3 * var(--vw)); background:var(--ph); }
   .sMeta { flex:1 1 auto; min-width:0; }
@@ -449,7 +446,7 @@
     overflow:hidden; text-overflow:ellipsis; margin-top:calc(.8 * var(--vw)); }
   .sHint { font-size:calc(2.8 * var(--vw)); opacity:.4; text-align:center; padding:calc(4 * var(--vw)) 0; }
   .sHint.listHint { padding:calc(2 * var(--vw)) 0 calc(1 * var(--vw)); }
-  .sHint.listLink { cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .sHint.listLink { cursor:pointer; display:table; margin:calc(1 * var(--vw)) auto 0; padding:calc(1.2 * var(--vw)) calc(3 * var(--vw)); border-radius:calc(2 * var(--vw)); }
   .sHint.simSeed { text-align:left; opacity:.55; padding:0 0 calc(3 * var(--vw)); }
 
 
@@ -1026,4 +1023,11 @@ html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 .syPath { font-size:calc(3 * var(--vw)); overflow-wrap:anywhere; margin-top:calc(1 * var(--vw)); color:rgba(var(--fg-rgb),.8); -webkit-user-select:text; user-select:text; }
 @media (min-width:700px) {
   .syTitle, .syK, .syKv, .sySub, .syNote, .syCore, .syPath { font-size:13px; } .syBig { font-size:30px; } .syDiskHead { font-size:15px; }
+}
+
+/* Antippbare Zeilen in allen Listen gleich: mit der Maus hinterlegt, beim Tippen kurz hinterlegt
+   (Titel, Alben, Suche, Warteschlange, Playlisten, Radio, Menü, Verlauf, Hinweise mit Verweis) */
+.sRow:active, .plRow:active, .menuRow:active, .hgRow:active, .sHint.listLink:active { background:rgba(var(--fg-rgb),.08); border-radius:calc(2 * var(--vw)); }
+@media (hover:hover) and (pointer:fine) {
+  .sRow:hover, .qRow:hover, .plRow:hover, .menuRow:hover, .hgRow:hover, .sHint.listLink:hover { background:rgba(var(--fg-rgb),.06); border-radius:calc(2 * var(--vw)); }
 }
