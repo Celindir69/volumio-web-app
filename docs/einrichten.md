@@ -218,6 +218,25 @@ jedes Laufwerks (interne Karte, USB und jede Verbindung unter `/mnt/NAS/` einzel
 `/proc`, `/sys` und `df`; er misst alle 2 Sekunden (eine kleine Datei, ohne spürbare Last) und sichert den Verlauf alle
 10 Minuten in `/data/xplorio/data/sysinfo.json`.
 
+#### Dienste
+Darunter die Karte „Dienste“: Volumio, MPD, Tag-Dienst, Rotel-Steuerung und Kiosk mit Zustand (läuft seit …, gestoppt,
+Fehler) und einem Knopf „Neustart“, beim Kiosk zusätzlich „Start“ und „Stopp“ (etwa, damit er nur läuft, wenn der Fernseher
+angeschlossen ist). Vor einem Neustart fragt die Seite nach. Dienste, die auf dem Player nicht eingerichtet sind, fehlen in
+der Liste. Der Tag-Dienst läuft als Benutzer `volumio` und darf genau diese Befehle nur mit einer sudo-Regel ausführen;
+ohne sie zeigt die Karte den Zustand und einen Hinweis. Einmalig einrichten (`visudo` prüft die Regel vor dem Speichern):
+
+```
+sudo visudo -f /etc/sudoers.d/xplorio-dienste
+```
+
+und diese eine Zeile eintragen:
+
+```
+volumio ALL=(root) NOPASSWD: /bin/systemctl --no-block restart volumio, /bin/systemctl --no-block restart mpd, /bin/systemctl --no-block restart tag-service, /bin/systemctl --no-block restart rotel-bridge, /bin/systemctl --no-block start volumio-kiosk, /bin/systemctl --no-block stop volumio-kiosk, /bin/systemctl --no-block restart volumio-kiosk
+```
+
+Die Regel erlaubt nur diese Befehle, nichts sonst.
+
 ### Verlauf und Statistik
 Im Menü (Zahnrad oben rechts) unter „Verlauf und Statistik“: **Zuletzt** gespielt (nach Tagen), **Meistgespielt** (Titel, Alben, Künstler oder Genres;
 30 Tage, 12 Monate oder gesamt), **Statistik** (Wiedergaben, Hörzeit, Verlauf, Tageszeit, Wochentag, Top-8-Genres; ein Genre antippen öffnet seine Alben) und **Rückblick**

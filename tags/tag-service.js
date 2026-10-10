@@ -1099,6 +1099,11 @@ function doSysinfo(query, res) {
   sysInfo.report(query.full === '1', function(r){ send(res, 200, r); });
 }
 
+/* GET /services: Zustand der Player-Dienste; POST /service {unit, action}: Neustart (Kiosk auch Start/Stopp) */
+var services = require('./services.js'), svc = new services.Services();
+function doServices(query, cb) { svc.status(function(r){ cb(r.ok ? 200 : 500, r); }); }
+function doService(body, cb) { svc.act(String(body.unit || ''), String(body.action || ''), 'tag-service', cb); }
+
 /* GET /lyricsoffset?key=… -> {ok, ms}; POST /lyricsoffset {key, ms}: Versatz der synchronen Lyrics je Titel
    (in ms, positiv = Text kommt später), für alle Geräte gemeinsam in lyrics-offsets.json */
 var OFFSET_FILE = path.join(DATA_DIR, 'lyrics-offsets.json');
@@ -1346,6 +1351,7 @@ function handle(req, res) {
   if (req.method === 'GET' && route === '/radiocover')  return doRadioCover(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/stationlogo') return doStationLogo(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/sysinfo') return doSysinfo(url.parse(req.url, true).query, res);
+  if (req.method === 'GET' && route === '/services') return doServices(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artistimage') return doArtistImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/lyricsoffset') return doOffsetGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodalbums') return doMoodAlbums(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
@@ -1363,7 +1369,7 @@ function handle(req, res) {
   if (req.method === 'GET' && route === '/lastfm')  return send(res, 200, {ok: true, recording: recording, lastfm: lfm.status()});
   if (req.method === 'GET' && route === '/artist')  return doArtist(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'POST' && route === '/essentia') return doEssentiaUpload(req, res);
-  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset', '/randommix', '/ratings', '/rate'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
+  if (req.method !== 'POST' || ['/read', '/write', '/undo', '/cover', '/scan', '/check', '/checkdone', '/lastfm', '/lyricsoffset', '/randommix', '/ratings', '/rate', '/service'].indexOf(route) < 0) return send(res, 404, {ok: false, error: 'unbekannter Pfad'});
   var data = '', tooBig = false;
   req.setEncoding('utf8');
   req.on('data', function(d){ data += d; if (data.length > MAX_BODY) { tooBig = true; req.destroy(); } });
@@ -1371,7 +1377,7 @@ function handle(req, res) {
     if (tooBig) return;
     var body;
     try { body = JSON.parse(data); } catch (e) { return send(res, 400, {ok: false, error: 'Ungültiges JSON'}); }
-    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet, '/randommix': doRandomMix, '/ratings': doRatings, '/rate': doRate}[route];
+    var fn = {'/read': doRead, '/write': doWrite, '/cover': doCover, '/scan': doScan, '/undo': doUndo, '/check': doCheckStart, '/checkdone': doCheckDone, '/lastfm': doLastfm, '/lyricsoffset': doOffsetSet, '/randommix': doRandomMix, '/ratings': doRatings, '/rate': doRate, '/service': doService}[route];
     try { fn(body || {}, function(c, o){ send(res, c, o); }); }
     catch (e) { console.error('Anfrage ' + route + ' gescheitert: ' + (e && e.stack || e)); if (!res.headersSent) send(res, 500, {ok: false, error: 'interner Fehler'}); }
   });

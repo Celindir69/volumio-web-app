@@ -177,6 +177,25 @@ When the page opens (only with the Tag Service), a card in the middle of the win
 
 In the menu under "System": the current CPU load (refreshed every 2 seconds, with the last 3 minutes and per core), a history of the last 24 hours (load, temperature or memory, averaged per minute), temperature, memory, the usage of each drive (internal card, USB and each connection under `/mnt/NAS/` separately; an unreachable connection is shown as "not reachable"), Volumio version, kernel, uptime and the file currently playing. The Tag Service reads the values from `/proc`, `/sys` and `df`; it samples every 2 seconds (one small file, no noticeable load) and saves the history every 10 minutes to `/data/xplorio/data/sysinfo.json`.
 
+#### Services
+Below that, the "Services" card: Volumio, MPD, Tag Service, Rotel control and kiosk with their state (running for …, stopped,
+error) and a "Restart" button, plus "Start" and "Stop" for the kiosk (for example, so it only runs while the TV is
+connected). The page asks before restarting. Services that are not set up on the player are not listed. The Tag Service runs
+as user `volumio` and may run exactly these commands only with a sudo rule; without it, the card shows the state and a hint.
+Set it up once (`visudo` checks the rule before saving):
+
+```
+sudo visudo -f /etc/sudoers.d/xplorio-dienste
+```
+
+and add this single line:
+
+```
+volumio ALL=(root) NOPASSWD: /bin/systemctl --no-block restart volumio, /bin/systemctl --no-block restart mpd, /bin/systemctl --no-block restart tag-service, /bin/systemctl --no-block restart rotel-bridge, /bin/systemctl --no-block start volumio-kiosk, /bin/systemctl --no-block stop volumio-kiosk, /bin/systemctl --no-block restart volumio-kiosk
+```
+
+The rule allows only these commands, nothing else.
+
 ### History and Statistics
 
 In the menu (gear at the top right) under "History and stats": **Recent** (by day), **Most played** (tracks, albums, artists, or genres; 30 days, 12 months, or all time), **Stats** (plays, listening time, history, time of day, weekday, top 8 genres; tapping a genre opens its albums), and **Year in review** (one year: totals compared with the previous year, months, plus expandable top tracks, albums, artists, genres, and newly discovered artists; tapping a monthly bar displays the rankings for that month; genres are taken from the album list below).
