@@ -191,10 +191,11 @@ function browseTrackRow(t, e, showAlbum) {
   return row;
 }
 
-/* Reiter auf einer Seite (Künstler, Jahr, Jahrzehnt): defs [[id, Name], …] -> {id: Bereich}; der gewählte steht im
-   browseStack-Eintrag (e.tab) und bleibt beim Zurück offen; der erste ist Vorgabe */
+/* Reiter auf einer Seite (Künstler, Album, Jahr, Jahrzehnt): defs [[id, Name, fill], …] -> {id: Bereich}; der gewählte
+   steht im browseStack-Eintrag (e.tab) und bleibt beim Zurück offen; der erste ist Vorgabe. fill(Bereich) füllt einen
+   Reiter erst, wenn er zum ersten Mal gezeigt wird. */
 function browseTabs(e, defs) {
-  var tabs = histEl('div', 'bTabs'), panes = {};
+  var tabs = histEl('div', 'bTabs'), panes = {}, filled = {};
   defs.forEach(function(x){
     panes[x[0]] = histEl('div');
     var t = histEl('div', 'infoTab', x[1]);
@@ -207,11 +208,33 @@ function browseTabs(e, defs) {
       tabs.children[i].classList.toggle('on', x[0] === cur);
       panes[x[0]].style.display = x[0] === cur ? '' : 'none';
     });
+    var d = defs.filter(function(x){ return x[0] === cur; })[0];
+    if (d[2] && !filled[cur]) { filled[cur] = true; d[2](panes[cur]); }
   }
   browseBody.appendChild(tabs);
   defs.forEach(function(x){ browseBody.appendChild(panes[x[0]]); });
   show();
   return panes;
+}
+
+/* Reiter „Hintergrund“: Künstler- bzw. Albumtext wie auf der Info-Seite (Volumio, sonst Last.fm/Wikipedia),
+   beim Album darunter die Mitwirkenden zum Aufklappen (info.js) */
+function backgroundFill(pane, e, seq, artist, album) {
+  var wait = browseNote(T('browse.loading'));
+  pane.appendChild(wait);
+  var jobs = album ? [ask({mode: 'storyAlbum', artist: artist, album: album}), ask({mode: 'creditsAlbum', artist: artist, album: album})]
+                   : [ask({mode: 'storyArtist', artist: artist})];
+  Promise.all(jobs).then(function(res){
+    if (seq !== browseSeq) return;
+    pane.removeChild(wait);
+    var story = res[0] && res[0].kind === 'story' && res[0].value, credits = res[1] && res[1].kind === 'credits' && res[1].value;
+    if (!story && !credits) return pane.appendChild(browseNote(T('info.noContent')));
+    if (story) pane.appendChild(histEl('div', 'bgStory', story));
+    if (credits) {
+      pane.appendChild(browseHeading(T('info.credits')));
+      creditsRender(pane, credits);
+    }
+  });
 }
 
 function browseArtist(e, seq) {
@@ -262,17 +285,18 @@ function browseArtist(e, seq) {
       browseBody.appendChild(head);
     }
 
-    /* eigene Sammlung: Reiter „Alben & Titel“ und „Entdecken“ (discover.js); der gewählte bleibt beim Zurück (e.tab) */
-    var pane = browseBody, more = null;
-    if (!isStream) {
-      var panes = browseTabs(e, [['albums', T('browse.tab.albums')], ['more', T('browse.tab.more')]]);
-      var moreNote = browseNote(T('browse.loading'));
-      panes.more.appendChild(moreNote);
-      more = discoverMore(e.artist, function(){ return seq === browseSeq; }, function(){ if (moreNote.parentNode) moreNote.parentNode.removeChild(moreNote); },
-        function(){ if (!panes.more.querySelector('.dMoreSec')) { moreNote.textContent = T('more.empty'); panes.more.insertBefore(moreNote, more); } });
-      panes.more.appendChild(more);
-      pane = panes.albums;
-    }
+    /* Reiter „Alben & Titel“, „Entdecken“ (discover.js; beim Dienst „Lokal entdecken“: aus der eigenen Sammlung)
+       und „Hintergrund“; der gewählte bleibt beim Zurück (e.tab) */
+    var panes = browseTabs(e, [['albums', T('browse.tab.albums')],
+      ['more', T(isStream ? 'browse.tab.moreLocal' : 'browse.tab.more'), function(box){
+        var moreNote = browseNote(T('browse.loading')), more;
+        box.appendChild(moreNote);
+        more = discoverMore(e.artist, function(){ return seq === browseSeq; }, function(){ if (moreNote.parentNode) moreNote.parentNode.removeChild(moreNote); },
+          function(){ if (!box.querySelector('.dMoreSec')) { moreNote.textContent = T('more.empty'); box.insertBefore(moreNote, more); } });
+        box.appendChild(more);
+      }],
+      ['bg', T('browse.tab.bg'), function(box){ backgroundFill(box, e, seq, e.artist); }]]);
+    var pane = panes.albums;
 
     var albumHead = browseHeading(T('browse.albums'));
     albumHead.style.display = 'none';
@@ -410,6 +434,15 @@ function browseAlbum(e, seq) {
     head.appendChild(play);
     browseBody.appendChild(head);
 
+    /* Reiter „Titel“, „Entdecken“ (beim Dienst „Lokal entdecken“) und „Hintergrund“ */
+    var stream = !!streamOf(e.uri);
+    var panes = browseTabs(e, [['tracks', T('browse.tab.tracks')],
+      ['more', T(stream ? 'browse.tab.moreLocal' : 'browse.tab.more'), function(box){
+        discoverAlbum(box, {artist: who, album: e.album, uri: stream ? '' : e.uri}, function(){ return seq === browseSeq; });
+      }],
+      ['bg', T('browse.tab.bg'), function(box){ backgroundFill(box, e, seq, who, e.album); }]]);
+    var pane = panes.tracks;
+
     var rows = [];
     tracks.forEach(function(t, i){
       var row = document.createElement('div');
@@ -433,11 +466,11 @@ function browseAlbum(e, seq) {
       row.addEventListener('click', function(){            /* Album ab diesem Titel (wie bei Playlisten) */
         playlistPlay({uri:e.uri, name:e.album, service:info.service || e.service || 'mpd', type:'folder'}, tracks, i);
       });
-      browseBody.appendChild(row);
+      pane.appendChild(row);
       rows.push(row);
     });
     rateAlbumPage(seq, e, who, tracks, meta, rows);         /* Sterne und Daumen (rating.js) */
-    browseBody.appendChild(browseNote(T('browse.hintAlbum')));
+    pane.appendChild(browseNote(T('browse.hintAlbum')));
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);

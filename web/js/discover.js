@@ -446,6 +446,100 @@ function discoverMore(artist, alive, onContent, onDone) {
   return box;
 }
 
+/* ---------- Entdecken (Reiter auf der Albumseite) ---------- */
+/* Tag-Dienst GET /albumprofile: ähnliche Alben aus der Sammlung (mit Würfel: 25 Titel daraus), Stimmung, Energie und
+   Stile des Albums (ohne lokales Album: des Künstlers), Jahr, Jahrzehnt und Genre, weitere Alben des Künstlers.
+   q: {artist, album, uri}; uri leer bei Alben vom Dienst. alive(): Seite noch dieselbe. */
+function discoverAlbum(box, q, alive) {
+  var wait = browseNote(T('browse.loading'));
+  box.appendChild(wait);
+  function group(label) {
+    var sec = histEl('div', 'dMoreSec');
+    sec.appendChild(histEl('div', 'mxLabel', label));
+    var chips = histEl('div', 'mxChips');
+    sec.appendChild(chips);
+    box.appendChild(sec);
+    return chips;
+  }
+  function chip(chips, label, onClick) {
+    if (Array.prototype.some.call(chips.children, function(x){ return x.textContent === label; })) return;   /* „Ruhig“ als Stimmung und Energie */
+    var c = histEl('div', 'mxChip', label);
+    c.addEventListener('click', function(ev){ ev.stopPropagation(); onClick(); });
+    chips.appendChild(c);
+  }
+  function moodset(title, mq) { openBrowse({kind: 'moodset', title: title, q: mq}); }
+  function tiles(title, items, dice) {
+    var sec = histEl('div', 'dMoreSec');
+    var head = histEl('div', 'mxLabel', title);
+    if (dice) {
+      head.classList.add('dHead');
+      var btns = histEl('div', 'dHeadBtns'), b = histEl('div', 'dDice');
+      b.title = T('disc.mix'); b.innerHTML = DICE_SVG;
+      b.addEventListener('click', function(){
+        b.classList.remove('roll'); void b.offsetWidth; b.classList.add('roll');
+        randomMixPlay({dirs: items.map(function(it){ return it.dir; })});
+      });
+      btns.appendChild(b); head.appendChild(btns);
+    }
+    sec.appendChild(head);
+    var row = histEl('div', 'dRow dLeft');
+    items.forEach(function(it){
+      var t = discoverShelfTile('album', 'never', it);
+      if (it.y) t.appendChild(histEl('div', 'dSub', String(it.y)));
+      row.appendChild(t);
+    });
+    sec.appendChild(row);
+    box.appendChild(sec);
+    discoverFit(row);
+  }
+  if (!discoverReady) { wait.textContent = T('more.emptyAlbum'); return; }
+  var dir = String(q.uri || '').replace(/^music-library\//, '');
+  tagGetJson('/albumprofile?artist=' + encodeURIComponent(q.artist || '') + '&album=' + encodeURIComponent(q.album || '') +
+             (dir && !/^[a-z]+:\/\//i.test(dir) ? '&dir=' + encodeURIComponent(dir) : '')).then(function(r){
+    if (!alive()) return;
+    box.removeChild(wait);
+    if (!r || !r.ok) return box.appendChild(browseNote(T(r && r.building ? 'disc.building' : 'genre.offline')));
+    var any = false, chips;
+    if (r.source === 'artist' && !r.found && (r.similar.length || r.moods.length || r.styles.length))
+      box.appendChild(browseNote(T('more.byArtist', {ar: q.artist}), 'sHint'));
+    if (r.similar.length) { tiles(T('more.similarAlbums'), r.similar, true); any = true; }
+    if (r.moods.length || r.energy) {
+      chips = group(T('more.mood'));
+      r.moods.forEach(function(m){ var name = mixName(m); chip(chips, name, function(){ moodset(name, 'moods=' + encodeURIComponent(m)); }); });
+      DISCOVER_ENERGY.forEach(function(en){
+        if (r.energy < en[0] || r.energy > en[1]) return;
+        var name = T(en[2]);
+        chip(chips, name, function(){ moodset(name, 'emin=' + en[0] + '&emax=' + en[1]); });
+      });
+      any = true;
+    }
+    if (r.styles.length) {
+      chips = group(T('more.style'));
+      r.styles.forEach(function(st){
+        var name = st.charAt(0).toUpperCase() + st.slice(1);
+        chip(chips, name, function(){ moodset(name, 'styles=' + encodeURIComponent(st)); });
+      });
+      any = true;
+    }
+    if (r.year || r.genre) {
+      chips = group(T('more.when'));
+      if (r.year) {
+        chip(chips, String(r.year), function(){ openBrowse({kind: 'year', year: r.year}); });
+        var d = r.year - r.year % 10;
+        chip(chips, T('disc.decade', {d: d}), function(){ openBrowse({kind: 'decade', decade: d}); });
+      }
+      if (r.genre && typeof genreOpen === 'function') chip(chips, r.genre, function(){ genreOpen(r.genre); });
+      any = true;
+    }
+    if (r.others.length) { tiles(T('more.others', {ar: histArtistName(r.others[0].ar)}), r.others, false); any = true; }
+    if (!any) box.appendChild(browseNote(T('more.emptyAlbum')));
+  }).catch(function(){
+    if (!alive()) return;
+    if (wait.parentNode) box.removeChild(wait);
+    box.appendChild(browseNote(T('genre.offline')));
+  });
+}
+
 /* Würfel-Knopf für die Zeile „Alle abspielen“ (Klick geht nicht an die Zeile weiter) */
 function randomMixButton(q) {
   var b = histEl('div', 'mixDice');

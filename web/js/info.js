@@ -203,7 +203,12 @@ if (!it.data || it.data.kind === 'story') {
   }
 
 
-  it.data.value.forEach(function(row){
+  creditsRender(infoContent, it.data.value);
+}
+
+/* Mitwirkende als Zeilen in box (Info-Seite, Reiter „Hintergrund“ der Albumseite) */
+function creditsRender(box, value) {
+  value.forEach(function(row){
     var line = document.createElement('div');
     line.className = 'credit-row';
     var k = document.createElement('div');
@@ -220,8 +225,8 @@ if (!it.data || it.data.kind === 'story') {
       v.appendChild(n);
     });
     line.appendChild(k); line.appendChild(v);
-    infoContent.appendChild(line);
-    infoContent.appendChild(more);
+    box.appendChild(line);
+    box.appendChild(more);
   });
 }
 

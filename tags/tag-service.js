@@ -680,6 +680,18 @@ function doArtistProfile(query, cb) {
   });
 }
 
+/* GET /albumprofile?artist=…&album=…[&dir=…] -> Entdecken auf der Albumseite (moodalbums.albumProfile) */
+function doAlbumProfile(query, cb) {
+  var artist = String(query.artist || '').trim(), album = String(query.album || '').trim(), dir = relUri(query.dir || '').replace(/\/+$/, '');
+  if (!album && !dir) return cb(400, {ok: false, error: 'album fehlt'});
+  albumsEnsure(function(list){
+    if (!list) return cb(200, {ok: false, building: true});              /* Albenliste entsteht zum ersten Mal */
+    var r = moodalbums.albumProfile(moodmix.index(moodCollector), list, {dir: dir, artist: artist, album: album}, plays.norm);
+    r.ok = true;
+    cb(200, r);
+  });
+}
+
 /* GET /similar?file=…&artist=…&title=…&album=…[&shuffle=1] -> {ok, seed: {mood, energy, bpm, style}, items: [{f, ar, ti, al, d, why}]}
    (Mehr wie dieser Titel); ohne Stimmungsdaten zum Titel {ok: false, nodata: true} */
 var similar = require('./similar.js');
@@ -1221,6 +1233,7 @@ var server = http.createServer(function(req, res){
   if (req.method === 'GET' && route === '/moodalbums') return doMoodAlbums(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodmix')  return doMoodmix(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/moodtags') return doMoodtags(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/albumprofile') return doAlbumProfile(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/artistprofile') return doArtistProfile(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/gems') return doGems(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/similar') return doSimilar(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
