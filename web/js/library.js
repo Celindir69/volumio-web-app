@@ -155,7 +155,8 @@ function radioLogos(items, container) {
     var icon = rows[i] && rows[i].querySelector('.plIcon'), name = it.title || it.name || '';
     if (!icon || !name) return;
     if (!it.albumart) icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-1.11-.89-2-2-2H8.3l8.26-3.34L15.88 1 3.24 6.15zM7 20a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm13-8h-2v-2h-2v2H4V8h16v4z"/></svg>';   /* Radio statt Playlist */
-    var a = it.albumart || '', img = new Image();
+    var a = it.albumart || '', img = new Image(), tid = radioTuneInId(it.uri);
+    if (!/^https?:\/\//.test(a) && tid) a = 'https://cdn-profiles.tunein.com/' + tid + '/images/logoq.jpg';   /* TuneIn-Favorit: Logo direkt über die Sender-ID */
     img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:calc(1.5 * var(--vw));background:#fff;';
     img.onload = function(){ while (icon.firstChild) icon.removeChild(icon.firstChild); icon.appendChild(img); };
     img.src = TAGS + '/stationlogo?name=' + encodeURIComponent(name) + (/^https?:\/\//.test(a) ? '&url=' + encodeURIComponent(a) : '');
