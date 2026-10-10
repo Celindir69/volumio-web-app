@@ -33,8 +33,9 @@ function mime(b) {
   if (b[0] === 0 && b[1] === 0 && b[2] === 1 && b[3] === 0) return 'image/x-icon';
   return '';
 }
+/* Adressen kommen von Volumio bzw. radio-browser.info: nur öffentliche Server */
 function loadImage(u, cb) {
-  coversearch.fetchUrl(u, 4 * 1024 * 1024, function(e, r){ cb(e || !mime(r.body) ? null : r.body, !!e); });
+  coversearch.fetchUrl(u, 4 * 1024 * 1024, function(e, r){ cb(e || !mime(r.body) ? null : r.body, !!e); }, {pub: !process.env.RADIO_ALLOW_LOCAL});
 }
 
 /* "Künstler - Titel" -> {artist, title}; null wenn kein Titel erkennbar */

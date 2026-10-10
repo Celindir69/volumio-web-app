@@ -47,13 +47,16 @@ Store.prototype.add = function(entries) {
   try { fs.mkdirSync(path.dirname(this.file)); } catch (e) { /* existiert schon */ }
   try { fs.appendFileSync(this.file, entries.map(function(e){ return JSON.stringify(e); }).join('\n') + '\n'); }
   catch (e) { ok = false; }
-  var sorted = list.length === 0 || entries.every(function(e){ return e.t >= list[list.length - 1].t; });
   var idx = this.idx;
-  entries.forEach(function(e){
-    list.push(e);
-    if (idx) { var k = trackKey(e); (idx[k] || (idx[k] = [])).push(e.t); }
-  });
-  if (!sorted) list.sort(function(a, b){ return a.t - b.t; });
+  entries.forEach(function(e){ if (idx) { var k = trackKey(e); (idx[k] || (idx[k] = [])).push(e.t); } });
+  var add = entries.slice().sort(function(a, b){ return a.t - b.t; });
+  /* in die nach t sortierte Liste einreihen, von hinten (Last.fm-Import bringt ältere Seiten: kein neues Sortieren des ganzen Verlaufs) */
+  var i = list.length - 1, j = add.length - 1, w = list.length + add.length - 1;
+  list.length += add.length;
+  while (j >= 0) {
+    if (i >= 0 && list[i].t > add[j].t) list[w--] = list[i--];
+    else list[w--] = add[j--];
+  }
   return ok;
 };
 

@@ -3,6 +3,8 @@
 var http  = require('http');
 var https = require('https');
 var url   = require('url');
+var dns   = require('dns');
+var net   = require('net');
 
 var UA = 'Xplorio/1.0 ( https://github.com/Celindir69/xplorio )';   /* MusicBrainz verlangt eine Kennung */
 var BASE = {
@@ -13,19 +15,47 @@ var BASE = {
 };
 var LASTFM_BLANK = '2a96cbd8b46e442fc41c2b86b821562f';      /* Platzhalter-Stern von Last.fm */
 
-/* einfacher GET mit Weiterleitungen, Zeit- und Größengrenze: cb(err, {type, body:Buffer}) */
-function fetchUrl(u, maxBytes, cb, hops) {
+/* Adressen im eigenen Netz (Router, NAS, der Player selbst) */
+function privateIp(ip) {
+  ip = String(ip || '').toLowerCase().replace(/^::ffff:/, '');
+  if (net.isIPv4(ip)) {
+    var b = ip.split('.').map(Number);
+    return b[0] === 0 || b[0] === 10 || b[0] === 127 || b[0] >= 224 || (b[0] === 169 && b[1] === 254) ||
+           (b[0] === 172 && b[1] >= 16 && b[1] <= 31) || (b[0] === 192 && b[1] === 168) || (b[0] === 100 && b[1] >= 64 && b[1] <= 127);
+  }
+  return ip === '::' || ip === '::1' || /^f[cd]/.test(ip) || /^fe[89ab]/.test(ip);
+}
+/* DNS-Auflösung, die Adressen im eigenen Netz ablehnt (auch nach Weiterleitungen) */
+function publicLookup(host, opts, cb) {
+  if (typeof opts === 'function') { cb = opts; opts = {}; }
+  dns.lookup(host, opts, function(e, addr, family){
+    if (e) return cb(e);
+    var list = Array.isArray(addr) ? addr : [{address: addr}];
+    if (list.some(function(a){ return privateIp(a.address); })) return cb(new Error('Adresse im eigenen Netz nicht erlaubt'));
+    cb(null, addr, family);
+  });
+}
+
+/* einfacher GET mit Weiterleitungen, Zeit- und Größengrenze: cb(err, {type, body:Buffer})
+   o.pub: nur öffentliche Adressen (für Adressen aus fremden Daten, z. B. Senderlogos) */
+function fetchUrl(u, maxBytes, cb, o) {
+  o = typeof o === 'object' && o ? o : {};
+  var hops = o.hops || 0;
   var p = url.parse(u);
   if (p.protocol !== 'https:' && p.protocol !== 'http:') return cb(new Error('ungültige Adresse'));
+  if (o.pub && net.isIP(String(p.hostname || '').replace(/^\[|\]$/g, '')) && privateIp(String(p.hostname).replace(/^\[|\]$/g, '')))
+    return cb(new Error('Adresse im eigenen Netz nicht erlaubt'));
   var done = false;
   function finish(e, r) { if (!done) { done = true; cb(e, r); } }
-  var req = (p.protocol === 'https:' ? https : http).get({
+  var opts = {
     protocol: p.protocol, hostname: p.hostname, port: p.port, path: p.path,
     headers: {'User-Agent': UA, 'Accept': '*/*'}
-  }, function(res){
-    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && (hops || 0) < 4) {
+  };
+  if (o.pub) opts.lookup = publicLookup;
+  var req = (p.protocol === 'https:' ? https : http).get(opts, function(res){
+    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && hops < 4) {
       res.resume();
-      return fetchUrl(url.resolve(u, res.headers.location), maxBytes, finish, (hops || 0) + 1);
+      return fetchUrl(url.resolve(u, res.headers.location), maxBytes, finish, {hops: hops + 1, pub: o.pub});
     }
     if (res.statusCode !== 200) { res.resume(); return finish(new Error('HTTP ' + res.statusCode)); }
     var parts = [], size = 0;
@@ -114,4 +144,4 @@ function image(u, cb) {
   });
 }
 
-module.exports = {search: search, image: image, key: key, fetchUrl: fetchUrl};
+module.exports = {search: search, image: image, key: key, fetchUrl: fetchUrl, privateIp: privateIp};
