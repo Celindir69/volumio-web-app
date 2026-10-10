@@ -167,7 +167,7 @@
   .credit-row:has(+ .credit-more:empty:last-child) { border-bottom:none; }
   .credit-key { flex:0 0 38%; opacity:.6; text-transform:lowercase; }
   .credit-val { flex:1 1 auto; }
-  .credit-val .menuLink.open { opacity:.6; }
+  .credit-link { cursor:pointer; }
   .credit-more:empty { display:none; }
   .credit-info { padding:calc(2 * var(--vw)) 0 calc(3 * var(--vw)); border-bottom:1px solid rgba(var(--fg-rgb),.15);
     font-size:calc(3.4 * var(--vw)); line-height:1.6; white-space:pre-wrap; }

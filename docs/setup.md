@@ -258,7 +258,7 @@ If the app is set to a different language than Volumio via `LANGUAGE` or `?lang=
 
 The source is shown below the text. There is no fallback for contributors.
 
-Contributors that Volumio delivers with a MusicBrainz ID are underlined. Tapping one expands its text below, tapping again
+Contributors that Volumio delivers with a MusicBrainz ID can be tapped (without a visual marker). This expands its text below, tapping again
 collapses it. For people the same order as for artists applies (Volumio, then Last.fm and Wikipedia); studios and labels
 come from Volumio only.
 
