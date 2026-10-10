@@ -143,24 +143,24 @@ Hinweise: Erlaubt sind nur Dateien unter `/mnt/INTERNAL`, `/mnt/USB`, `/mnt/NAS`
 `/data/xplorio/data/changes.jsonl` (die letzten 200 Änderungen; ältere Einträge und ihre Cover-Sicherungen räumt der Dienst selbst auf). Werden die Musikdateien von einem anderen Rechner gespiegelt, überschreibt die nächste
 Spiegelung die Änderungen am Player. Nach Änderungen liest MPD die betroffenen Ordner neu ein, gesammelt 15 Sekunden
 nach der letzten Änderung und nie, solange MPD noch einliest; bei mehr als drei Ordnern ein Scan des gemeinsamen
-Elternordners. Solange der Bibliotheks-Check offen ist, wird nur gesammelt und beim Schließen einmal eingelesen
+Elternordners. Solange „Bibliothek prüfen“ offen ist, wird nur gesammelt und beim Schließen einmal eingelesen
 (spätestens 10 Minuten nach der letzten Änderung). Das wirkt nur, wenn MPD nicht selbst mitliest: Steht in
 `/etc/mpd.conf` `auto_update "yes"`, scannt MPD jede geänderte Datei sofort, und Volumio baut danach jedes Mal seine
 Albumliste neu auf (rund eine Minute Last je Album, bei vielen Alben hintereinander bis zum Hänger). Empfehlung:
 `auto_update "no"` (auch in der Vorlage unter `/volumio/app/plugins/music_service/mpd/`, falls dort vorhanden) und
 `sudo systemctl restart mpd`; neue Musik dann wie gewohnt mit „Bibliothek aktualisieren“ einlesen (im Volumio-Menü „Aktualisieren“, nicht „Neu
-einlesen“, oder mit dem Knopf oben im Bibliotheks-Check bzw. dem Eintrag „Bibliothek aktualisieren“ im Zahnradmenü; dabei gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
+einlesen“, oder mit dem Knopf oben in „Bibliothek prüfen“ bzw. dem Eintrag „Bibliothek aktualisieren“ im Zahnradmenü; dabei gehen auch noch gesammelte Änderungen mit auf). Der Dienst ist ohne Anmeldung im lokalen Netz erreichbar.
 
 ### Cover online suchen
 Im Album-Editor sucht „Online suchen“ bei iTunes, Last.fm (mit dem Last.fm-Key aus `keys.json`) und im
-Cover Art Archive (MusicBrainz) nach Album-Interpret (sonst Interpret) und Album, wie sie gerade in den Feldern stehen
+Cover Art Archive (MusicBrainz) nach Album-Künstler (sonst Künstler) und Album, wie sie gerade in den Feldern stehen
 (zum Suchen kurz ändern, ohne zu speichern). Die Vorschläge erscheinen
 nebeneinander; ein Tipp übernimmt das Bild wie ein gewähltes (einbetten und/oder folder.jpg, mit Rückgängig).
 Die Abfragen macht der Tag-Dienst; der Player braucht dafür Internetzugang.
 
-### Bibliotheks-Check
+### Bibliothek prüfen
 Im Menü (Zahnrad oben rechts, nur wenn der Tag-Dienst läuft): findet Alben ohne Cover, Compilations ohne
-einheitlichen Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche Albumnamen/Jahre, Alben, deren
+einheitlichen Album-Künstler, Künstler in mehreren Schreibweisen, uneinheitliche Albumnamen/Jahre, Alben, deren
 Date-Tag vom ersten Erscheinen laut MusicBrainz abweicht (aus dem Nachschlagen für die Geburtstage; der Stift schlägt
 das MusicBrainz-Datum vor), und Titel ohne Tracknummer; der Stift öffnet den passenden Editor. Die Prüfung liest die MPD-Datenbank (`MPD_HOST`, `MPD_PORT`, Standard
 `localhost:6600`) und die Ordner, ändert nichts an den Dateien und läuft nur auf Knopfdruck. Ergebnis:
@@ -296,7 +296,7 @@ Genres, nach Künstler sortiert. Je Album zählen bis zu drei Unterstile seines 
 Alben ohne Analyse stehen nur unter „Alle“. Die Suche findet auch Unterstile. Als Genre eines Albums gilt sein
 häufigstes Genre-Tag (aus der Albenliste). Auf der Albumseite stehen Künstler, Album und Genre untereinander; Künstler und
 Genre öffnen ihre Seite. In Albumlisten steht das Genre klein vor dem Stift. Genre-Tags vereinheitlichen und ergänzen hilft
-der [Bibliotheks-Check](#bibliotheks-check).
+[Bibliothek prüfen](#bibliothek-prüfen).
 Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/xplorio/data/artists/`
 (Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.
 
@@ -322,7 +322,7 @@ brauchbare Titel-Tags ersatzweise die Tags des Künstlers) und rechnet sie nach 
 `tags/mood/classification_rules.json` in Stimmung, Energie (1–5) und Stil um. Abgefragt wird nur, solange nichts spielt
 (Stopp oder Pause; geprüft alle 5 s), mit etwa 4 Anfragen je Sekunde. Die Musikdateien bleiben unverändert; die Rohtags
 liegen in `/data/xplorio/data/moodtags/`, die Titelliste dazu in `/data/xplorio/data/library-tracks.json` (entsteht
-zusammen mit der Albenliste). Fortschritt und Verteilung zeigt der Bibliotheks-Check unter „Stimmungs-Tags (Last.fm)“.
+zusammen mit der Albenliste). Fortschritt und Verteilung zeigt „Bibliothek prüfen“ unter „Stimmungs-Tags (Last.fm)“.
 Ausschalten: `MOODTAGS: false` in `web/config.local.js`, dann den Tag-Dienst neu starten.
 
 **Stimmungs-Mix:** Playlisten-Taste, Reiter „Stimmungs-Mix“ (erscheint, sobald der Tag-Dienst läuft). Dort lassen sich
@@ -376,7 +376,7 @@ python3 analyse.py --upload http://<player>:8766
   ein anderes, `--ffmpeg aus` schaltet es ab. Bisher fehlgeschlagene Dateien holt `--retry-errors` nach. Mit ffmpeg
   gelesene Titel tragen `"dec":"ffmpeg"` in `essentia.jsonl`.
 - Die Ergebnisdatei `essentia.jsonl` liegt auf dem Player unter `/data/xplorio/data/` (ersetzt bei jedem Hochladen die
-  vorige; alternativ per `scp` dorthin kopieren). Der Bibliotheks-Check zeigt unter „Stimmungs-Tags“, wie viele Titel
+  vorige; alternativ per `scp` dorthin kopieren). „Bibliothek prüfen“ zeigt unter „Stimmungs-Tags“, wie viele Titel
   zugeordnet sind.
 
 ### Künstler- und Albumtexte
