@@ -362,5 +362,23 @@ function recentAlbums(list, limit, minTracks, scan) {
   return out;
 }
 
-module.exports = {recentAlbums: recentAlbums, Store: Store, Tracker: Tracker, recent: recent, top: top, topGenre: topGenre, stats: stats, rangeStart: rangeStart,
+/* Ein Album auf seiner Seite: wie oft gehört und wann zuletzt. Ein „Hören“ sind Titel des Albums ohne Pause über
+   ALBUM_GAP; ein einzelner Titel zählt auch. dir: Ordner (lokal, wie rel() ihn liefert), sonst Album und Interpret.
+   -> {n, tracks (Titel-Wiedergaben), first, last} oder null */
+var ALBUM_GAP = 3 * 3600;
+function albumStats(list, rel, dir, al, ar) {
+  var kal = norm(al), kar = norm(ar), out = null, prev = 0;
+  for (var i = 0; i < list.length; i++) {
+    var e = list[i], hit;
+    if (dir) { var d = e.u ? path.dirname(rel(e.u)) : ''; hit = d === dir || d.indexOf(dir + '/') === 0; }   /* auch CD1/CD2 darunter */
+    else hit = !!e.al && keys(e).al === kal && (!kar || keys(e).ar === kar);
+    if (!hit) continue;
+    if (!out) out = {n: 0, tracks: 0, first: e.t, last: e.t};
+    if (!prev || e.t - prev > ALBUM_GAP) out.n++;
+    out.tracks++; out.last = e.t; prev = e.t;
+  }
+  return out;
+}
+
+module.exports = {albumStats: albumStats, recentAlbums: recentAlbums, Store: Store, Tracker: Tracker, recent: recent, top: top, topGenre: topGenre, stats: stats, rangeStart: rangeStart,
                   year: year, years: years, ago: ago, localStart: localStart, norm: norm, trackKey: trackKey, local: local};

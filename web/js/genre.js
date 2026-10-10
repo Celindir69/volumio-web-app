@@ -298,14 +298,21 @@ function yearFromAnywhere(y) {
   else openBrowse({kind: 'year', year: y});
 }
 
-/* Wiedergabe: Jahr hinter dem Album (lokal); key verhindert, dass ein spätes Ergebnis beim nächsten Titel landet */
-var playerYearKey = '';
+/* Wiedergabe: Jahr hinter dem Album und Genre klein unter der Qualitätsangabe (lokal; ein Tipp öffnet die Genre-Seite);
+   key verhindert, dass ein spätes Ergebnis beim nächsten Titel landet */
+var playerYearKey = '', mGenre = document.getElementById('mGenre');
 function playerYear(uri, album, artist) {
   var key = playerYearKey = uri + '|' + album + '|' + artist;
+  if (mGenre) mGenre.textContent = '';
   if (!album || !uri || streamOf(uri)) return;
   albumInfoLookup([{uri: uri, album: album, artist: artist}]).then(function(r){
-    if (key !== playerYearKey || !r.years[0]) return;
-    mAlbum.appendChild(yearSpan(r.years[0]));
+    if (key !== playerYearKey) return;
+    if (r.years[0]) mAlbum.appendChild(yearSpan(r.years[0]));
+    var g = r.genres[0];
+    if (!g || !mGenre) return;
+    var el = histEl('span', '', g);
+    el.addEventListener('click', function(ev){ ev.stopPropagation(); genreFromAnywhere(g); });
+    mGenre.appendChild(el);
   });
 }
 

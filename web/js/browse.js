@@ -468,6 +468,7 @@ function browseAlbum(e, seq) {
         queueAddButton([{uri:e.uri, service:info.service || e.service || 'mpd', type:'folder', title:e.album, artist:e.artist}], tracks.length)]);
     play.title = T('browse.playAlbum');
     browseBody.appendChild(play);
+    albumPlaysInfo(play, seq, e.uri, e.album, who);
 
     /* Reiter „Titel“, „Entdecken“ (beim Dienst „Lokal entdecken“) und „Hintergrund“ */
     var stream = !!streamOf(e.uri);
@@ -511,6 +512,25 @@ function browseAlbum(e, seq) {
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
     browseBody.appendChild(browseNote(T('browse.loadError')));
   });
+}
+
+/* Albumseite: „12-mal gehört / zuletzt …“ aus dem Verlauf, klein und mittig zwischen „Abspielen“ und den Symbolen.
+   Nur Information, kein Knopf: ein Tipp darauf spielt wie die übrige Zeile das Album. */
+function albumPlaysDay(t) {                               /* heute, gestern, sonst 3.10.2025 */
+  var s = histDay(t);
+  return s === T('hist.today') || s === T('hist.yesterday') ? s.toLowerCase() : langDate(new Date(t * 1000));
+}
+function albumPlaysInfo(play, seq, uri, album, artist) {
+  if (typeof TAGS === 'undefined') return;
+  var local = histRel(uri || '');
+  tagGetJson('/plays?view=album&u=' + encodeURIComponent(local) + '&al=' + encodeURIComponent(album || '') + '&ar=' + encodeURIComponent(local ? '' : artist || ''))
+    .then(function(r){
+      if (seq !== browseSeq || !r || !r.ok) return;
+      var st = r.stats, box = histEl('div', 'bPlays');
+      box.appendChild(histEl('div', 'bPlaysN', st ? T('album.plays', {n: st.n}) : T('album.playsNone')));
+      if (st) box.appendChild(histEl('div', '', T('album.playsLast', {d: albumPlaysDay(st.last)})));
+      play.insertBefore(box, play.querySelector('.sMeta').nextSibling);
+    }).catch(function(){});
 }
 
 /* ---------- Titel einer Playlist ---------- */

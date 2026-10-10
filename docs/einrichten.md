@@ -193,7 +193,8 @@ Beim Öffnen der Seite (nur mit Tag-Dienst) erscheint in der Mitte eine Karte mi
 breitem Rand): das **Album des Tages**
 (zufällig, bevorzugt lange nicht oder nie gehört; bleibt den ganzen Tag dasselbe) mit „Abspielen“ und Albumtext (wie im
 Info-Overlay, scrollbar), **Zuletzt gehört**
-(Alben, von denen zuletzt mindestens zwei Titel liefen), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
+(Alben, von denen zuletzt mindestens zwei Titel liefen), **Um diese Zeit vor X Jahren** (Alben, die vor einem
+Jahr oder länger um dieses Datum herum liefen, ± 3 Tage), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
 180 Tagen dazukamen oder sich änderten, nach dem Änderungsdatum aus MPD) und ein Zufallsmix. Tippen daneben schließt es.
 Es kommt höchstens alle 30 Minuten von selbst und nicht in der Bühnenansicht; „Beim Öffnen zeigen“ unten schaltet es
 für dieses Gerät ab, im Menü unter „Begrüßung“ ist es jederzeit erreichbar. Mit `?welcome=0` in der Adresse bleibt es beim Öffnen aus (z. B. für ein Lesezeichen). Nach dem Update liest der Tag-Dienst die
@@ -275,6 +276,9 @@ Energie und die Jahrzehnte seiner Alben. Jeder Knopf öffnet wie beim Entdecken 
 bisherige Weg zählt dabei nicht als Filter. Der Würfel vor den ähnlichen Künstlern startet einen Zufallsmix, in dem
 jeder dieser Künstler etwa gleich oft vorkommt, egal wie viel von ihm in der Sammlung liegt.
 
+**Wie oft gehört** (Tag-Dienst): In der Abspielzeile der Albumseite steht mittig, wie oft das Album gehört wurde und
+wann zuletzt (aus dem Verlauf; Titel ohne Pause über drei Stunden zählen als ein Hören).
+
 **Entdecken auf der Albumseite** (Tag-Dienst): Die Albumseite hat die Reiter „Titel“, „Entdecken“ und „Hintergrund“.
 „Entdecken“ zeigt ähnliche Alben aus der Sammlung (Stimmungen, Stile und Energie der eingeordneten Titel im Vergleich, je
 Künstler höchstens eins, mit Würfel für einen Zufallsmix daraus), Stimmung, Energie und Stile des Albums, Jahr, Jahrzehnt
@@ -303,7 +307,8 @@ der Stilrichtungen (Discogs-Unterstile, z. B. „Trip Hop“ unter Electronic) m
 Genres, nach Künstler sortiert. Je Album zählen bis zu drei Unterstile seines Genres, gemittelt über die analysierten Titel;
 Alben ohne Analyse stehen nur unter „Alle“. Die Suche findet auch Unterstile. Als Genre eines Albums gilt sein
 häufigstes Genre-Tag (aus der Albenliste). Auf der Albumseite stehen Künstler, Album und Genre untereinander; Künstler und
-Genre öffnen ihre Seite. In Albumlisten steht das Genre klein vor dem Stift. Genre-Tags vereinheitlichen und ergänzen hilft
+Genre öffnen ihre Seite. In Albumlisten steht das Genre klein vor dem Stift, in der Player-Ansicht klein unter der
+Qualitätsangabe (ein Tipp öffnet die Genre-Seite). Genre-Tags vereinheitlichen und ergänzen hilft
 [Bibliothek prüfen](#bibliothek-prüfen).
 Künstlerfotos holt der Tag-Dienst einmal von Deezer und speichert sie unter `/data/xplorio/data/artists/`
 (Last.fm liefert keine mehr); ohne Foto erscheint Volumios Künstler-Symbol.

@@ -80,6 +80,7 @@ function welcomeRender(r) {
   if (bdayRows(bday, r.birthdays, ['today', 'week']) || bdayRows(bday, r.birthdays, ['month'])) box.appendChild(bday);
   var rows = [];
   if (r.recent.length) rows.push(welcomeRow(T('welcome.recent'), r.recent, function(it){ return welcomeYear(discoverTile('album', it), it.y); }));
+  if (r.ago && r.ago.items.length) rows.push(welcomeRow(T('welcome.ago', {n: r.ago.years}), r.ago.items, function(it){ return welcomeYear(discoverTile('album', it), it.y); }));
   if (r.fresh.length) rows.push(welcomeRow(T('welcome.fresh'), r.fresh, function(it){ return welcomeYear(discoverShelfTile('album', 'never', it), it.y); }));
   rows.forEach(function(s){ box.appendChild(s); });
   var mix = histEl('div', 'wMix');
@@ -106,7 +107,7 @@ function openWelcome(auto) {
   document.getElementById('welcomeTitle').textContent = welcomeGreeting();
   document.getElementById('welcomeBack').style.display = auto ? 'none' : '';     /* aus dem Menü geöffnet */
   if (!auto) { closeAllOverlays(); welcomeBody.textContent = ''; welcomeBody.appendChild(browseNote(T('browse.loading'))); overlayWelcome.classList.add('on'); }
-  tagGetJson('/welcome?day=' + discoverToday()).then(function(r){
+  tagGetJson('/welcome?day=' + discoverToday() + histTz()).then(function(r){
     if (seq !== welcomeSeq) return;
     if (!r || !r.ok || !(r.day || r.recent.length || r.fresh.length)) {
       if (!auto) { welcomeBody.textContent = ''; welcomeBody.appendChild(browseNote(T(r && r.building ? 'disc.building' : 'hist.offline'))); }
