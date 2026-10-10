@@ -362,7 +362,7 @@ nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (in der Sprac
 Künstler bei Last.fm und Wikipedia, erst beide in der Sprache der Oberfläche, dann beide englisch (bei Wikipedia nur Artikel, die nach Musik aussehen). Die Quelle
 steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
 
-Mitwirkende, die Volumio mit einer MusicBrainz-Kennung liefert, sind unterstrichen. Antippen klappt darunter ihren Text
+Mitwirkende, die Volumio mit einer MusicBrainz-Kennung liefert, lassen sich antippen (ohne eigene Markierung). Das klappt darunter ihren Text
 auf, nochmal Antippen klappt ihn zu. Bei Personen gilt dieselbe Reihenfolge wie bei Künstlern (Volumio, dann Last.fm und
 Wikipedia), Studios und Labels kommen nur von Volumio.
 

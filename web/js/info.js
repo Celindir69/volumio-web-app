@@ -216,7 +216,7 @@ if (!it.data || it.data.kind === 'story') {
       if (i) v.appendChild(document.createTextNode(', '));
       var link = creditLink(x.uri), n = document.createElement('span');
       n.textContent = x.name;
-      if (link) { n.className = 'menuLink'; n.addEventListener('click', function(){ toggleCredit(n, more, x.name, link); }); }
+      if (link) { n.className = 'credit-link'; n.addEventListener('click', function(){ toggleCredit(n, more, x.name, link); }); }
       v.appendChild(n);
     });
     line.appendChild(k); line.appendChild(v);
