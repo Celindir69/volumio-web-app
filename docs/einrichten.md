@@ -362,6 +362,10 @@ nicht binnen 6 s), holt die App den Text selbst: Album bei Last.fm (in der Sprac
 Künstler bei Last.fm und Wikipedia, erst beide in der Sprache der Oberfläche, dann beide englisch (bei Wikipedia nur Artikel, die nach Musik aussehen). Die Quelle
 steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
 
+Mitwirkende, die Volumio mit einer MusicBrainz-Kennung liefert, sind unterstrichen. Antippen klappt darunter ihren Text
+auf, nochmal Antippen klappt ihn zu. Bei Personen gilt dieselbe Reihenfolge wie bei Künstlern (Volumio, dann Last.fm und
+Wikipedia), Studios und Labels kommen nur von Volumio.
+
 Zum laufenden Titel sucht die App in derselben Reihenfolge einen eigenen Text (Last.fm `track.getInfo`, dann ein
 Wikipedia-Artikel, dessen Name der Liedname ist, der sich als Lied, Single oder Song beschreibt und den Interpreten nennt).
 Zusätze wie „(Remastered 2011)“ werden dafür weggelassen. Nur wenn etwas gefunden wird, erscheint der Reiter „Titel“

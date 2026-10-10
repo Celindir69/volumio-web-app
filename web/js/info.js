@@ -210,9 +210,57 @@ if (!it.data || it.data.kind === 'story') {
     k.className = 'credit-key'; k.textContent = row.key;
     var v = document.createElement('div');
     v.className = 'credit-val';
-    v.textContent = (row.values || []).map(function(x){ return x.name; }).join(', ');
+    var more = document.createElement('div');                  /* aufgeklappte Infos unter der Zeile */
+    more.className = 'credit-more';
+    (row.values || []).forEach(function(x, i){
+      if (i) v.appendChild(document.createTextNode(', '));
+      var link = creditLink(x.uri), n = document.createElement('span');
+      n.textContent = x.name;
+      if (link) { n.className = 'menuLink'; n.addEventListener('click', function(){ toggleCredit(n, more, x.name, link); }); }
+      v.appendChild(n);
+    });
     line.appendChild(k); line.appendChild(v);
     infoContent.appendChild(line);
+    infoContent.appendChild(more);
+  });
+}
+
+/* Mitwirkende verlinkt Volumio per MusicBrainz-Kennung (mbid:/artist|place|label/…) */
+function creditLink(uri) {
+  var m = /^mbid:\/(artist|place|label)\/([0-9a-f-]+)/i.exec(uri || '');
+  return m ? {mode: 'story' + m[1].charAt(0).toUpperCase() + m[1].slice(1), mbid: m[2]} : null;
+}
+
+var creditCache = {};
+function creditStory(name, link) {
+  var k = link.mode + '|' + link.mbid;
+  if (creditCache[k]) return creditCache[k];
+  var p = link.mode === 'storyArtist'                          /* Personen: bei Bedarf auch eigene Quellen (Last.fm, Wikipedia) */
+    ? ask({mode: link.mode, mbid: link.mbid, artist: name})
+    : askVolumio({mode: link.mode, mbid: link.mbid});
+  creditCache[k] = p.then(function(res){
+    if (!res || res.kind !== 'story' || !res.value) { delete creditCache[k]; return null; }
+    var txt = new DOMParser().parseFromString(String(res.value), 'text/html').body.textContent.trim();   /* Volumio liefert teils HTML */
+    return txt || null;
+  });
+  return creditCache[k];
+}
+
+function toggleCredit(n, more, name, link) {
+  var open = more.querySelector('.credit-info[data-name="' + CSS.escape(name) + '"]');
+  if (open) { open.remove(); n.classList.remove('open'); return; }
+  var box = document.createElement('div');
+  box.className = 'credit-info'; box.setAttribute('data-name', name);
+  var h = document.createElement('div');
+  h.className = 'credit-info-name'; h.textContent = name;
+  var t = document.createElement('div');
+  t.textContent = '…';
+  box.appendChild(h); box.appendChild(t);
+  more.appendChild(box); n.classList.add('open');
+  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  creditStory(name, link).then(function(txt){
+    t.textContent = txt || T('info.noContent');
+    if (box.isConnected) box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   });
 }
 
