@@ -37,7 +37,9 @@ function poll() {
 fetch('/api/v1/getState').then(function(r){ return r.json(); }).then(function(st){
 
 curDur = Number(st.duration) || 0;
-seekBase = Number(st.seek) || 0; seekStamp = Date.now();
+/* gestoppt zählt Volumio die Zeit teils weiter (Wiedergabe angefordert, aber das Ausgabegerät ließ sich nicht öffnen):
+   dann steht der Titel am Anfang */
+seekBase = st.status === 'stop' ? 0 : (Number(st.seek) || 0); seekStamp = Date.now();
 playing = (st.status === 'play');
 paintTime();
 updateSyncedLyrics();
