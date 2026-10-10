@@ -228,8 +228,9 @@ function browseMoodSet(e, seq) {
 
 /* „Alle abspielen“ wie auf der Künstlerseite: Warteschlange durch alle Alben der Liste ersetzen (Reihenfolge wie angezeigt) */
 function genrePlayAllHead(list) {
+  function folders() { return list.map(function(a){ return {uri: 'music-library/' + a.dir, service: 'mpd', type: 'folder', title: a.al, artist: a.ar}; }); }
   return playRow(T('browse.playAll'), '', function(){
-    var items = list.map(function(a){ return {uri: 'music-library/' + a.dir, service: 'mpd', type: 'folder', title: a.al, artist: a.ar}; });
+    var items = folders();
     browseOrigin = null;
     fetch('/api/v1/replaceAndPlay', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -238,7 +239,8 @@ function genrePlayAllHead(list) {
       if (items.length > 1) setTimeout(function(){ socket.emit('addToQueue', items.slice(1)); }, 300);
     }).catch(function(){});
     closeAllOverlays();
-  }, [randomMixButton({dirs: list.map(function(a){ return a.dir; })})]);   /* Würfel: 25 zufällige Titel daraus (discover.js) */
+  }, [randomMixButton({dirs: list.map(function(a){ return a.dir; })}),     /* Würfel: 25 zufällige Titel daraus (discover.js) */
+      queueAddButton(folders, 0)]);
 }
 
 function genreSubTiles(e, list, subs) {
