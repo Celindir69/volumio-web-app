@@ -693,9 +693,9 @@ html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { d
 
 /* Verlauf und Statistik */
 .qEmptyBtn { display:block; margin:2vh auto; }
-#historyBack, #welcomeBack { cursor:pointer; opacity:.7; display:flex; }
+#historyBack, #welcomeBack, #systemBack { cursor:pointer; opacity:.7; display:flex; }
 #welcomeBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
-#historyBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
+#historyBack svg, #systemBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 
 /* ---------- Menü (Zahnrad) ---------- */
@@ -976,7 +976,52 @@ html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 
 /* Tippflächen etwa 44 px (Apple-Richtwert): Polster plus gleich großer Gegenrand, Symbole und Abstände bleiben gleich */
 .vBtn { padding:9px; margin:-9px; align-items:center; justify-content:center; }
-#checkBack, #historyBack, #welcomeBack, #volumioBack { padding:10px; margin:-10px; }
+#checkBack, #historyBack, #welcomeBack, #volumioBack, #systemBack { padding:10px; margin:-10px; }
 #browseBack { padding:8px; margin:-8px calc(1 * var(--vw) - 6px) -8px calc(-2 * var(--vw) - 6px); }
 .rateStars { gap:0; margin-left:calc(-1.8 * var(--vw)); margin-top:0; }
 .rateStar { box-sizing:content-box; padding:calc(1.8 * var(--vw)); }
+
+/* Seite „System“ (system.js): Karten, ab iPad-Breite zweispaltig; Diagramme in der Akzentfarbe */
+#overlaySystem .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
+#sysBody { padding:calc(2 * var(--vw)) calc(5 * var(--vw)) calc(6 * var(--vw)); }
+.syGridBox { display:grid; grid-template-columns:1fr; gap:calc(3 * var(--vw)); }
+@media (min-width:700px) { .syGridBox { grid-template-columns:1fr 1fr; gap:14px; } .syWide { grid-column:1 / -1; } }
+.syCard { background:rgba(var(--fg-rgb),.06); border:1px solid rgba(var(--fg-rgb),.08); border-radius:14px; padding:calc(3.5 * var(--vw)) calc(4 * var(--vw));
+  min-width:0; position:relative; }
+.syTitle { font-size:calc(2.8 * var(--vw)); letter-spacing:.14em; color:rgba(var(--fg-rgb),.5); margin-bottom:calc(2 * var(--vw)); }
+.syHero { display:flex; align-items:baseline; gap:calc(3 * var(--vw)); flex-wrap:wrap; }
+.syBig { font-size:calc(8 * var(--vw)); font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums; }
+.sySub, .syNote { font-size:calc(3 * var(--vw)); color:rgba(var(--fg-rgb),.6); }
+.syNote { margin-top:calc(1.5 * var(--vw)); line-height:1.4; }
+.syNote.syWarn { color:var(--warn); }
+.syChartBox { position:relative; margin-top:calc(2 * var(--vw)); touch-action:pan-y; }
+.syChart { display:block; overflow:visible; }
+.syFill { fill:var(--accent, var(--fg)); opacity:.22; }
+.syLine { fill:none; stroke:var(--accent, var(--fg)); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+.syGrid { stroke:rgba(var(--fg-rgb),.12); stroke-width:1; }
+.syAxis { fill:rgba(var(--fg-rgb),.5); font-size:10px; font-family:inherit; }
+.syCross { stroke:rgba(var(--fg-rgb),.45); stroke-width:1; }
+.syDot { fill:var(--accent, var(--fg)); stroke:var(--page); stroke-width:2; }
+.syTip { position:absolute; top:-4px; width:90px; text-align:center; font-size:11px; padding:2px 0; border-radius:6px;
+  background:rgba(var(--shade-rgb),.75); color:var(--fg); pointer-events:none; white-space:nowrap; }
+.syMeter { height:8px; border-radius:4px; background:rgba(var(--fg-rgb),.12); overflow:hidden; margin-top:calc(1.5 * var(--vw)); }
+.syMeterFill { height:100%; border-radius:4px; background:var(--accent, var(--fg)); transition:width .6s ease; }
+.syCores { display:grid; grid-template-columns:1fr 1fr; gap:calc(1.5 * var(--vw)) calc(4 * var(--vw)); margin-top:calc(3 * var(--vw)); }
+.syCore { display:flex; align-items:center; gap:calc(2 * var(--vw)); font-size:calc(2.9 * var(--vw)); color:rgba(var(--fg-rgb),.6); }
+.syCore .syMeter { flex:1 1 auto; margin-top:0; height:6px; }
+.syCoreName { flex:0 0 auto; }
+.syCoreVal { flex:0 0 calc(10 * var(--vw)); text-align:right; font-variant-numeric:tabular-nums; }
+.syKinds { margin-bottom:calc(1 * var(--vw)); }
+.syDisk + .syDisk { margin-top:calc(3.5 * var(--vw)); }
+.syDiskHead { display:flex; justify-content:space-between; gap:calc(3 * var(--vw)); font-size:calc(3.5 * var(--vw)); }
+.syDiskName { font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.syDiskVal { flex:0 0 auto; color:rgba(var(--fg-rgb),.7); font-variant-numeric:tabular-nums; }
+.syKv { display:flex; justify-content:space-between; gap:calc(3 * var(--vw)); font-size:calc(3.3 * var(--vw)); padding:calc(1.2 * var(--vw)) 0;
+  border-bottom:1px solid rgba(var(--fg-rgb),.08); }
+.syKv:last-child { border-bottom:none; }
+.syK { color:rgba(var(--fg-rgb),.55); flex:0 0 auto; font-size:calc(3.3 * var(--vw)); }
+.syV { text-align:right; min-width:0; overflow-wrap:anywhere; }
+.syPath { font-size:calc(3 * var(--vw)); overflow-wrap:anywhere; margin-top:calc(1 * var(--vw)); color:rgba(var(--fg-rgb),.8); -webkit-user-select:text; user-select:text; }
+@media (min-width:700px) {
+  .syTitle, .syK, .syKv, .sySub, .syNote, .syCore, .syPath { font-size:13px; } .syBig { font-size:30px; } .syDiskHead { font-size:15px; }
+}

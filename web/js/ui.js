@@ -18,6 +18,8 @@ function closeAllOverlays() {
   if (typeof checkRelease === 'function') checkRelease();      /* zurückgehaltene MPD-Scans jetzt (check.js) */
   var oh = document.getElementById('overlayHistory');
   if (oh) oh.classList.remove('on');
+  var osy = document.getElementById('overlaySystem');
+  if (osy) osy.classList.remove('on');
   var ow = document.getElementById('overlayWelcome');
   if (ow) ow.classList.remove('on');
   var ot = document.getElementById('overlayTags');

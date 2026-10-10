@@ -1,0 +1,340 @@
+/* Seite „System“ (Zahnrad-Menü): CPU-Last live und über 24 h, Temperatur, Arbeitsspeicher, Laufwerke (interne
+   Karte, USB, jede NAS-Verbindung), Systemangaben und die laufende Datei. Werte vom Tag-Dienst (GET /sysinfo,
+   tags/sysinfo.js) und von Volumio (getState). Solange die Seite offen ist: Live-Werte alle 2 s, alles andere jede Minute.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
+var overlaySystem = document.getElementById('overlaySystem');
+var sysBody = document.getElementById('sysBody');
+var sysTimer = null, sysFullTimer = null, sysSeq = 0, sysData = null, sysHistKind = 'cpu', sysEls = null;
+var SYS_NS = 'http://www.w3.org/2000/svg';
+
+function openSystem() {
+  closeAllOverlays();
+  overlaySystem.classList.add('on');
+  sysSeq++;
+  sysEls = null;
+  while (sysBody.firstChild) sysBody.removeChild(sysBody.firstChild);
+  sysBody.appendChild(browseNote(T('hist.loading')));
+  sysFull();
+}
+function sysStop() { clearTimeout(sysTimer); clearTimeout(sysFullTimer); sysSeq++; }
+function sysOpen() { return overlaySystem.classList.contains('on') && !document.hidden; }
+
+function sysFull() {
+  var seq = sysSeq;
+  clearTimeout(sysFullTimer);
+  Promise.all([tagGetJson('/sysinfo?full=1'), withTimeout(fetch('/api/v1/getState'), 8000).then(function(r){ return r.json(); }).catch(function(){ return null; })])
+    .then(function(res){
+      if (seq !== sysSeq) return;
+      sysData = res[0];
+      if (!sysData || !sysData.ok) throw new Error('keine Daten');
+      sysRender(res[1]);
+      sysLive(seq);
+      sysFullTimer = setTimeout(function(){ if (seq === sysSeq && sysOpen()) sysFull(); }, 60000);
+    }).catch(function(){
+      if (seq !== sysSeq) return;
+      while (sysBody.firstChild) sysBody.removeChild(sysBody.firstChild);
+      sysBody.appendChild(browseNote(T('hist.offlinePort', {port: (window.APP_CONFIG && window.APP_CONFIG.TAGS_PORT) || 8766})));
+    });
+}
+
+function sysLive(seq) {
+  clearTimeout(sysTimer);
+  sysTimer = setTimeout(function(){
+    if (seq !== sysSeq) return;
+    if (!overlaySystem.classList.contains('on')) return;  /* Seite zu: aufhören */
+    if (document.hidden) return sysLive(seq);              /* im Hintergrund: nicht abfragen, aber dranbleiben */
+    tagGetJson('/sysinfo').then(function(r){
+      if (seq !== sysSeq || !r || !r.ok) return;
+      ['cpu', 'cores', 'live', 'load', 'mem', 'temp', 'uptime'].forEach(function(k){ sysData[k] = r[k]; });
+      sysPaintLive();
+    }).catch(function(){}).then(function(){ sysLive(seq); });
+  }, 2000);
+}
+
+/* ---------- Formate ---------- */
+function sysNum(x, d) {
+  try { return Number(x).toLocaleString(LANG_LOCALE, {minimumFractionDigits: d || 0, maximumFractionDigits: d || 0}); } catch (e) { return Number(x).toFixed(d || 0); }
+}
+function sysBytes(kb) {
+  var u = ['KB', 'MB', 'GB', 'TB'], i = 0, v = kb;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return sysNum(v, v < 10 && i > 0 ? 1 : 0) + ' ' + u[i];
+}
+function sysDuration(s) {
+  var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? T('sys.upDays', {d: d, h: h}) : h ? T('sys.upHours', {h: h, m: m}) : T('sys.upMin', {m: m});
+}
+function sysTime(t) {
+  var d = new Date(t);
+  return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+function sysDiskName(m) {
+  if (m === '/data') return T('sys.diskInternal');
+  var p = m.split('/');                                   /* /mnt/USB/Name, /mnt/NAS/Name, /mnt/INTERNAL */
+  if (p[2] === 'INTERNAL') return T('sys.diskInternalMusic');
+  return p.length > 3 ? p[2] + ' · ' + p.slice(3).join('/') : p.slice(2).join('/');
+}
+
+/* ---------- Bausteine ---------- */
+function sysCard(title, cls) {
+  var c = histEl('div', 'syCard' + (cls ? ' ' + cls : ''));
+  c.appendChild(histEl('div', 'syTitle', title));
+  return c;
+}
+function sysMeter(frac) {
+  var m = histEl('div', 'syMeter'), f = histEl('div', 'syMeterFill');
+  f.style.width = Math.max(0, Math.min(100, frac * 100)) + '%';
+  m.appendChild(f);
+  return m;
+}
+function sysSvg(tag, attrs, parent) {
+  var e = document.createElementNS(SYS_NS, tag);
+  Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+/* Flächendiagramm [[Zeit, Wert], …] mit fester Skala lo..hi; Lücken (Dienst lief nicht) unterbrechen die Linie.
+   opts: {lo, hi, h, fmt(v), grid:[Werte], gap (ms), labels: true, hover: true} */
+function sysArea(box, pts, opts) {
+  while (box.firstChild) box.removeChild(box.firstChild);
+  var W = Math.max(200, box.clientWidth || 320), H = opts.h || 120, padB = opts.labels ? 18 : 2, padT = 6;
+  var svg = sysSvg('svg', {viewBox: '0 0 ' + W + ' ' + H, width: '100%', height: H, 'class': 'syChart'}, box);
+  var lo = opts.lo, hi = opts.hi, ph = H - padB - padT;
+  pts = pts.filter(function(p){ return p[1] !== null && p[1] !== undefined; });
+  if (opts.bucket && pts.length > W / 3) {                 /* 24 h = 1440 Werte: auf etwa 3 px je Punkt mitteln */
+    var n = Math.max(1, Math.round(W / 3)), span = ((opts.t1 || pts[pts.length - 1][0]) - (opts.t0 || pts[0][0])) / n, acc = {}, keys = [];
+    pts.forEach(function(p){
+      var k = Math.floor((p[0] - (opts.t0 || pts[0][0])) / span);
+      if (!acc[k]) { acc[k] = [0, 0, 0]; keys.push(k); }
+      acc[k][0] += p[0]; acc[k][1] += p[1]; acc[k][2]++;
+    });
+    pts = keys.map(function(k){ return [acc[k][0] / acc[k][2], acc[k][1] / acc[k][2]]; });
+    opts.gap = Math.max(opts.gap || 0, span * 2.5);        /* gemittelte Punkte liegen weiter auseinander: keine Scheinlücken */
+  }
+  var t0 = opts.t0 !== undefined ? opts.t0 : (pts.length ? pts[0][0] : 0), t1 = opts.t1 !== undefined ? opts.t1 : (pts.length ? pts[pts.length - 1][0] : 1);
+  if (t1 <= t0) t1 = t0 + 1;
+  function x(t) { return (t - t0) / (t1 - t0) * (W - 2) + 1; }
+  function y(v) { return padT + ph - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * ph; }
+  (opts.grid || []).forEach(function(g){
+    sysSvg('line', {x1: 0, x2: W, y1: y(g), y2: y(g), 'class': 'syGrid'}, svg);
+    if (opts.labels) { var tx = sysSvg('text', {x: W - 2, y: y(g) - 3, 'class': 'syAxis', 'text-anchor': 'end'}, svg); tx.textContent = opts.fmt(g); }
+  });
+  /* in Abschnitte ohne Lücke teilen */
+  var segs = [], cur = [];
+  pts.forEach(function(p, i){
+    if (i && p[0] - pts[i - 1][0] > (opts.gap || 180000)) { segs.push(cur); cur = []; }
+    cur.push(p);
+  });
+  if (cur.length) segs.push(cur);
+  segs.forEach(function(s){
+    if (s.length === 1) s = [s[0], [s[0][0] + 1, s[0][1]]];
+    var line = s.map(function(p, i){ return (i ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + y(p[1]).toFixed(1); }).join('');
+    sysSvg('path', {d: line + 'L' + x(s[s.length - 1][0]).toFixed(1) + ' ' + (padT + ph) + 'L' + x(s[0][0]).toFixed(1) + ' ' + (padT + ph) + 'Z', 'class': 'syFill'}, svg);
+    sysSvg('path', {d: line, 'class': 'syLine'}, svg);
+  });
+  if (opts.labels) {                                       /* Uhrzeiten unten: alle 6 h */
+    var first = Math.ceil(t0 / 3600000) * 3600000;
+    for (var tt = first; tt <= t1; tt += 3600000) {
+      if (new Date(tt).getHours() % 6) continue;
+      var lx = x(tt);
+      if (lx < 16 || lx > W - 16) continue;
+      var tl = sysSvg('text', {x: lx, y: H - 4, 'class': 'syAxis', 'text-anchor': 'middle'}, svg);
+      tl.textContent = sysTime(tt);
+    }
+  }
+  if (!opts.hover || !pts.length) return;
+  /* Fadenkreuz mit Wert und Uhrzeit (Maus: Zeigen, Touch: Tippen und Wischen) */
+  var cross = sysSvg('line', {y1: padT, y2: padT + ph, 'class': 'syCross'}, svg);
+  var dot = sysSvg('circle', {r: 4, 'class': 'syDot'}, svg);
+  var tip = histEl('div', 'syTip');
+  box.appendChild(tip);
+  function hide() { cross.style.display = dot.style.display = tip.style.display = 'none'; }
+  function show(ev) {
+    var r = svg.getBoundingClientRect(), tx = (ev.clientX - r.left) / r.width * W, t = t0 + (tx - 1) / (W - 2) * (t1 - t0);
+    var best = pts[0];
+    pts.forEach(function(p){ if (Math.abs(p[0] - t) < Math.abs(best[0] - t)) best = p; });
+    var px = x(best[0]), py = y(best[1]);
+    cross.setAttribute('x1', px); cross.setAttribute('x2', px);
+    dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+    tip.textContent = sysTime(best[0]) + ' · ' + opts.fmt(best[1]);
+    tip.style.left = Math.max(0, Math.min(r.width - 90, px / W * r.width - 45)) + 'px';
+    cross.style.display = dot.style.display = tip.style.display = '';
+  }
+  hide();
+  svg.addEventListener('pointermove', show);
+  svg.addEventListener('pointerdown', show);
+  svg.addEventListener('pointerleave', hide);
+}
+
+/* ---------- Seite ---------- */
+function sysRender(st) {
+  var d = sysData;
+  while (sysBody.firstChild) sysBody.removeChild(sysBody.firstChild);
+  var grid = histEl('div', 'syGridBox');
+  sysBody.appendChild(grid);
+  sysEls = {};
+
+  /* Prozessor: aktuelle Last groß, Verlauf der letzten 3 Minuten, je Kern ein Balken */
+  var cpu = sysCard(T('sys.cpu'), 'syWide');
+  var hero = histEl('div', 'syHero');
+  sysEls.cpuVal = histEl('span', 'syBig', '–');
+  hero.appendChild(sysEls.cpuVal);
+  sysEls.cpuSub = histEl('span', 'sySub', '');
+  hero.appendChild(sysEls.cpuSub);
+  cpu.appendChild(hero);
+  sysEls.cpuLive = histEl('div', 'syChartBox');
+  cpu.appendChild(sysEls.cpuLive);
+  sysEls.cores = histEl('div', 'syCores');
+  cpu.appendChild(sysEls.cores);
+  grid.appendChild(cpu);
+
+  /* 24 Stunden: eine Größe auf einmal (Last, Temperatur oder Speicher), umschaltbar */
+  var hist = sysCard(T('sys.hist'), 'syWide');
+  var seg = histEl('div', 'mxChips syKinds');
+  [['cpu', T('sys.kind.cpu')], ['temp', T('sys.kind.temp')], ['mem', T('sys.kind.mem')]].forEach(function(k){
+    var c = histEl('div', 'mxChip mxSmall' + (k[0] === sysHistKind ? ' on' : ''), k[1]);
+    c.addEventListener('click', function(){
+      sysHistKind = k[0];
+      Array.prototype.forEach.call(seg.children, function(x){ x.classList.toggle('on', x === c); });
+      sysPaintHist();
+    });
+    seg.appendChild(c);
+  });
+  hist.appendChild(seg);
+  sysEls.hist = histEl('div', 'syChartBox');
+  hist.appendChild(sysEls.hist);
+  sysEls.histNote = histEl('div', 'syNote', '');
+  hist.appendChild(sysEls.histNote);
+  grid.appendChild(hist);
+
+  /* Temperatur */
+  var temp = sysCard(T('sys.temp'));
+  sysEls.tempVal = histEl('div', 'syBig', '–');
+  temp.appendChild(sysEls.tempVal);
+  sysEls.tempMeter = histEl('div');
+  temp.appendChild(sysEls.tempMeter);
+  sysEls.tempNote = histEl('div', 'syNote', '');
+  temp.appendChild(sysEls.tempNote);
+  grid.appendChild(temp);
+
+  /* Arbeitsspeicher */
+  var mem = sysCard(T('sys.mem'));
+  sysEls.memVal = histEl('div', 'syBig', '–');
+  mem.appendChild(sysEls.memVal);
+  sysEls.memMeter = histEl('div');
+  mem.appendChild(sysEls.memMeter);
+  sysEls.memNote = histEl('div', 'syNote', '');
+  mem.appendChild(sysEls.memNote);
+  grid.appendChild(mem);
+
+  /* Laufwerke */
+  var disks = sysCard(T('sys.disks'), 'syWide');
+  (d.disks || []).forEach(function(k){
+    var row = histEl('div', 'syDisk');
+    var head = histEl('div', 'syDiskHead');
+    head.appendChild(histEl('span', 'syDiskName', sysDiskName(k.mount)));
+    head.appendChild(histEl('span', 'syDiskVal', k.ok
+      ? T('sys.diskFree', {free: sysBytes(k.avail), size: sysBytes(k.size)})
+      : T('sys.diskOffline')));
+    row.appendChild(head);
+    if (k.ok && k.size) row.appendChild(sysMeter(k.used / k.size));
+    row.appendChild(histEl('div', 'syNote', k.mount + (k.net ? ' · ' + T('sys.diskNet') : '') + (k.ok && k.size ? ' · ' + T('sys.diskUsed', {p: sysNum(k.used / k.size * 100)}) : '')));
+    disks.appendChild(row);
+  });
+  if (!(d.disks || []).length) disks.appendChild(histEl('div', 'syNote', T('sys.diskNone')));
+  grid.appendChild(disks);
+
+  /* Systemangaben */
+  var s = d.sys || {}, info = sysCard(T('sys.info'));
+  function kv(box, k, v) {
+    if (!v) return;
+    var r = histEl('div', 'syKv');
+    r.appendChild(histEl('span', 'syK', k));
+    r.appendChild(histEl('span', 'syV', v));
+    box.appendChild(r);
+  }
+  kv(info, T('sys.volumio'), s.volumio + (s.hardware ? ' (' + s.hardware + ')' : ''));
+  kv(info, T('sys.os'), s.os);
+  kv(info, T('sys.kernel'), s.kernel + (s.arch ? ' · ' + s.arch : ''));
+  kv(info, T('sys.cpuModel'), (s.cpuCount ? T('sys.cores', {n: s.cpuCount}) : '') + (s.cpuModel ? ' · ' + s.cpuModel : ''));
+  kv(info, T('sys.node'), s.node);
+  kv(info, T('sys.host'), s.host);
+  sysEls.uptime = histEl('span', 'syV', '');
+  var ur = histEl('div', 'syKv');
+  ur.appendChild(histEl('span', 'syK', T('sys.uptime')));
+  ur.appendChild(sysEls.uptime);
+  info.appendChild(ur);
+  grid.appendChild(info);
+
+  /* laufende Datei (Volumio getState) */
+  if (st) {
+    var pl = sysCard(T('sys.playing'));
+    kv(pl, T('sys.state'), [st.status, st.service].filter(Boolean).join(' · '));
+    kv(pl, T('sys.track'), [st.artist, st.title].filter(Boolean).join(' – '));
+    kv(pl, T('sys.format'), [String(st.trackType || '').toUpperCase(), st.samplerate, st.bitdepth, st.bitrate, st.channels ? T('sys.channels', {n: st.channels}) : ''].filter(Boolean).join(' · '));
+    var p = histEl('div', 'syPath', st.uri || '');
+    if (st.uri) { pl.appendChild(histEl('div', 'syK', T('sys.path'))); pl.appendChild(p); }
+    grid.appendChild(pl);
+  }
+
+  sysPaintLive();
+  sysPaintHist();
+}
+
+function sysPaintLive() {
+  var d = sysData, e = sysEls;
+  if (!e || !d) return;
+  e.cpuVal.textContent = d.cpu === null || d.cpu === undefined ? '–' : sysNum(d.cpu) + ' %';
+  e.cpuSub.textContent = (d.load || []).length ? T('sys.load', {a: sysNum(d.load[0], 2), b: sysNum(d.load[1], 2), c: sysNum(d.load[2], 2)}) : '';
+  var now = d.now || Date.now(), live = d.live || [];
+  sysArea(e.cpuLive, live, {lo: 0, hi: 100, h: 64, fmt: function(v){ return sysNum(v) + ' %'; }, grid: [50], gap: 10000,
+                            t0: live.length ? live[live.length - 1][0] - 180000 : now - 180000, t1: live.length ? live[live.length - 1][0] : now, hover: true});
+  while (e.cores.firstChild) e.cores.removeChild(e.cores.firstChild);
+  (d.cores || []).forEach(function(c, i){
+    var b = histEl('div', 'syCore');
+    b.appendChild(histEl('span', 'syCoreName', T('sys.core', {n: i + 1})));
+    b.appendChild(sysMeter((c || 0) / 100));
+    b.appendChild(histEl('span', 'syCoreVal', c === null ? '–' : sysNum(c) + ' %'));
+    e.cores.appendChild(b);
+  });
+  if (d.temp !== null && d.temp !== undefined) {
+    e.tempVal.textContent = sysNum(d.temp, 1) + ' °C';
+    while (e.tempMeter.firstChild) e.tempMeter.removeChild(e.tempMeter.firstChild);
+    e.tempMeter.appendChild(sysMeter((d.temp - 30) / 55));           /* Skala 30–85 °C: ab 80 °C drosselt der Raspberry Pi */
+    e.tempNote.textContent = d.temp >= 80 ? '⚠ ' + T('sys.tempHot') : d.temp >= 70 ? '⚠ ' + T('sys.tempWarm') : T('sys.tempOk');
+    e.tempNote.className = 'syNote' + (d.temp >= 70 ? ' syWarn' : '');
+  } else e.tempVal.textContent = T('sys.none');
+  var m = d.mem || {};
+  if (m.total) {
+    var used = m.total - m.avail;
+    e.memVal.textContent = sysNum(used / m.total * 100) + ' %';
+    while (e.memMeter.firstChild) e.memMeter.removeChild(e.memMeter.firstChild);
+    e.memMeter.appendChild(sysMeter(used / m.total));
+    e.memNote.textContent = T('sys.memUsed', {used: sysBytes(used), total: sysBytes(m.total)}) +
+      (m.swapTotal ? ' · ' + T('sys.swap', {used: sysBytes(m.swapTotal - m.swapFree)}) : '');
+  }
+  if (d.uptime) e.uptime.textContent = sysDuration(d.uptime);
+}
+
+function sysPaintHist() {
+  var d = sysData, e = sysEls;
+  if (!e || !d) return;
+  var col = {cpu: 1, mem: 2, temp: 3}[sysHistKind], h = d.hist || [];
+  var pts = h.map(function(r){ return [r[0], r[col]]; });
+  var vals = pts.map(function(p){ return p[1]; }).filter(function(v){ return v !== null && v !== undefined; });
+  var now = d.now || Date.now();
+  var o = sysHistKind === 'temp'
+    ? {lo: 30, hi: 85, grid: [40, 60, 80], fmt: function(v){ return sysNum(v, 1) + ' °C'; }}
+    : {lo: 0, hi: 100, grid: [25, 50, 75], fmt: function(v){ return sysNum(v) + ' %'; }};
+  o.h = 150; o.labels = true; o.hover = true; o.bucket = true; o.gap = 600000; o.t0 = now - 24 * 3600000; o.t1 = now;
+  sysArea(e.hist, pts, o);
+  if (!vals.length) { e.histNote.textContent = T('sys.histEmpty'); return; }
+  var avg = vals.reduce(function(a, b){ return a + b; }, 0) / vals.length, max = Math.max.apply(null, vals);
+  e.histNote.textContent = T('sys.histSum', {avg: o.fmt(avg), max: o.fmt(max)}) + (h.length && h[0][0] > now - 23 * 3600000 ? ' · ' + T('sys.histSince', {t: sysTime(h[0][0])}) : '');
+}
+
+document.getElementById('closeSystem').addEventListener('click', function(){ sysStop(); closeAllOverlays(); });
+document.getElementById('systemBack').addEventListener('click', function(){ sysStop(); openMenu(); });
+window.addEventListener('resize', function(){ if (sysOpen() && sysEls) { sysPaintLive(); sysPaintHist(); } });
+document.addEventListener('visibilitychange', function(){ if (sysOpen() && sysEls) sysFull(); });

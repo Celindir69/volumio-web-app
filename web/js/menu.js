@@ -1,5 +1,5 @@
 /* Menü hinter dem Zahnrad oben rechts: Werkzeuge, die nicht zur Suche gehören.
-   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach check.js, history.js und volumio.js geladen.
+   Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; nach check.js, history.js, system.js und volumio.js geladen.
    Weitere Einträge: eine Zeile in MENU_ITEMS (needsTags: nur, wenn der Tag-Dienst läuft). */
 var overlayMenu = document.getElementById('overlayMenu');
 var menuBody    = document.getElementById('menuBody');
@@ -14,6 +14,8 @@ var MENU_ITEMS = [
    icon: 'M2 5h11v2H2zm0 4h11v2H2zm0 4h7v2H2zm15.3 1.3l-2.8-2.8-1.4 1.4 4.2 4.2 6.7-6.7-1.4-1.4z'},
   {id: 'update', needsTags: true, title: T('check.db.button'), action: true, open: function(){ libUpdStart(); },
    icon: 'M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z'},
+  {id: 'system', needsTags: true, title: T('menu.system'), sub: T('menu.systemSub'), open: function(){ openSystem(); },
+   icon: 'M3 13h4l3-8 4 14 3-6h4v2h-2.8L14 22 10 9.4 8.4 15H3z'},
   {id: 'volumio', title: T('menu.volumio'), sub: T('menu.volumioSub'), open: function(){ openVolumio(); },
    icon: 'M3 4h4.2l4.8 11.3L16.8 4H21l-7 16h-4L3 4z'}
 ];
