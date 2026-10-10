@@ -106,4 +106,79 @@ function decadeProfile(idx, albumList, d, albumDir) {
           decades: [d - 10, d, d + 10].filter(function(x){ return has[x]; })};
 }
 
-module.exports = {summarize: summarize, fit: fit, list: list, artistProfile: artistProfile, decadeProfile: decadeProfile, SHARE: SHARE};
+/* Entdecken auf der Albumseite. Das Album wird über seinen Ordner gesucht, sonst über Künstler und Titel (Zusätze in
+   Klammern zählen nicht; so passt auch ein Album vom Streamingdienst, das lokal liegt). Ohne lokales Album gilt das Profil
+   des Künstlers. Ähnliche Alben: gewichtete Überdeckung der Stimmungs- und Stil-Anteile und Nähe der Energie, je Künstler
+   höchstens eins, keins vom selben Künstler.
+   idx: moodmix.index; albumList: albums.json; q: {dir, artist, album}; norm: plays.norm
+   -> {source: 'album'|'artist'|null, n, moods, styles, energy, year, genre, similar: [{dir, al, ar, y}], others: [...]} */
+var SIMILAR_MAX = 12, SIMILAR_MIN = 0.35;
+function bareTitle(s) { return String(s || '').toLowerCase().replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').trim(); }
+function vectorOf(tracks) {
+  var n = tracks.length, moods = {}, styles = {}, eSum = 0, eN = 0;
+  tracks.forEach(function(r){
+    (r.mood || []).forEach(function(m){ moods[m] = (moods[m] || 0) + 1 / n; });
+    (r.style || []).forEach(function(x){ styles[x] = (styles[x] || 0) + 1 / n; });
+    if (typeof r.energy === 'number') { eSum += r.energy; eN++; }
+  });
+  return {n: n, moods: moods, styles: styles, energy: eN ? eSum / eN : 0};
+}
+function overlap(a, b) {                       /* Summe der Minima / Summe der Maxima, 0..1 */
+  var lo = 0, hi = 0, k;
+  for (k in a) { lo += Math.min(a[k], b[k] || 0); hi += Math.max(a[k], b[k] || 0); }
+  for (k in b) if (!(k in a)) hi += b[k];
+  return hi ? lo / hi : 0;
+}
+function closeness(a, b) {
+  var e = a.energy && b.energy ? 1 - Math.abs(a.energy - b.energy) / 4 : 0.5;
+  return 0.5 * overlap(a.moods, b.moods) + 0.3 * overlap(a.styles, b.styles) + 0.2 * e;
+}
+function topShare(o) {
+  return Object.keys(o).filter(function(k){ return o[k] >= PROFILE_SHARE; })
+    .sort(function(a, b){ return o[b] - o[a] || (a < b ? -1 : 1); }).slice(0, PROFILE_MAX);
+}
+function albumProfile(idx, albumList, q, norm) {
+  albumList = albumList || [];
+  var who = norm(q.artist || ''), want = bareTitle(q.album), target = null;
+  if (q.dir) target = albumList.filter(function(a){ return a.dir === q.dir; })[0] || null;
+  if (!target && want) target = albumList.filter(function(a){ return bareTitle(a.al) === want && (!who || norm(a.ar) === who); })[0] || null;
+  var key = target ? norm(target.ar) : who;
+  var byDir = {};
+  idx.forEach(function(x){
+    if (!x.it.f) return;
+    var d = albums.albumDir(rel(x.it.f));
+    (byDir[d] || (byDir[d] = [])).push(x.r);
+  });
+  var own = target && byDir[target.dir] && byDir[target.dir].length >= MIN_TRACKS ? byDir[target.dir] : null, source = own ? 'album' : null;
+  if (!own && key) {
+    own = [];
+    idx.forEach(function(x){ if (norm(x.it.ar) === key) own.push(x.r); });
+    if (own.length >= MIN_TRACKS) source = 'artist'; else own = null;
+  }
+  var out = {source: source, found: !!target, n: own ? own.length : 0, moods: [], styles: [], energy: 0, year: target && target.y || 0,
+             genre: target && target.ge || '', similar: [], others: []};
+  if (own) {
+    var v = vectorOf(own);
+    out.moods = topShare(v.moods); out.styles = topShare(v.styles); out.energy = Math.round(v.energy);
+    var seen = {};
+    albumList.map(function(a){
+      var t = byDir[a.dir];
+      if (!t || t.length < MIN_TRACKS || (target && a.dir === target.dir) || norm(a.ar) === key || a.ar === 'Verschiedene') return null;
+      return {a: a, s: closeness(v, vectorOf(t))};
+    }).filter(function(x){ return x && x.s >= SIMILAR_MIN; })
+      .sort(function(x, y){ return y.s - x.s || (x.a.dir < y.a.dir ? -1 : 1); })
+      .forEach(function(x){
+        var k = norm(x.a.ar);
+        if (seen[k] || out.similar.length >= SIMILAR_MAX) return;
+        seen[k] = true;
+        var o = {dir: x.a.dir, al: x.a.al, ar: x.a.ar}; if (x.a.y) o.y = x.a.y;
+        out.similar.push(o);
+      });
+  }
+  if (key) out.others = albumList.filter(function(a){ return norm(a.ar) === key && (!target || a.dir !== target.dir) && bareTitle(a.al) !== want; })
+    .sort(function(a, b){ return (a.y || 9999) - (b.y || 9999) || a.al.localeCompare(b.al); })
+    .map(function(a){ var o = {dir: a.dir, al: a.al, ar: a.ar}; if (a.y) o.y = a.y; return o; });
+  return out;
+}
+
+module.exports = {summarize: summarize, fit: fit, list: list, artistProfile: artistProfile, decadeProfile: decadeProfile, albumProfile: albumProfile, SHARE: SHARE};

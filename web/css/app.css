@@ -168,6 +168,7 @@
   .credit-key { flex:0 0 38%; opacity:.6; text-transform:lowercase; }
   .credit-val { flex:1 1 auto; }
   .credit-link { cursor:pointer; }
+  .bgStory { font-size:calc(3.6 * var(--vw)); line-height:1.65; white-space:pre-wrap; padding-bottom:2vh; }
   .credit-more:empty { display:none; }
   .credit-info { padding:calc(2 * var(--vw)) 0 calc(3 * var(--vw)); border-bottom:1px solid rgba(var(--fg-rgb),.15);
     font-size:calc(3.4 * var(--vw)); line-height:1.6; white-space:pre-wrap; }
@@ -781,6 +782,7 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 .dRow { display:flex; gap:calc(3 * var(--vw)); overflow-x:auto; padding-bottom:calc(2 * var(--vw)); scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .dRow::-webkit-scrollbar { display:none; }
 .dRow.fit { justify-content:space-evenly; }
+.dRow.dLeft.fit { justify-content:flex-start; }   /* Albumseite: Reihen bündig unter ihrer Überschrift */
 .dTile { flex:0 0 calc(26 * var(--vw)); max-width:140px; min-width:0; cursor:pointer; }
 .dTile .sCover { width:calc(26 * var(--vw)); height:calc(26 * var(--vw)); max-width:140px; max-height:140px; object-fit:cover; margin:0 0 calc(1.2 * var(--vw)); border-radius:calc(1.5 * var(--vw)); }
 .dTi { font-size:calc(3.2 * var(--vw)); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

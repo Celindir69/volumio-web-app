@@ -61,4 +61,30 @@ t('Entdecken zum Jahrzehnt: Künstler mit Alben darin, häufige Stimmungen und S
   assert.deepStrictEqual(ma.decadeProfile(idx, al, 2000, function(f){ return f.replace(/\/[^\/]*$/, ''); }).decades, [1990, 2000]);
 });
 
+t('Albumprofil: über Ordner oder Titel, ähnliche Alben je Künstler eins, weitere Alben des Künstlers', function(){
+  function a(ar, dir, i, mood, energy, style) { return {it: {ar: ar, f: 'mnt/' + dir + '/' + i + '.flac'}, r: {mood: mood, energy: energy, style: style}}; }
+  var norm = function(s){ return String(s || '').toLowerCase().trim(); };
+  var ix = [a('Alpha', 'M/A1', 1, ['relaxed'], 2, ['ambient']), a('Alpha', 'M/A1', 2, ['relaxed', 'dreamy'], 2, ['ambient']),
+            a('Alpha', 'M/A2', 1, ['intense'], 5, ['house']), a('Alpha', 'M/A2', 2, ['intense'], 5, ['house']),
+            a('Beta', 'M/B1', 1, ['relaxed'], 2, ['ambient']), a('Beta', 'M/B1', 2, ['relaxed'], 1, ['ambient']),
+            a('Beta', 'M/B2', 1, ['relaxed'], 2, ['ambient']), a('Beta', 'M/B2', 2, ['dreamy'], 2, ['ambient']),
+            a('Gamma', 'M/G1', 1, ['intense'], 5, ['techno']), a('Gamma', 'M/G1', 2, ['epic'], 4, ['house'])];
+  var al = [{dir: 'M/A1', al: 'Stille (Remastered)', ar: 'Alpha', y: 1994, ge: 'Ambient'}, {dir: 'M/A2', al: 'Laut', ar: 'Alpha', y: 1991},
+            {dir: 'M/B1', al: 'Nebel', ar: 'Beta', y: 2001}, {dir: 'M/B2', al: 'Dunst', ar: 'Beta'}, {dir: 'M/G1', al: 'Funken', ar: 'Gamma'}];
+  var p = ma.albumProfile(ix, al, {dir: 'M/A1'}, norm);
+  assert.strictEqual(p.source, 'album');
+  assert.deepStrictEqual(p.moods, ['relaxed', 'dreamy']);
+  assert.deepStrictEqual(p.styles, ['ambient']);
+  assert.strictEqual(p.energy, 2); assert.strictEqual(p.year, 1994); assert.strictEqual(p.genre, 'Ambient');
+  assert.deepStrictEqual(p.similar.map(function(x){ return x.al; }), ['Dunst']);          /* Beta nur einmal (Dunst passt besser), Gamma passt nicht, Alpha nie */
+  assert.deepStrictEqual(p.others.map(function(x){ return x.al; }), ['Laut']);
+  assert.strictEqual(ma.albumProfile(ix, al, {artist: 'alpha', album: 'Stille'}, norm).source, 'album');   /* Titel ohne Zusatz, vom Dienst */
+  var q = ma.albumProfile(ix, al, {artist: 'Gamma', album: 'Nur beim Dienst'}, norm);
+  assert.strictEqual(q.source, 'artist'); assert.strictEqual(q.found, false);
+  assert.deepStrictEqual(q.similar.map(function(x){ return x.al; }), ['Laut']);
+  assert.deepStrictEqual(q.others.map(function(x){ return x.al; }), ['Funken']);
+  var none = ma.albumProfile(ix, al, {artist: 'Delta', album: 'X'}, norm);
+  assert.strictEqual(none.source, null); assert.deepStrictEqual(none.similar, []); assert.deepStrictEqual(none.others, []);
+});
+
 console.log(n + ' Prüfungen');
