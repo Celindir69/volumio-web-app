@@ -703,9 +703,9 @@ html.noHra #searchSources .srcHra, html.noSpotify #searchSources .srcSpotify { d
 
 /* Verlauf und Statistik */
 .qEmptyBtn { display:block; margin:2vh auto; }
-#historyBack, #welcomeBack, #systemBack { cursor:pointer; opacity:.7; display:flex; }
+#historyBack, #welcomeBack, #systemBack, #helpBack { cursor:pointer; opacity:.7; display:flex; }
 #welcomeBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
-#historyBack svg, #systemBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
+#historyBack svg, #systemBack svg, #helpBack svg { width:calc(7 * var(--vw)); height:calc(7 * var(--vw)); fill:var(--fg); }
 #overlayHistory .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
 
 /* ---------- Menü (Zahnrad) ---------- */
@@ -983,7 +983,7 @@ html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 
 /* Tippflächen etwa 44 px (Apple-Richtwert): Polster plus gleich großer Gegenrand, Symbole und Abstände bleiben gleich */
 .vBtn { padding:9px; margin:-9px; align-items:center; justify-content:center; }
-#checkBack, #historyBack, #welcomeBack, #volumioBack, #systemBack { padding:10px; margin:-10px; }
+#checkBack, #historyBack, #welcomeBack, #volumioBack, #systemBack, #helpBack { padding:10px; margin:-10px; }
 #browseBack { padding:8px; margin:-8px calc(1 * var(--vw) - 6px) -8px calc(-2 * var(--vw) - 6px); }
 .rateStars { gap:0; margin-left:calc(-1.8 * var(--vw)); margin-top:0; }
 .rateStar { box-sizing:content-box; padding:calc(1.8 * var(--vw)); }
@@ -1038,4 +1038,20 @@ html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 .sRow:active, .plRow:active, .menuRow:active, .hgRow:active, .sHint.listLink:active { background:rgba(var(--fg-rgb),.08); border-radius:calc(2 * var(--vw)); }
 @media (hover:hover) and (pointer:fine) {
   .sRow:hover, .qRow:hover, .plRow:hover, .menuRow:hover, .hgRow:hover, .sHint.listLink:hover { background:rgba(var(--fg-rgb),.06); border-radius:calc(2 * var(--vw)); }
+}
+
+/* Seite „Hilfe“ (help.js): Karten wie bei „System“, je Zeile die Handlung hervorgehoben */
+#overlayHelp .overlayHead h2 { flex:1 1 auto; margin-left:calc(2 * var(--vw)); }
+#helpBody { padding:calc(2 * var(--vw)) calc(5 * var(--vw)) calc(6 * var(--vw)); }
+.hlIntro { font-size:calc(3.2 * var(--vw)); color:rgba(var(--fg-rgb),.7); margin:0 0 calc(3 * var(--vw)); line-height:1.45; }
+.hlHead { display:flex; align-items:center; gap:calc(2.5 * var(--vw)); margin-bottom:calc(2 * var(--vw)); }
+.hlIcon { width:calc(6 * var(--vw)); height:calc(6 * var(--vw)); max-width:24px; max-height:24px; fill:var(--accent, var(--fg)); flex:0 0 auto; }
+.hlTitle { font-size:calc(3.8 * var(--vw)); font-weight:600; }
+.hlRow { font-size:calc(3.2 * var(--vw)); line-height:1.45; color:rgba(var(--fg-rgb),.75); padding:calc(1 * var(--vw)) 0; }
+.hlDo { font-weight:600; color:var(--fg); }
+.hlMore { display:inline-block; margin-top:calc(2 * var(--vw)); font-size:calc(2.9 * var(--vw)); color:rgba(var(--fg-rgb),.5); text-decoration:none; }
+.hlMore::after { content:' ›'; }
+.hlMore:hover { color:var(--fg); }
+@media (min-width:700px) {
+  .hlIntro { font-size:15px; } .hlTitle { font-size:17px; } .hlRow { font-size:14px; } .hlMore { font-size:13px; }
 }
