@@ -87,24 +87,24 @@ die Ranglisten für diesen Monat.
   <img src="docs/bilder/rueckblick.jpg" width="200" alt="Jahresrückblick">
 </p>
 
-### Tag-Editor und Bibliotheks-Check
+### Tag-Editor und „Bibliothek prüfen“
 Tags einzelner Titel, ganzer Alben oder aller Titel eines Künstlers bearbeiten, mit Textfunktionen wie Groß-/Kleinschreibung,
-Rückgängig und Cover (Datei wählen, online suchen, eingebettetes Cover als `folder.jpg`). Der Bibliotheks-Check findet
-Alben ohne Cover, fehlende oder uneinheitliche Album-Interpreten, Künstler in mehreren Schreibweisen, uneinheitliche
+Rückgängig und Cover (Datei wählen, online suchen, eingebettetes Cover als `folder.jpg`). „Bibliothek prüfen“ im Menü findet
+Alben ohne Cover, fehlende oder uneinheitliche Album-Künstler, Künstler in mehreren Schreibweisen, uneinheitliche
 Albumnamen oder Jahre, Titel ohne Tracknummer und Erscheinungsdaten, die von MusicBrainz abweichen, und schlägt je Album ein Genre vor (Discogs-Oberkategorien, aus
 vorhandenen Genre-Tags und der Audio-Analyse); jeder Eintrag öffnet direkt den passenden Editor und bleibt danach bis zur nächsten Prüfung ausgegraut. Dort steht auch der
 Fortschritt der Stimmungs-Tags.
 
 <p>
   <img src="docs/bilder/tag-editor.jpg" width="200" alt="Tag-Editor">
-  <img src="docs/bilder/check.jpg" width="200" alt="Bibliotheks-Check">
-  <img src="docs/bilder/stimmungs-tags.jpg" width="200" alt="Stimmungs-Tags im Bibliotheks-Check">
+  <img src="docs/bilder/check.jpg" width="200" alt="Bibliothek prüfen">
+  <img src="docs/bilder/stimmungs-tags.jpg" width="200" alt="Stimmungs-Tags unter „Bibliothek prüfen“">
 </p>
 
 ### Weiteres
 - Begrüßung beim Öffnen: Album des Tages, Album-Geburtstage (runde und Jubiläen hervorgehoben), zuletzt gehörte und neue
   Alben, Zufallsmix; Geburtstage, zuletzt gehört und neu auch unter Entdecken.
-- Menü hinter dem Zahnrad oben rechts: Begrüßung, Verlauf und Statistik, Bibliotheks-Check, Bibliothek aktualisieren und die
+- Menü hinter dem Zahnrad oben rechts: Begrüßung, Verlauf und Statistik, Bibliothek prüfen, Bibliothek aktualisieren und die
   originale Volumio-Oberfläche (Durchsuchen, Warteschlange, Einstellungen, Plugins, System = Volumios Seite /dev); unten Logo, eingespielter Stand und Lizenz.
 - Hell und dunkel, nach der Einstellung des Geräts oder fest eingestellt.
 - Deutsch und Englisch, wie in Volumio eingestellt oder fest eingestellt; weitere Sprachen als Datei in `web/lang/`
@@ -121,7 +121,7 @@ Fortschritt der Stimmungs-Tags.
 |---|---|---|
 | `xplorio.html` + `web/` | Oberfläche für Handy, iPad, Desktop (Wiedergabe, Queue, Suche lokal und bei Streamingdiensten, Lyrics, Infos, Tag-Editor, Stimmungs-Mix, Verlauf, Display-Layout für große Bildschirme) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
 | `kioskTV.html` | Seite für einen Kiosk-Bildschirm (Cover, Titel, Lyrics) | `/volumio/http/www*/` |
-| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliotheks-Check, Verlauf, Stimmungs-Tags, Cover; nimmt nur Aufträge der Oberfläche an; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/xplorio/tags/` (Daten: `/data/xplorio/data/`) |
+| `tags/` | Tag-Dienst (Port 8766): Tag-Editor, Bibliothek prüfen, Verlauf, Stimmungs-Tags, Cover; nimmt nur Aufträge der Oberfläche an; Python 2.7 oder 3 mit mitgelieferter mutagen-Bibliothek (GPLv2, siehe `tags/vendor/mutagen/COPYING`) | `/data/xplorio/tags/` (Daten: `/data/xplorio/data/`) |
 | `rotel/rotel-bridge.js` | optional: HTTP-Dienst (Port 8765) für einen Rotel-Verstärker im Netz (Lautstärke, Ein/Aus, Eingang), nur für die Oberfläche | `/data/xplorio/rotel/` |
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | startet Volumio neu bzw. verbindet TIDAL neu, wenn das TIDAL-Plugin hängt (nur unter Volumio 2 erprobt) | `/volumio/http/www3/tools/` |
 | `tools/xplorio-deploy.sh` | aktualisiert den Player aus diesem Repository (`xplorio-deploy`) | `/usr/local/bin/` |

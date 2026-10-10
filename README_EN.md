@@ -94,10 +94,10 @@ Tapping a month displays the rankings for that month.
   <img src="docs/bilder/rueckblick.jpg" width="200" alt="Year in review">
 </p>
 
-### Tag Editor and Library Check
+### Tag Editor and “Check library”
 
 Edit tags for individual tracks, entire albums, or all tracks by an artist, with text functions such as upper/lowercase
-conversion, Undo, and cover art options (choose a file, search online, save embedded cover art as `folder.jpg`). The Library Check finds
+conversion, Undo, and cover art options (choose a file, search online, save embedded cover art as `folder.jpg`). “Check library” in the menu finds
 albums without cover art, missing or inconsistent album artists, artists with multiple spellings, inconsistent
 album names or years, tracks without track numbers and release dates that differ from MusicBrainz, and suggests one genre per album (Discogs top categories, from
 existing genre tags and the audio analysis); each entry opens the appropriate editor directly and then stays greyed out until the next check. It also shows the
@@ -113,7 +113,7 @@ progress of the mood tags.
 
 - Welcome screen on opening: album of the day, album birthdays (round ones and anniversaries highlighted), recently
   played and new albums, random mix; birthdays, recently played and new also in Discover.
-- Menu behind the gear at the top right: welcome screen, history and stats, library check, update library, and the original Volumio
+- Menu behind the gear at the top right: welcome screen, history and stats, check library, update library, and the original Volumio
   interface (browse, queue, settings, plugins, system = Volumio's /dev page); at the bottom the logo, the installed version and the license.
 - Light and dark, following the device setting or set explicitly.
 - German and English, following the Volumio language setting or set explicitly; further languages as a file in `web/lang/`
@@ -130,7 +130,7 @@ progress of the mood tags.
 |---|---|---|
 | `xplorio.html` + `web/` | Interface for phone, iPad, and desktop (playback, queue, local and streaming-service search, lyrics, information, Tag Editor, Mood Mix, history, display layout for large screens) | `/volumio/http/www3/` (Volumio 4: `www4/`) |
 | `kioskTV.html` | Page for a kiosk display (cover art, track information, lyrics) | `/volumio/http/www*/` |
-| `tags/` | Tag Service (port 8766): Tag Editor, Library Check, history, mood tags, cover art; accepts commands only from the interface; Python 2.7 or 3 with bundled mutagen library (GPLv2, see `tags/vendor/mutagen/COPYING`) | `/data/xplorio/tags/` (data: `/data/xplorio/data/`) |
+| `tags/` | Tag Service (port 8766): Tag Editor, Check library, history, mood tags, cover art; accepts commands only from the interface; Python 2.7 or 3 with bundled mutagen library (GPLv2, see `tags/vendor/mutagen/COPYING`) | `/data/xplorio/tags/` (data: `/data/xplorio/data/`) |
 | `rotel/rotel-bridge.js` | optional: HTTP service (port 8765) for a network-connected Rotel amplifier (volume, power, input), interface only | `/data/xplorio/rotel/` |
 | `tools/tidal-watchdog.sh`, `tools/tidal-reconnect.js` | restarts Volumio or reconnects TIDAL if the TIDAL plugin becomes unresponsive (tested only on Volumio 2) | `/volumio/http/www3/tools/` |
 | `tools/xplorio-deploy.sh` | updates the player from this repository (`xplorio-deploy`) | `/usr/local/bin/` |

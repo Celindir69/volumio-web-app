@@ -78,10 +78,11 @@ function mixPick() {
   mixBody.appendChild(chips);
 
   /* Energie als Bereich 1–5 */
-  mixBody.appendChild(histEl('div', 'mxLabel', T('mix.energy')));
+  var enLabel = histEl('div', 'mxLabel', T('mix.energy'));
+  mixBody.appendChild(enLabel);
   mixDual(mixBody, 1, 5, 1, mixCrit.emin, mixCrit.emax, T('mix.energy.low'), T('mix.energy.high'), function(a, b){
     return a === 1 && b === 5 ? T('mix.all') : a === b ? String(a) : a + '–' + b;
-  }, function(a, b){ mixCrit.emin = a; mixCrit.emax = b; mixCount(); });
+  }, function(a, b){ mixCrit.emin = a; mixCrit.emax = b; mixCount(); }, enLabel);
 
   /* Genre (Genre-Tag des Albums); erscheint, sobald der Tag-Dienst Genres meldet */
   var genreWrap = histEl('div', 'mxGenre');
@@ -119,14 +120,15 @@ function mixPick() {
   var tempo = histEl('div', 'mxTempo');
   tempo.style.display = mixState.hasBpm || mixCrit.bmin || mixCrit.bmax ? '' : 'none';
   mixState.tempo = tempo;
-  tempo.appendChild(histEl('div', 'mxLabel', T('mix.tempo')));
+  var tempoLabel = histEl('div', 'mxLabel', T('mix.tempo'));
+  tempo.appendChild(tempoLabel);
   var bl = MIX_BPM[0], bh = MIX_BPM[1];
   mixDual(tempo, bl, bh, MIX_BPM[2], mixCrit.bmin || bl, mixCrit.bmax || bh, T('mix.tempo.slow'), T('mix.tempo.fast'), function(a, b){
     if (a === bl && b === bh) return T('mix.all');
     if (a === bl) return T('mix.bpm.max', {b: b});
     if (b === bh) return T('mix.bpm.min', {a: a});
     return a === b ? T('mix.bpm', {a: a}) : T('mix.bpm.range', {a: a, b: b});
-  }, function(a, b){ mixCrit.bmin = a === bl ? 0 : a; mixCrit.bmax = b === bh ? 0 : b; mixCount(); });
+  }, function(a, b){ mixCrit.bmin = a === bl ? 0 : a; mixCrit.bmax = b === bh ? 0 : b; mixCount(); }, tempoLabel);
   fine.appendChild(tempo);
 
   /* Jahre (Jahr des Albums); Regler von der Spanne der Sammlung, sobald die Trefferzahl sie meldet */
@@ -155,8 +157,9 @@ function mixPick() {
   mixCount();
 }
 
-/* Bereich mit zwei Reglern übereinander (Energie, Tempo); fmt(a, b) -> Anzeige, set(a, b) bei jeder Änderung */
-function mixDual(parent, min, max, step, a0, b0, left, right, fmt, set) {
+/* Bereich mit zwei Reglern übereinander (Energie, Tempo); fmt(a, b) -> Anzeige, set(a, b) bei jeder Änderung;
+   label: Beschriftung, daneben „alle“ (setzt den Bereich zurück), solange ein Bereich gewählt ist */
+function mixDual(parent, min, max, step, a0, b0, left, right, fmt, set, label) {
   var en = histEl('div', 'mxEnergy');
   var track = histEl('div', 'mxTrack'), fill = histEl('div', 'mxFill');
   track.appendChild(fill);
@@ -168,8 +171,19 @@ function mixDual(parent, min, max, step, a0, b0, left, right, fmt, set) {
   var val = histEl('span', 'mxVal');
   ends.appendChild(val);
   ends.appendChild(histEl('span', '', right));
+  var reset = null;
+  if (label) {
+    reset = histEl('span', 'mxReset', T('mix.all'));
+    reset.title = T('mix.reset');
+    reset.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      lo.value = min; hi.value = max; changed(lo);
+    });
+    label.appendChild(reset);
+  }
   function paint() {
     var a = +lo.value, b = +hi.value, w = max - min;
+    if (reset) reset.style.display = a > min || b < max ? '' : 'none';
     fill.style.left = ((a - min) / w * 100) + '%';
     fill.style.right = ((max - b) / w * 100) + '%';
     val.textContent = fmt(a, b);
@@ -208,10 +222,11 @@ function mixYearsPaint() {
   box.style.display = sp ? '' : 'none';
   if (!sp) return;
   var lo = sp[0], hi = sp[1];
-  box.appendChild(histEl('div', 'mxLabel', T('mix.years')));
+  var yearLabel = histEl('div', 'mxLabel', T('mix.years'));
+  box.appendChild(yearLabel);
   mixDual(box, lo, hi, 1, mixCrit.ymin || lo, mixCrit.ymax || hi, T('mix.years.old'), T('mix.years.new'), function(a, b){
     return mixYearText(a === lo ? 0 : a, b === hi ? 0 : b);
-  }, function(a, b){ mixCrit.ymin = a === lo ? 0 : a; mixCrit.ymax = b === hi ? 0 : b; mixCount(); });
+  }, function(a, b){ mixCrit.ymin = a === lo ? 0 : a; mixCrit.ymax = b === hi ? 0 : b; mixCount(); }, yearLabel);
   box.appendChild(histEl('div', 'mxHint', T('mix.years.hint')));
 }
 
@@ -357,7 +372,6 @@ function mixPreview() {
   if (mixCrit.genres.length > 1) info.appendChild(histEl('div', 'mxSumS', mixCrit.genres.map(mixGenreName).join(' · ')));
   if (mixCrit.styles.length) info.appendChild(histEl('div', 'mxSumS', mixCrit.styles.join(mixCrit.match === 'all' ? ' + ' : ' · ')));
   var total = tracks.reduce(function(s, x){ return s + (x.d || 0); }, 0);
-  info.appendChild(histEl('div', 'mxSumN', T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : '')));
   head.appendChild(info);
   var edit = histEl('div', 'mxEdit', T('mix.edit'));
   edit.addEventListener('click', function(){ mixState.view = 'pick'; mixRender(); });
@@ -373,19 +387,16 @@ function mixPreview() {
     return;
   }
 
-  var bar = histEl('div', 'mxBar');
-  var play = histEl('button', 'mxGo mxPlay', '▶  ' + T('mix.play'));
-  play.addEventListener('click', function(){ mixPlay(tracks, true); });
   var reroll = histEl('button', 'mxIcon', '');
   reroll.title = T('mix.reroll');
   reroll.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
-  reroll.addEventListener('click', function(){ reroll.classList.add('spin'); mixBuild(); });
+  reroll.addEventListener('click', function(ev){ ev.stopPropagation(); reroll.classList.add('spin'); mixBuild(); });
   var add = histEl('button', 'mxIcon', '');
   add.title = T('mix.addToQueue');
   add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14 10H3v2h11v-2zm0-4H3v2h11V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM3 16h7v-2H3v2z"/></svg>';
-  add.addEventListener('click', function(){ mixPlay(tracks, false); });
-  bar.appendChild(play); bar.appendChild(reroll); bar.appendChild(add);
-  mixBody.appendChild(bar);
+  add.addEventListener('click', function(ev){ ev.stopPropagation(); mixPlay(tracks, false); });
+  mixBody.appendChild(playRow(T('mix.play'), T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : ''),
+    function(){ mixPlay(tracks, true); }, [reroll, add]));   /* Zeile wie auf Album- und Künstlerseite (browse.js) */
 
   var list = histEl('div', 'mxList');
   tracks.forEach(function(x, i){
@@ -413,6 +424,7 @@ function mixPreview() {
       mixBody.scrollTop = keep;
     });
     row.appendChild(del);
+    row.addEventListener('click', function(){ mixPlay(tracks.slice(tracks.indexOf(x)), true); });   /* ab diesem Titel */
     list.appendChild(row);
   });
   mixBody.appendChild(list);
@@ -423,7 +435,7 @@ function mixPlay(tracks, replace) {
   var items = tracks.map(function(x){
     return {uri: 'music-library/' + x.f, service: 'mpd', type: 'song', title: x.ti, artist: x.ar, album: x.al};
   });
-  if (!replace) { socket.emit('addToQueue', items); closeAllOverlays(); return; }
+  if (!replace) { socket.emit('addToQueue', items); closeAllOverlays(); showToast(T('mix.added', {n: items.length})); return; }
   fetch('/api/v1/replaceAndPlay', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({item: items[0]})

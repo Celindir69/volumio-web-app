@@ -47,7 +47,7 @@ function setTrackInfo(key, title, data, radio) {
 
 function showInfo(list) {
   list = withTrackInfo(list);
-  infoItems = list.filter(function(i){ return i && (i.data || i.always || i.lazy); });
+  infoItems = list.filter(function(i){ return i && (i.data || i.always || i.lazy || i.discover); });
   infoIdx = 0;
   btnInfo.className = 'actBtn' + (infoItems.length ? ' has-content' : '');
   buildInfoTabs();
@@ -98,6 +98,20 @@ function renderInfo(dir) {
   }
   while (infoContent.firstChild) infoContent.removeChild(infoContent.firstChild);
 
+
+  /* Reiter „Entdecken“: wie auf der Künstlerseite (discover.js); einmal gebaut, beim Zurückwechseln nicht neu laden */
+  if (it.discover) {
+    if (!it.el) {
+      var box = document.createElement('div'), note = browseNote(T('browse.loading'));
+      box.appendChild(note);
+      box.appendChild(discoverMore(it.artist, function(){ return infoItems.indexOf(it) >= 0; },
+        function(){ if (note.parentNode) note.parentNode.removeChild(note); },
+        function(){ if (!box.querySelector('.dMoreSec')) { note.textContent = T('more.empty'); box.insertBefore(note, box.firstChild); } }));
+      it.el = box;
+    }
+    infoContent.appendChild(it.el);
+    return;
+  }
 
   if (it.lazy && !it.data) {
     var loading = document.createElement('div');

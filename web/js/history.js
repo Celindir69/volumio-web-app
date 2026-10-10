@@ -367,7 +367,7 @@ function histYear(seq) {
         histYear(++histSeq);
       }}));
     histBody.appendChild(browseNote(T('hist.year.best', {month: full[best], n: y.months[best]})));
-    var inMonth = y.month >= 0 && y.month < 12, suffix = inMonth ? ' · ' + full[y.month].toUpperCase() : '';
+    var inMonth = y.month >= 0 && y.month < 12, suffix = inMonth ? ' · ' + full[y.month] : '';
     if (inMonth) {
       var scope = histEl('div', 'hScope');
       scope.appendChild(histEl('span', '', T('hist.year.chartsFor', {month: full[y.month], year: y.year})));
