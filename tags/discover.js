@@ -120,7 +120,8 @@ function mixPool(tracks, albumList, q) {
 }
 
 /* Mix über mehrere Künstler (ähnliche Künstler): jeder Künstler etwa gleich oft, egal wie viel von ihm da ist;
-   Künstler des Albums (Ordner) zählt, sonst der des Titels. Je Künstler zuerst nicht kürzlich Gehörtes (recent(t)),
+   es zählt der Künstler des Titels, auf seinem eigenen Album der des Albums ("Spliff feat. Nina" auf einem
+   Spliff-Album zählt als Spliff). Sampler mit Album-Künstler "Various Artists" o. Ä. zählen so nicht als ein Künstler. Je Künstler zuerst nicht kürzlich Gehörtes (recent(t)),
    über die Alben verteilt. Nie derselbe Künstler direkt hintereinander, solange
    ein anderer übrig ist; jede Datei höchstens einmal. */
 function mixBalanced(pool, k, albumList, rnd, recent) {
@@ -130,7 +131,8 @@ function mixBalanced(pool, k, albumList, rnd, recent) {
   pool.forEach(function(t){
     if (seen[t[2]]) return;
     seen[t[2]] = true;
-    var a = dirArtist[albums.albumDir(t[2])] || plays.norm(t[0]);
+    var aa = dirArtist[albums.albumDir(t[2])], ta = plays.norm(t[0]);
+    var a = aa && ta.indexOf(aa) === 0 ? aa : (ta || aa || '');
     (by[a] || (by[a] = [])).push(t);
   });
   Object.keys(by).forEach(function(a){                  /* je Künstler: nicht kürzlich Gehörtes zuerst, quer durch die Alben */
