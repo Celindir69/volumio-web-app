@@ -14,17 +14,29 @@ function paintQuality(st) {
 /* Webradio: zeigt der Player ein Senderlogo (Adresse von Volumio), es dem Tag-Dienst für die Senderliste melden.
    Den Namen kennt die Senderliste (radioNames in library.js); einmal je Sender und Adresse */
 var radioLogoSent = {};
-/* Sendername zum laufenden Stream: aus der Senderliste (gleiche Adresse, auch ohne / am Ende oder http/https),
-   sonst das, was Volumio bei Webradio als Künstler meldet (meist der Sendername, z. B. bei TuneIn) */
-function radioUriKey(u) { return String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/[\/;]+$/, ''); }
+/* Sendername zum laufenden Stream, aus der Senderliste (radioNames):
+   1. gleiche Adresse (auch ohne / am Ende, ohne ?…, http oder https)
+   2. gleicher Server und gleicher Senderpfad (z. B. stream.klassikradio.de/piano, egal welche Bitrate), wenn eindeutig
+   3. ein Sender vom selben Server, dessen Name das enthält, was Volumio als Künstler meldet (z. B. „Piano“)
+   sonst der Künstler selbst (bei TuneIn meist der Sendername) */
+function radioUriKey(u) { return String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/[?#].*$/, '').replace(/[\/;]+$/, ''); }
+function radioUriParts(u) { var p = radioUriKey(u).split('/'); return {host: p[0].replace(/^www\./, ''), first: p[1] || ''}; }
+function radioUnique(list) { return list.length === 1 ? list[0] : ''; }
 function radioStationName(st) {
   var names = typeof radioNames === 'function' ? radioNames() : {};
   if (names[st.uri]) return names[st.uri];
-  var k = radioUriKey(st.uri), hit = '';
-  Object.keys(names).some(function(u){ if (radioUriKey(u) === k) { hit = names[u]; return true; } return false; });
+  var k = radioUriKey(st.uri), me = radioUriParts(st.uri), all = Object.keys(names), hit = '';
+  all.some(function(u){ if (radioUriKey(u) === k) { hit = names[u]; return true; } return false; });
   if (hit) return hit;
   var ar = String(st.artist || '').trim(), ti = String(st.title || '');
-  return ar && ti.indexOf(ar + ' - ') !== 0 ? ar : '';         /* „Künstler - Titel“ mit demselben Künstler: kein Sendername */
+  if (ar && ti.indexOf(ar + ' - ') === 0) ar = '';             /* „Künstler - Titel“ mit demselben Künstler: kein Sendername */
+  var sameHost = all.filter(function(u){ return me.host && radioUriParts(u).host === me.host; });
+  hit = me.first && radioUnique(sameHost.filter(function(u){ return radioUriParts(u).first === me.first; }));
+  if (hit) return names[hit];
+  var al = ar.toLowerCase();
+  hit = al && radioUnique(sameHost.filter(function(u){ return String(names[u]).toLowerCase().indexOf(al) >= 0; }));
+  if (hit) return names[hit];
+  return ar;
 }
 function radioLogoLearn(st) {
   if (st.trackType !== 'webradio' || typeof TAGS === 'undefined' || !st.uri) return;
