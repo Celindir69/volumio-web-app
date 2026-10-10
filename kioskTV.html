@@ -724,7 +724,7 @@ function radioArt(st, stationArt) {
 
 function handleState(st) {
     var dur = Number(st.duration) || 0;
-    var pos = Number(st.seek) || 0;
+    var pos = st.status === 'stop' ? 0 : (Number(st.seek) || 0);   /* gestoppt zählt Volumio teils weiter (Ausgabegerät aus) */
     seekBase = pos;
     seekStamp = nowMs();
     playing = (st.status === 'play');
