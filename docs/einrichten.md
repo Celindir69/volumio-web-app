@@ -197,7 +197,7 @@ Info-Overlay, scrollbar), **Zuletzt gehört**
 Jahr oder länger um dieses Datum herum liefen, ± 3 Tage), **Neu in der Sammlung** (Alben, deren Dateien in den letzten
 180 Tagen dazukamen oder sich änderten, nach dem Änderungsdatum aus MPD) und ein Zufallsmix. Tippen daneben schließt es.
 Es kommt höchstens alle 30 Minuten von selbst und nicht in der Bühnenansicht; „Beim Öffnen zeigen“ unten schaltet es
-für dieses Gerät ab, im Menü unter „Begrüßung“ ist es jederzeit erreichbar. Mit `?welcome=0` in der Adresse bleibt es beim Öffnen aus (z. B. für ein Lesezeichen). Nach dem Update liest der Tag-Dienst die
+für dieses Gerät ab, im Menü unter „Begrüßungsschirm“ ist es jederzeit erreichbar. Mit `?welcome=0` in der Adresse bleibt es beim Öffnen aus (z. B. für ein Lesezeichen). Nach dem Update liest der Tag-Dienst die
 Albenliste einmal neu, bis dahin fehlt „Neu in der Sammlung“.
 
 **Geburtstage:** Alben, die heute, in dieser Woche (Montag bis Sonntag) oder in diesem Monat Erscheinungstag haben. Die

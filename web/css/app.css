@@ -1049,9 +1049,8 @@ html.light.stage #cover { box-shadow:0 10px 30px rgba(0,0,0,.25); }
 .hlTitle { font-size:calc(3.8 * var(--vw)); font-weight:600; }
 .hlRow { font-size:calc(3.2 * var(--vw)); line-height:1.45; color:rgba(var(--fg-rgb),.75); padding:calc(1 * var(--vw)) 0; }
 .hlDo { font-weight:600; color:var(--fg); }
-.hlMore { display:inline-block; margin-top:calc(2 * var(--vw)); font-size:calc(2.9 * var(--vw)); color:rgba(var(--fg-rgb),.5); text-decoration:none; }
-.hlMore::after { content:' ›'; }
-.hlMore:hover { color:var(--fg); }
+.hlMore { color:var(--accent, var(--fg)); text-decoration:none; white-space:nowrap; font-weight:600; }
+.hlExt { width:.95em; height:.95em; fill:currentColor; vertical-align:-.12em; margin-left:.25em; }
 @media (min-width:700px) {
-  .hlIntro { font-size:15px; } .hlTitle { font-size:17px; } .hlRow { font-size:14px; } .hlMore { font-size:13px; }
+  .hlIntro { font-size:15px; } .hlTitle { font-size:17px; } .hlRow { font-size:14px; }
 }
