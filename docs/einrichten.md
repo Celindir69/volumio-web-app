@@ -399,7 +399,7 @@ Künstler bei Last.fm und Wikipedia, erst beide in der Sprache der Oberfläche, 
 steht unter dem Text. Für die Mitwirkenden gibt es keinen Ersatz.
 
 Mitwirkende, die Volumio mit einer MusicBrainz-Kennung liefert, lassen sich antippen (ohne eigene Markierung). Das klappt darunter ihren Text
-auf, nochmal Antippen klappt ihn zu. Bei Personen gilt dieselbe Reihenfolge wie bei Künstlern (Volumio, dann Last.fm und
+auf; nochmal Antippen des Namens oder ein Tipp auf den Text klappt ihn zu. Bei Personen gilt dieselbe Reihenfolge wie bei Künstlern (Volumio, dann Last.fm und
 Wikipedia), Studios und Labels kommen nur von Volumio.
 
 Zum laufenden Titel sucht die App in derselben Reihenfolge einen eigenen Text (Last.fm `track.getInfo`, dann ein
@@ -408,6 +408,14 @@ Zusätze wie „(Remastered 2011)“ werden dafür weggelassen. Nur wenn etwas g
 hinter „Album“, beim Webradio als erster Reiter. Das Ergebnis, auch „nichts gefunden“, merkt sich der Browser je Titel (die letzten 400).
 Ist die App über `LANGUAGE` oder `?lang=` auf eine andere Sprache gestellt als Volumio, holt sie die Texte zuerst selbst und fragt Volumio
 nur, wenn dabei nichts herauskommt (Volumio liefert seine Texte in der eigenen Sprache).
+
+**Gleiche Namen:** Texte, Fotos, Cover, Lyrics und Mitwirkende werden über den Namen gesucht. Gibt es einen anderen
+Künstler, ein anderes Album oder einen anderen Titel mit demselben Namen, kann deshalb auch einmal die Information zum
+falschen erscheinen. Ein eindeutiges MusicBrainz-Tag in den Dateien hilft Volumio; bei den eigenen Quellen (Last.fm,
+Wikipedia, Deezer, LRCLIB) bleibt es beim Namen.
+
+In der Bühnenansicht werden lange Lyrics ohne Zeitmarken etwas kleiner gesetzt; passen sie dann nicht ganz, scrollt man
+selbst (sie blättern nicht von allein weiter).
 
 ### Lyrics-Versatz
 Laufen synchrone Lyrics konstant zu früh oder zu spät (andere Fassung des Titels), verschieben „−“ und „+“ neben der

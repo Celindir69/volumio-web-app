@@ -4,14 +4,13 @@
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; wird nach poll.js geladen. */
 var STAGE_KEY = 'mxLayout';
 var STAGE_MQ = window.matchMedia('(orientation:landscape) and (min-width:900px) and (min-height:560px)');
-var STAGE_PAGE_MS = 25000;       /* Karussell und lange Lyrics ohne Zeitmarken: Seitenwechsel wie im Kiosk */
+var STAGE_PAGE_MS = 25000;       /* Karussell: Seitenwechsel wie im Kiosk */
 var STAGE_IDLE_MS = 60000;       /* nach eigenem Wischen/Tippen so lange nicht selbst blättern */
 
 var btnStage = document.getElementById('btnStage');
 var topRight = document.getElementById('topRight');
 var stageOn = false;
 var stageInfoTimer = null, stageInfoUserAt = 0;
-var stagePlain = null;           /* lange Lyrics ohne Zeitmarken: {offs:[…], start, page} */
 
 function stagePref() {
   try {
@@ -127,7 +126,8 @@ showInfo = function(list){
   stageInfoSchedule();
 };
 
-/* ---------- Lyrics ohne Zeitmarken: zu lange Texte erst kleiner, dann seitenweise (wie kioskTV.html) ---------- */
+/* ---------- Lyrics ohne Zeitmarken: zu lange Texte etwas kleiner; passen sie dann nicht, scrollt man selbst
+   (kein automatisches Weiterblättern: sonst ist der Text gerade weg, wenn man ihn liest) ---------- */
 var STAGE_PLAIN_MIN = 0.72;      /* kleinste Schrift relativ zur normalen Größe */
 
 var stageShowLyrics = showLyrics;
@@ -138,35 +138,14 @@ showLyrics = function(data){
 };
 
 function stagePlainSetup() {
-  stagePlain = null;
   lyricsText.style.fontSize = '';
   if (!stageOn || lyricsText.classList.contains('synced') || !lyricsText.textContent) return;
   var avail = area.clientHeight - 24;
   if (!avail || lyricsText.scrollHeight <= avail) return;
   var base = parseFloat(getComputedStyle(lyricsText).fontSize), min = Math.round(base * STAGE_PLAIN_MIN);
   for (var px = Math.floor(base) - 1; px >= min && lyricsText.scrollHeight > avail; px--) lyricsText.style.fontSize = px + 'px';
-  var total = lyricsText.scrollHeight;
-  if (total <= avail) return;
-  var lh = parseFloat(getComputedStyle(lyricsText).lineHeight) || 24;
-  var pageH = Math.max(1, Math.floor(avail / lh) - 1) * lh, last = total - area.clientHeight + 24, offs = [];
-  for (var y = 0; y < last; y += pageH) offs.push(Math.round(y));
-  offs.push(Math.max(0, Math.round(last)));
-  stagePlain = {offs: offs, start: Date.now(), page: -1};
   area.scrollTop = 0;
 }
-
-/* Seite nach Liedposition (über 90 % der Dauer verteilt), ohne Dauer (Radio) alle STAGE_PAGE_MS */
-setInterval(function(){
-  if (!stageOn || !stagePlain || Date.now() < lyrUserUntil) return;
-  var n = stagePlain.offs.length, p;
-  if (curDur > 0) p = Math.floor((Number(window.currentSeekMs) || 0) / (curDur * 1000 * 0.9 / n));
-  else p = Math.floor((Date.now() - stagePlain.start) / STAGE_PAGE_MS);
-  p = Math.max(0, Math.min(n - 1, p));
-  if (p !== stagePlain.page || lyrPending) {
-    stagePlain.page = p; lyrPending = false;
-    stageScroll(area, stagePlain.offs[p]);
-  }
-}, 1000);
 
 window.addEventListener('resize', function(){ if (stageOn) setTimeout(stagePlainSetup, 100); });
 

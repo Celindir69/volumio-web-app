@@ -277,6 +277,7 @@ function toggleCredit(n, more, name, link) {
   var t = document.createElement('div');
   t.textContent = '…';
   box.appendChild(h); box.appendChild(t);
+  box.addEventListener('click', function(){ box.remove(); n.classList.remove('open'); });   /* Tipp auf die Info schließt sie wieder */
   more.appendChild(box); n.classList.add('open');
   box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   creditStory(name, link).then(function(txt){

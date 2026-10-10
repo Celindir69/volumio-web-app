@@ -284,11 +284,15 @@ If the app is set to a different language than Volumio via `LANGUAGE` or `?lang=
 
 The source is shown below the text. There is no fallback for contributors.
 
-Contributors that Volumio delivers with a MusicBrainz ID can be tapped (without a visual marker). This expands its text below, tapping again
+Contributors that Volumio delivers with a MusicBrainz ID can be tapped (without a visual marker). This expands its text below; tapping the name again or tapping the text
 collapses it. For people the same order as for artists applies (Volumio, then Last.fm and Wikipedia); studios and labels
 come from Volumio only.
 
 For the current track the app looks for a text of its own in the same order (Last.fm `track.getInfo`, then a Wikipedia article whose name is the song name, which describes itself as a song or single and names the artist). Additions such as "(Remastered 2011)" are ignored for this. Only if something is found does a "Track" tab appear after "Album", or as the first tab for web radio. The browser remembers the result per track, including "nothing found" (the last 400).
+
+**Same names:** texts, photos, covers, lyrics and contributors are looked up by name. If another artist, album or track has the same name, the information shown can occasionally belong to the wrong one. A unique MusicBrainz tag in the files helps Volumio; the app's own sources (Last.fm, Wikipedia, Deezer, LRCLIB) still go by name.
+
+In the stage view, long lyrics without timestamps are set slightly smaller; if they still don't fit, you scroll yourself (they don't page on by themselves).
 
 ### Lyrics Offset
 
