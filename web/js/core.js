@@ -39,6 +39,19 @@ socket.on('pushUiSettings', function(s){
   volumioLang = String(s.language).slice(0, 2).toLowerCase();
   if (typeof langFromVolumio === 'function') langFromVolumio(s.language);
 });
+/* Volumio meldet Fehler beim Abspielen als Hinweis (MPD: „Failed to open "alsa"…“, „No such device“ bzw. Volumios
+   Text dazu): Ausgabegerät aus oder belegt -> eigener kurzer Hinweis */
+function audioErrorText(m) {
+  var s = String((m && m.message) || '');
+  if (!m || m.type !== 'error') return '';
+  if (/resource busy|device is busy/i.test(s)) return T('audio.busy');
+  if (/failed to open|alsa|no such device|output device/i.test(s)) return T('audio.unreachable');
+  return '';
+}
+socket.on('pushToastMessage', function(m){
+  var t = audioErrorText(m);
+  if (t && typeof showToast === 'function') showToast(t);
+});
 socket.on('pushState', function(st){
   if (typeof showVolumio === 'function') showVolumio(st);
   if (typeof st.random === 'boolean') { stRandom = st.random; updateCtrlUI(); }
