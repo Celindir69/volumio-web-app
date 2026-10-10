@@ -145,3 +145,24 @@ function showToast(text) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 3500);
 }
+
+/* body.ovOn: ein Overlay ist offen; body.ovMain: eines außer Lyrics und Info (für die CSS-Regeln am Zahnrad;
+   ersetzt :has(), das Safari vor 15.4 nicht kennt) */
+(function(){
+  var list = document.querySelectorAll('.overlay');
+  function sync() {
+    var on = false, main = false;
+    for (var i = 0; i < list.length; i++) {
+      if (!list[i].classList.contains('on')) continue;
+      on = true;
+      if (list[i].id !== 'overlayLyrics' && list[i].id !== 'overlayInfo') main = true;
+    }
+    document.body.classList.toggle('ovOn', on);
+    document.body.classList.toggle('ovMain', main);
+  }
+  if (window.MutationObserver) {
+    var mo = new MutationObserver(sync);
+    for (var i = 0; i < list.length; i++) mo.observe(list[i], {attributes: true, attributeFilter: ['class']});
+  }
+  sync();
+})();

@@ -100,7 +100,7 @@ if (typeof module !== 'undefined') {
     document.documentElement.lang = LANG;
     /* Englisch und Deutsch als Rückfall immer mitladen */
     [LANG, 'en', 'de'].filter(function(c, i, a){ return a.indexOf(c) === i; }).forEach(function(c){
-      document.write('<script src="web/lang/' + c + '.js?t=' + Date.now() + '" onerror="void 0"><\/script>');
+      document.write('<script src="web/lang/' + c + '.js?v=' + (window.XV || Date.now()) + '" onerror="void 0"><\/script>');
     });
   })();
 }

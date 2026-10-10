@@ -275,9 +275,21 @@ function albumInfoLookup(items) {
   var none = {genres: items.map(function(){ return ''; }), years: items.map(function(){ return 0; })};
   if (!genreReady || !items.length) return Promise.resolve(none);
   var q = items.map(function(it){ return [it.uri || '', it.album || '', it.artist || '']; });
-  return tagGetJson('/albumgenre?q=' + encodeURIComponent(JSON.stringify(q))).then(function(r){
-    return {genres: (r && r.genres) || none.genres, years: (r && r.years) || none.years};
-  }).catch(function(){ return none; });
+  /* in Stücken: eine lange Adresse sprengt sonst die Kopfgrenze des Dienstes (rund 8 kB), und alles fehlt still */
+  var parts = [], cur = [], len = 0;
+  q.forEach(function(x){
+    var l = encodeURIComponent(JSON.stringify(x)).length + 3;
+    if (cur.length && len + l > 6000) { parts.push(cur); cur = []; len = 0; }
+    cur.push(x); len += l;
+  });
+  if (cur.length) parts.push(cur);
+  return Promise.all(parts.map(function(part){
+    return tagGetJson('/albumgenre?q=' + encodeURIComponent(JSON.stringify(part))).then(function(r){
+      return {genres: (r && r.genres) || part.map(function(){ return ''; }), years: (r && r.years) || part.map(function(){ return 0; })};
+    }).catch(function(){ return {genres: part.map(function(){ return ''; }), years: part.map(function(){ return 0; })}; });
+  })).then(function(rs){
+    return {genres: [].concat.apply([], rs.map(function(r){ return r.genres; })), years: [].concat.apply([], rs.map(function(r){ return r.years; }))};
+  });
 }
 function genreLookup(items) { return albumInfoLookup(items).then(function(r){ return r.genres; }); }
 
@@ -330,9 +342,8 @@ function genreFromAnywhere(g) {
   else openBrowse({kind: 'genre', genre: g});
 }
 
-tagGetJson('/health').then(function(r){
-  if (!r || !r.ok) return;
+whenTags(function(){
   genreReady = true;
   if (curAlbumTitle && !mAlbum.querySelector('.bYear')) playerYear(curAlbumUri || '', curAlbumTitle, mArtist.textContent);   /* erster Titel kam vor dem Tag-Dienst */
   if (genreTab) genreTab.style.display = '';
-}).catch(function(){});
+});

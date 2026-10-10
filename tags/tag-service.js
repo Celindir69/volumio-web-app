@@ -418,9 +418,11 @@ function doGenres(query, cb) {
   cb(200, {ok: true, albums: all, at: last ? last.at : null});
 }
 
-function doCheckGet(cb) {
+/* ?have=<at>: Ergebnis mit diesem Stand liegt beim Aufrufer schon vor -> nur Fortschritt, result: 'same' (spart MB je Abfrage) */
+function doCheckGet(query, cb) {
   var last = readCheck();
-  cb(200, {ok: true, running: checkRun, error: checkError, result: last});
+  var same = last && query && query.have && String(last.at) === String(query.have);
+  cb(200, {ok: true, running: checkRun, error: checkError, result: same ? 'same' : last});
 }
 
 /* POST /checkdone {key}: Eintrag als bearbeitet merken (bleibt ausgegraut), bis neu geprüft wird.
@@ -1323,7 +1325,7 @@ function handle(req, res) {
   if (req.method === 'GET' && route === '/coverimage') return doCoverImage(url.parse(req.url, true).query, res);
   if (req.method === 'GET' && route === '/coversearch') return doCoverSearch(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/scan')    return doScanGet(function(c, o){ send(res, c, o); });
-  if (req.method === 'GET' && route === '/check')   return doCheckGet(function(c, o){ send(res, c, o); });
+  if (req.method === 'GET' && route === '/check')   return doCheckGet(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && ['/genrelist', '/genrealbums', '/albumgenre', '/decades', '/decadealbums', '/yearalbums', '/decadeprofile'].indexOf(route) >= 0)
     return doGenreLib(route, url.parse(req.url, true).query, function(c, o){ send(res, c, o); });
   if (req.method === 'GET' && route === '/genres')  return doGenres(url.parse(req.url, true).query, function(c, o){ send(res, c, o); });

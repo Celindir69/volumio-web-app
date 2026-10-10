@@ -43,6 +43,10 @@ t('Stand fürs Menü: web/version.json mit Branch und Datum (eigenes Archiv ohne
   var v = JSON.parse(fs.readFileSync(path.join(R, 'volumio/http/www3/web/version.json'), 'utf8'));
   assert.strictEqual(v.branch, 'main'); assert.strictEqual(v.commit, ''); assert.ok(/^\d{4}-\d\d-\d\d$/.test(v.date), v.date);
 });
+t('Cache-Kennung: web/build.js mit Prüfsumme der Oberfläche', function(){
+  var b = fs.readFileSync(path.join(R, 'volumio/http/www3/web/build.js'), 'utf8');
+  assert.ok(/^window\.XPLORIO_BUILD = '[0-9a-f]{12}';\n$/.test(b), b);
+});
 t('Stand fürs Menü: Commit aus einem Archiv wie bei GitHub (git archive)', function(){
   var ga = path.join(T, 'ga.tar.gz'), sha = cp.execSync('git rev-parse HEAD', {cwd: repo, encoding: 'utf8'}).trim();
   cp.execSync('git archive --format=tar.gz --prefix=xplorio-x/ -o ' + ga + ' HEAD', {cwd: repo});

@@ -736,7 +736,7 @@ function handleState(st) {
     if (art && art !== lastArt) {
       lastArt = art;
       cover.src = art;
-      bg.style.backgroundImage = 'url(' + art + ')';
+      bg.style.backgroundImage = 'url("' + String(art).replace(/["\\\n]/g, encodeURIComponent) + '")';   /* Klammern oder Anführungszeichen im Pfad */
     }
 
     var artist = st.artist || '', album = st.album || '';

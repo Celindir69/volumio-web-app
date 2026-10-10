@@ -131,6 +131,10 @@ commit=$(gzip -dc "$TMP/src.tar.gz" 2>/dev/null | head -c 2048 | grep -ao 'comme
 stamp=$(date -r "$TMP/src/xplorio.html" +%Y-%m-%d 2>/dev/null || true)
 mkdir -p "$TMP/src/web"
 printf '{"branch":"%s","commit":"%s","date":"%s"}\n' "$BRANCH" "$commit" "$stamp" > "$TMP/src/web/version.json"
+# Kennung für den Browser-Cache (xplorio.html lädt Skripte und Styles mit ?v=<Kennung>): Prüfsumme der Oberfläche,
+# ändert sich also genau dann, wenn sich dort etwas geändert hat
+build=$(cd "$TMP/src" && find xplorio.html web -type f ! -name build.js ! -name version.json 2>/dev/null | LC_ALL=C sort | xargs cat 2>/dev/null | md5sum | cut -c1-12)
+printf "window.XPLORIO_BUILD = '%s';\n" "$build" > "$TMP/src/web/build.js"
 
 # ---------- Vergleichen ----------
 CHANGED=""; NEW=""; n=0

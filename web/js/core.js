@@ -204,19 +204,22 @@ var similarAllCache = {};       /* Künstlername -> alle Namen von Last.fm (auch
 /* ---------- Zeitanzeige (läuft zwischen den Polls selbst weiter) ---------- */
 var seekBase = 0, seekStamp = 0, playing = false;
 
+/* nur schreiben, was sich geändert hat: gleiche Texte neu zu setzen erzwingt trotzdem ein neues Layout */
+var shownTime = {el: null, rem: null, fill: null};
 function paintTime() {
   if (document.hidden) return;
   var pos = seekBase + (playing ? Date.now() - seekStamp : 0);
   if (curDur) pos = Math.min(pos, curDur * 1000);
   window.currentSeekMs = pos;          /* Lyrics laufen so flüssig mit */
-  if (!curDur) {                       /* Webradio: keine Dauer */
-    tElapsed.textContent = ''; tRemain.textContent = '';
-    seekFill.style.width = '0%';
-    return;
+  var el = '', rem = '', fill = 0;     /* Webradio: keine Dauer */
+  if (curDur) {
+    el = fmtTime(pos / 1000);
+    rem = '-' + fmtTime(Math.max(0, curDur - pos / 1000));
+    fill = Math.round(Math.min(1, pos / 1000 / curDur) * 1000) / 1000;
   }
-  tElapsed.textContent = fmtTime(pos / 1000);
-  tRemain.textContent  = '-' + fmtTime(Math.max(0, curDur - pos / 1000));
-  seekFill.style.width = Math.min(100, pos / 1000 / curDur * 100) + '%';
+  if (el !== shownTime.el) tElapsed.textContent = shownTime.el = el;
+  if (rem !== shownTime.rem) tRemain.textContent = shownTime.rem = rem;
+  if (fill !== shownTime.fill) { shownTime.fill = fill; seekFill.style.transform = 'scaleX(' + fill + ')'; }
 }
 setInterval(paintTime, 250);
 
@@ -279,7 +282,11 @@ function askTrack(artist, title) {
     c[k] = res ? res.value : 0;
     var keys = Object.keys(c);                                 /* älteste zuerst weg (Einfügereihenfolge) */
     keys.slice(0, Math.max(0, keys.length - TRACKINFO_MAX)).forEach(function(x){ delete c[x]; });
-    try { localStorage.setItem('trackInfo', JSON.stringify(c)); } catch (e) {}
+    /* Speicher voll: mit weniger Einträgen erneut, sonst bliebe der Stand für immer eingefroren */
+    for (var keep = keys.length; keep > 0; keep = Math.floor(keep / 2)) {
+      try { localStorage.setItem('trackInfo', JSON.stringify(c)); break; }
+      catch (e) { Object.keys(c).slice(0, Math.ceil(keep / 2)).forEach(function(x){ delete c[x]; }); }
+    }
     return res;
   }, function(){ return null; });                              /* Zeitüberschreitung: nicht merken, nächstes Mal neu */
 }

@@ -104,6 +104,8 @@ function renderInfo(dir) {
     loading.className = 'plHint';
     loading.textContent = T('info.similar.searching');
     infoContent.appendChild(loading);
+    if (it.loading) return;                                /* schon unterwegs (Reiter erneut gewählt): nicht doppelt laden */
+    it.loading = true;
     loadSimilarArtists(it.artist).then(function(matches){
       var streams = {};                                    /* je Dienst: null = wird noch gesucht */
       streamsOn().forEach(function(svc){ streams[svc.id] = null; });
@@ -118,7 +120,7 @@ function renderInfo(dir) {
           });
         });
       }, Promise.resolve());
-    });
+    }, function(){ it.loading = false; });
     return;
   }
 
