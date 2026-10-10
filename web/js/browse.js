@@ -182,6 +182,26 @@ function playRow(label, sub, onPlay, extras) {
   head.addEventListener('click', onPlay);
   return head;
 }
+/* Symbol „An die Warteschlange anhängen“ für die Abspielzeile: items() liefert die Volumio-Einträge (Ordner werden von
+   Volumio aufgelöst), n die Titelzahl für die Meldung (0: unbekannt). Die Seite bleibt offen, man kann weiter anhängen. */
+var QUEUE_ADD_SVG = '<svg viewBox="0 0 24 24"><path d="M14 10H3v2h11v-2zm0-4H3v2h11V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM3 16h7v-2H3v2z"/></svg>';
+function queueAddButton(items, n) {
+  var b = document.createElement('button');
+  b.className = 'mxIcon';
+  b.title = T('mix.addToQueue');
+  b.innerHTML = QUEUE_ADD_SVG;
+  b.addEventListener('click', function(ev){
+    ev.stopPropagation();
+    var list = typeof items === 'function' ? items() : items;
+    if (!list || !list.length) return;
+    socket.emit('addToQueue', list);
+    showToast(n ? T('mix.added', {n: n}) : T('queue.added'));
+  });
+  return b;
+}
+/* Hinweis über der Titelliste (unter der Linie von Reitern bzw. Abspielzeile), damit man ihn auch bei langen Listen sieht */
+function listHint(text) { return browseNote(text, 'sHint listHint'); }
+
 /* "12 Titel · 48 Min." (Dauer nur, wenn alle Titel eine haben) */
 function playRowSub(tracks, secOf) {
   var n = tracks.length, sum = 0, all = n > 0;
@@ -301,7 +321,8 @@ function browseArtist(e, seq) {
         browsePlay({uri:'artists://' + e.artist, service:'mpd', type:'folder', title:e.artist});
       }, [rateArtistHeart(e.artist),                   /* Lieblingskünstler (rating.js) */
           randomMixButton({artist: e.artist}),         /* 25 zufällige Titel des Künstlers (discover.js) */
-          tagArtistButton(e.artist)]));                /* Tags aller lokalen Titel des Künstlers bearbeiten */
+          tagArtistButton(e.artist),                   /* Tags aller lokalen Titel des Künstlers bearbeiten */
+          queueAddButton([{uri:'artists://' + e.artist, service:'mpd', type:'folder', title:e.artist}], 0)]));
     }
 
     /* Reiter „Alben & Titel“, „Entdecken“ (discover.js; beim Dienst „Lokal entdecken“: aus der eigenen Sammlung)
@@ -443,7 +464,8 @@ function browseAlbum(e, seq) {
     var play = playRow(T('browse.play'), playRowSub(tracks, function(t){ return t.duration; }), function(){
       browsePlay({uri:e.uri, service:info.service || e.service || 'mpd', type:'folder', title:e.album, artist:e.artist});
     }, [localTracks.length ? tagEditButton(localTracks.map(function(t){ return {uri:t.uri, title:t.title || t.name || ''}; }),   /* lokale Dateien: Tags bearbeiten */
-                                           e.album, 'browseEditBtn') : null]);
+                                           e.album, 'browseEditBtn') : null,
+        queueAddButton([{uri:e.uri, service:info.service || e.service || 'mpd', type:'folder', title:e.album, artist:e.artist}], tracks.length)]);
     play.title = T('browse.playAlbum');
     browseBody.appendChild(play);
 
@@ -457,6 +479,7 @@ function browseAlbum(e, seq) {
     var pane = panes.tracks;
 
     var rows = [];
+    pane.appendChild(listHint(T('browse.hintAlbum')));
     tracks.forEach(function(t, i){
       var row = document.createElement('div');
       var isCur = (e.album === curAlbum && (t.title || t.name) === mTitle.textContent);
@@ -483,7 +506,6 @@ function browseAlbum(e, seq) {
       rows.push(row);
     });
     rateAlbumPage(seq, e, who, tracks, meta, rows);         /* Sterne und Daumen (rating.js) */
-    pane.appendChild(browseNote(T('browse.hintAlbum')));
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);
@@ -530,7 +552,9 @@ function browsePlaylist(e, seq) {
     if (tile.firstChild) { tile.id = 'browsePlTile'; browseBody.appendChild(tile); }
 
     browseBody.appendChild(playRow(T('browse.playPlaylist'), playRowSub(tracks, function(t){ return t.duration; }),
-      function(){ playlistPlay(e, tracks, 0); }));
+      function(){ playlistPlay(e, tracks, 0); },
+      [queueAddButton(tracks.map(function(t){ return {uri:t.uri, service:t.service || 'mpd', type:'song', title:t.title || t.name || '', artist:t.artist || '', album:t.album || ''}; }), tracks.length)]));
+    browseBody.appendChild(listHint(T('browse.hintPlaylist')));
 
     tracks.forEach(function(t, i){
       var row = document.createElement('div');
@@ -555,7 +579,6 @@ function browsePlaylist(e, seq) {
       row.addEventListener('click', function(){ playlistPlay(e, tracks, i); });
       browseBody.appendChild(row);
     });
-    browseBody.appendChild(browseNote(T('browse.hintPlaylist')));
   }).catch(function(){
     if (seq !== browseSeq) return;
     while (browseBody.firstChild) browseBody.removeChild(browseBody.firstChild);

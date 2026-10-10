@@ -391,12 +391,10 @@ function mixPreview() {
   reroll.title = T('mix.reroll');
   reroll.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
   reroll.addEventListener('click', function(ev){ ev.stopPropagation(); reroll.classList.add('spin'); mixBuild(); });
-  var add = histEl('button', 'mxIcon', '');
-  add.title = T('mix.addToQueue');
-  add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14 10H3v2h11v-2zm0-4H3v2h11V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM3 16h7v-2H3v2z"/></svg>';
-  add.addEventListener('click', function(ev){ ev.stopPropagation(); mixPlay(tracks, false); });
+  var add = queueAddButton(function(){ return mixItems(tracks); }, tracks.length);
   mixBody.appendChild(playRow(T('mix.play'), T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : ''),
     function(){ mixPlay(tracks, true); }, [reroll, add]));   /* Zeile wie auf Album- und Künstlerseite (browse.js) */
+  mixBody.appendChild(listHint(T('mix.hint')));
 
   var list = histEl('div', 'mxList');
   tracks.forEach(function(x, i){
@@ -431,10 +429,13 @@ function mixPreview() {
 }
 
 /* replace: Warteschlange ersetzen und ab Titel 1 spielen; sonst hinten anhängen */
-function mixPlay(tracks, replace) {
-  var items = tracks.map(function(x){
+function mixItems(tracks) {
+  return tracks.map(function(x){
     return {uri: 'music-library/' + x.f, service: 'mpd', type: 'song', title: x.ti, artist: x.ar, album: x.al};
   });
+}
+function mixPlay(tracks, replace) {
+  var items = mixItems(tracks);
   if (!replace) { socket.emit('addToQueue', items); closeAllOverlays(); showToast(T('mix.added', {n: items.length})); return; }
   fetch('/api/v1/replaceAndPlay', {
     method: 'POST', headers: {'Content-Type': 'application/json'},

@@ -256,6 +256,9 @@
   .playRow .bAlbum { font-size:calc(4.2 * var(--vw)); }
   .playRow .sSub:empty { display:none; }
   .playRow .mxIcon, .playRow .mixDice, .playRow .rateHeart, .playRow .browseEditBtn { margin-left:calc(2 * var(--vw)); }
+  /* bis zu vier Symbole rechts: etwas kleiner, damit „Alle abspielen“ auf schmalen Telefonen ganz lesbar bleibt */
+  .playRow .mxIcon, .playRow .mixDice, .playRow .browseEditBtn { flex:0 0 calc(9 * var(--vw)); width:calc(9 * var(--vw)); height:calc(9 * var(--vw)); margin-left:calc(1.5 * var(--vw)); }
+  .playRow .rateHeart { margin-left:calc(1.5 * var(--vw)); }
   #browseBody .infoSection { margin-top:calc(4 * var(--vw)); }
   .bCover { flex:0 0 calc(18 * var(--vw)); height:calc(18 * var(--vw)); object-fit:cover; background:var(--ph);
     border-radius:calc(2 * var(--vw)); margin-right:calc(3.5 * var(--vw)); }
@@ -445,6 +448,7 @@
   .sSub { font-size:calc(3.2 * var(--vw)); opacity:.6; white-space:nowrap;
     overflow:hidden; text-overflow:ellipsis; margin-top:calc(.8 * var(--vw)); }
   .sHint { font-size:calc(2.8 * var(--vw)); opacity:.4; text-align:center; padding:calc(4 * var(--vw)) 0; }
+  .sHint.listHint { padding:calc(2 * var(--vw)) 0 calc(1 * var(--vw)); }
   .sHint.simSeed { text-align:left; opacity:.55; padding:0 0 calc(3 * var(--vw)); }
 
 

@@ -307,10 +307,13 @@ function randomMixPlay(q) {
 }
 
 /* Titel vom Tag-Dienst ([{f, ti, ar, al}]) werden die Warteschlange, der erste läuft */
-function tracksPlay(list) {
-  var items = list.map(function(t){
+function tracksItems(list) {
+  return list.map(function(t){
     return {uri: 'music-library/' + t.f, service: 'mpd', type: 'song', title: t.ti, artist: t.ar, album: t.al};
   });
+}
+function tracksPlay(list) {
+  var items = tracksItems(list);
   browseOrigin = null;
   fetch('/api/v1/replaceAndPlay', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -348,7 +351,8 @@ function browseSimilar(e, seq) {
       }).catch(function(){ showToast(T('hist.offline')); });
     });
     browseBody.appendChild(playRow(T('browse.playAll'), playRowSub(r.items, function(x){ return x.d; }),
-      function(){ tracksPlay(r.items); }, [dice]));
+      function(){ tracksPlay(r.items); }, [dice, queueAddButton(tracksItems(r.items), r.items.length)]));
+    browseBody.appendChild(listHint(T('similar.hint')));
     r.items.forEach(function(x){
       var row = histEl('div', 'sRow mxRow');
       row.appendChild(histImg(histAlbumArt(x.ar, x.al, x.f.replace(/\/[^\/]*$/, ''))));
