@@ -127,7 +127,8 @@ if (radio) {
       showInfo([
         {title:artist,            label:T('info.tab.artist'), data:res[0], always:true},
         {title:T('info.collection'), label:T('info.tab.collection'), data:res[1]},
-        {title:T('info.similar'), label:T('info.tab.similar'), lazy:true, artist:artist}
+        {title:T('info.similar'), label:T('info.tab.similar'), lazy:true, artist:artist},
+        {title:T('browse.tab.more'), label:T('browse.tab.more'), discover:true, artist:artist}
       ]);
     });
   return;
@@ -145,7 +146,8 @@ Promise.all([
     {title:artist,            label:T('info.tab.artist'),    data:res[1], always:true},
     {title:T('info.credits'), label:T('info.tab.credits'), data:res[2]},
     {title:T('info.collection'), label:T('info.tab.collection'), data:res[3]},
-    {title:T('info.similar'), label:T('info.tab.similar'),   lazy:true, artist:artist}
+    {title:T('info.similar'), label:T('info.tab.similar'),   lazy:true, artist:artist},
+    {title:T('browse.tab.more'), label:T('browse.tab.more'), discover:true, artist:artist}
   ]);
 });
 

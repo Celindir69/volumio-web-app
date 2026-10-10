@@ -158,6 +158,7 @@
     font-size:calc(3.8 * var(--vw)); border-bottom:2px solid transparent;
     opacity:.5; transition:all .2s; white-space:nowrap; }
   .infoTab.on { border-bottom-color:var(--fg); opacity:1; }
+  #infoTabs .infoTab { padding-top:.35em; }                       /* Platz für Ä/Ö/Ü: der Streifen schneidet oben ab (overflow) */
   .bTabs .infoTab { padding-top:calc(1.5 * var(--vw) + 4px); }   /* zwischen der Linie des Seitenkopfs und der eigenen mittig */
   #infoSlider { position:relative; overflow:hidden; }
   .infoImg { width:100%; max-height:60vh; object-fit:cover; border-radius:calc(2 * var(--vw)); margin-bottom:calc(4 * var(--vw)); display:block; }
@@ -882,11 +883,13 @@ html:not(.light) .wCard { background:rgba(40,40,46,.86); }   /* dunkel: heller a
 .mxChip.mxMore { background:none; opacity:.7; }
 .mxChip.mxSmall { font-size:calc(3.1 * var(--vw)); padding:calc(1.2 * var(--vw)) calc(2.8 * var(--vw)); }
 .dMore { padding-bottom:calc(4 * var(--vw)); }
-.dMoreSec .mxLabel { padding-top:calc(3 * var(--vw)); }
+.dMoreSec .mxLabel { padding-top:calc(3 * var(--vw)); text-transform:none; letter-spacing:.14em; font-size:calc(2.8 * var(--vw)); }   /* Abschnitt wie „Zuletzt gehört“, keine Formularbeschriftung */
 .mxChip.dMixChip { display:inline-flex; align-items:center; justify-content:center; padding-left:calc(2.8 * var(--vw)); padding-right:calc(2.8 * var(--vw)); }
 .mxChip.dMixChip svg { width:calc(4.6 * var(--vw)); height:calc(4.6 * var(--vw)); max-width:22px; max-height:22px; fill:var(--fg); }
 .mxChip.dMixChip.roll svg { animation:dRoll .45s ease-out; }
-.mxLabel { font-size:calc(3 * var(--vw)); text-transform:uppercase; letter-spacing:.08em; opacity:.5; padding:calc(5 * var(--vw)) 0 calc(2 * var(--vw)); }
+.mxLabel { font-size:calc(3 * var(--vw)); text-transform:uppercase; letter-spacing:.08em; color:rgba(var(--fg-rgb),.5); padding:calc(5 * var(--vw)) 0 calc(2 * var(--vw)); }
+.mxReset { margin-left:.6em; padding:.6em .5em; margin-top:-.6em; margin-bottom:-.6em; display:inline-block; cursor:pointer;
+  text-transform:none; letter-spacing:0; font-weight:600; color:var(--accent, var(--fg)); }
 .mxEnergy { position:relative; height:calc(9 * var(--vw)); max-height:44px; margin:0 calc(2 * var(--vw)); }
 .mxTrack { position:absolute; left:0; right:0; top:50%; height:calc(1.4 * var(--vw)); min-height:5px; transform:translateY(-50%);
   background:rgba(var(--fg-rgb),.15); border-radius:999px; }

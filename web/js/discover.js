@@ -77,7 +77,7 @@ function bdayRows(sec, b, which, dates) {
     var items = (b && b[k]) || [];
     if (!items.length) return;
     any = true;
-    var title = k === 'month' ? T('bday.month', {m: langMonths('long')[new Date().getMonth()].toUpperCase()}) : T('bday.' + k);
+    var title = k === 'month' ? T('bday.month', {m: langMonths('long')[new Date().getMonth()]}) : T('bday.' + k);
     var s = histEl('div', 'dSec');
     discoverRow(s, title, items.map(bdayTile));
     sec.appendChild(s);

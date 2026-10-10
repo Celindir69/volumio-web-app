@@ -140,6 +140,7 @@ function rateAlbumPage(seq, e, who, tracks, meta, rows) {
         ev.stopPropagation();
         v = (v === n) ? 0 : n;                            /* gleicher Stern noch einmal: Bewertung weg */
         show();
+        showToast(v ? T('rate.albumSet', {n: v}) : T('rate.albumCleared'));
         tagPostJson('/rate', {kind: 'album', uri: albumUri, al: e.album || '', ar: who || '', v: v}).catch(function(){ showToast(T('rate.saveError')); });
       });
       stars.appendChild(s);
