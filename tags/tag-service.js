@@ -561,6 +561,10 @@ function doPlays(query, cb) {
     yr.albums_top.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; });
     return cb(200, {ok: true, years: ys, review: yr});
   }
+  if (view === 'album') {                               /* Albumseite: wie oft gehört, zuletzt */
+    var dir = relUri(query.u).replace(/\/+$/, '');
+    return cb(200, {ok: true, stats: plays.albumStats(list, relUri, dir, query.al, query.ar)});
+  }
   if (view === 'ago') {
     var ak = ['artist', 'track'].indexOf(query.kind) >= 0 ? query.kind : 'album';
     var ag = plays.ago(list, now, tz, 12, ak);
@@ -895,7 +899,10 @@ function doWelcome(query, cb) {
     }
     var recent = plays.recentAlbums(pl, 8);
     recent.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; var y = yearOf({u: it.u, al: it.ti, ar: it.ar}); if (y) it.y = y; });
-    cb(200, {ok: true, day: pick, recent: recent, fresh: albums.freshAlbums(list, now, 8),
+    var tz = {w: parseInt(query.tzw, 10) || 0, s: parseInt(query.tzs, 10) || 0};
+    var ago = plays.ago(pl, now, tz, 8, 'album');        /* um diese Zeit vor X Jahren gehört (wie die Reihe in Entdecken) */
+    ago.items.forEach(function(it){ if (it.u) it.u = relUri(it.u); if (!it.u) delete it.u; var y = yearOf({u: it.u, al: it.ti, ar: it.ar}); if (y) it.y = y; });
+    cb(200, {ok: true, day: pick, recent: recent, fresh: albums.freshAlbums(list, now, 8), ago: ago.items.length ? ago : null,
              birthdays: releasedates.birthdays(list, function(a){ return releaseDates.dateOf(a); }, day), dates: releaseDates.status()});
   });
 }

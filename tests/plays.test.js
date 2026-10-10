@@ -174,4 +174,13 @@ t('Meistgespielt nach Genre mit dem meistgespielten Album als Bild', function(){
   assert.deepStrictEqual(g, [{g: 'Rock', n: 4, ar: 'A', al: 'Zwei', u: 'USB/A/Zwei'}, {g: 'Pop', n: 1, ar: 'B', al: 'Drei'}]);
   assert.deepStrictEqual(plays.topGenre(l, function(){ return 'Rock'; }, 12, 10)[0].n, 3, 'Zeitraum');
 });
+t('Albumseite: wie oft gehört (Pause über 3 h = neues Hören), zuletzt; Ordner auch mit CD1/CD2', function(){
+  var H = 3600, rel = function(u){ return String(u).replace(/^mnt\//, ''); };
+  var l = [{t: 1000, ar: 'A', ti: 'x', al: 'Eins', u: 'mnt/USB/A/Eins/CD1/1.flac'}, {t: 1300, ar: 'A', ti: 'y', al: 'Eins', u: 'mnt/USB/A/Eins/CD2/1.flac'},
+           {t: 1000 + 5 * H, ar: 'A', ti: 'x', al: 'Eins', u: 'mnt/USB/A/Eins/CD1/1.flac'}, {t: 1000 + 6 * H, ar: 'B', ti: 'q', al: 'Eins', u: 'tidal://1'},
+           {t: 1000 + 7 * H, ar: 'A', ti: 'z', al: 'Einsam', u: 'mnt/USB/A/Einsam/1.flac'}];
+  assert.deepStrictEqual(plays.albumStats(l, rel, 'USB/A/Eins', 'Eins', ''), {n: 2, tracks: 3, first: 1000, last: 1000 + 5 * H});
+  assert.strictEqual(plays.albumStats(l, rel, '', 'Eins', 'B').n, 1, 'Dienst: Album und Interpret');
+  assert.strictEqual(plays.albumStats(l, rel, 'USB/A/Fehlt', 'Fehlt', ''), null);
+});
 console.log(n + ' Prüfungen');
