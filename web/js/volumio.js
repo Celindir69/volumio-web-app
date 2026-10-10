@@ -7,7 +7,8 @@ var VOLUMIO_PAGES = [
   { label: T('volumio.page.browse'),   path: '/browse' },
   { label: T('volumio.page.queue'),    path: '/queue' },
   { label: T('volumio.page.settings'), path: '/settings' },
-  { label: T('volumio.page.plugins'),  path: '/plugin-manager' }
+  { label: T('volumio.page.plugins'),  path: '/plugin-manager' },
+  { label: T('volumio.page.system'),   path: '/dev' }              /* Entwicklerseite: SSH, Protokolle, Neustart */
 
 ];
 

@@ -555,5 +555,6 @@ langRegister('de', 'Deutsch', {
   'volumio.page.browse': 'Browse',
   'volumio.page.plugins': 'Plugins',
   'volumio.page.queue': 'Queue',
-  'volumio.page.settings': 'Einstellungen'
+  'volumio.page.settings': 'Einstellungen',
+  'volumio.page.system': 'System'
 }, 'de-DE');
