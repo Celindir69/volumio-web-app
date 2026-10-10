@@ -217,7 +217,7 @@ function loadQueue() {
       hint.textContent = finePointer
         ? T('queue.hintMouse')
         : T('queue.hintTouch');
-      queueList.appendChild(hint);
+      queueList.insertBefore(hint, queueList.firstChild);   /* oben, wie bei den anderen Listen; bei langen Listen sonst nie zu sehen */
     }
     if (!queueData.length) {                           /* leer: Hinweis und Weg zur Suche statt einer leeren Fläche */
       queueList.appendChild(browseNote(T('queue.empty')));

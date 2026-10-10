@@ -485,7 +485,7 @@ langRegister('de', 'Deutsch', {
   'rate.saveError': 'Bewertung nicht gespeichert: Tag-Dienst nicht erreichbar',
   'rate.track': 'Bewerten: mag ich, mag ich nicht, neutral',
   'queue.hintMouse': 'Klicken: Abspielen  ·  Papierkorb: Entfernen  ·  Handle: Sortieren',
-  'queue.hintTouch': 'tippen: Abspielen  ·  ← wischen: Löschen  ·  Handle: Sortieren',
+  'queue.hintTouch': 'Tippen: Abspielen  ·  ← wischen: Löschen  ·  Handle: Sortieren',
   'queue.remove': 'Aus Warteschlange entfernen',
   'queue.added': 'An die Warteschlange angehängt',
   'queue.empty': 'Die Warteschlange ist leer.',
