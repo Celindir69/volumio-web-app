@@ -1,7 +1,7 @@
 /* Cover-Farbstimmung: eine Akzentfarbe und eine Hintergrundtönung aus dem Cover des laufenden Titels.
    pickMood() ist eine reine Funktion (Pixel -> Farben) und mit tests/color.test.js prüfbar;
    updateMood() lädt das Cover klein in eine Zeichenfläche und setzt die CSS-Variablen
-   --accent-d/-l und --tint-d/-l (dunkles bzw. helles Design; base.css wählt daraus --accent und --bg-tint). Nur Cover vom eigenen Player (same origin bzw. /albumart) werden gelesen:
+   --accent-d/-l, --on-accent-d/-l und --tint-d/-l (dunkles bzw. helles Design; base.css wählt daraus --accent und --bg-tint). Nur Cover vom eigenen Player (same origin bzw. /albumart) werden gelesen:
    fremde Server (z. B. Tidal, TuneIn) senden keine CORS-Kopfzeile, dort bleibt es bei der Standardoptik.
    Klassisches Skript, gemeinsamer globaler Gültigkeitsbereich; Reihenfolge siehe xplorio.html. */
 
@@ -16,6 +16,17 @@ function cmHsl(r, g, b) {
     h *= 60; if (h < 0) h += 360;
   }
   return [h, s, l];
+}
+
+/* Schrift auf der Akzentfläche: dunkel oder hell, je nachdem, was mehr Kontrast hat (WCAG-Leuchtdichte) */
+function cmOnColor(h, s, l) {
+  var a = s * Math.min(l, 1 - l);
+  function ch(n) {
+    var k = (n + h / 30) % 12, v = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  }
+  var L = 0.2126 * ch(0) + 0.7152 * ch(8) + 0.0722 * ch(4);
+  return (L + 0.05) / 0.0556 >= 1.05 / (L + 0.05) ? '#111' : '#fff';
 }
 
 /* px: flache RGBA-Liste (wie ImageData.data). Ergebnis {hue, accent, tint} oder null (Cover ohne Farbe) */
@@ -60,14 +71,17 @@ function pickMood(px) {
     accent: 'hsl(' + hue + ', ' + Math.round(s * 100) + '%, ' + Math.round(accentL * 100) + '%)',
     tint: 'hsla(' + hue + ', ' + Math.round(tintS * 100) + '%, 34%, 0.42)',
     accentLight: 'hsl(' + hue + ', ' + Math.round(s * 100) + '%, ' + Math.round(lightL * 100) + '%)',
-    tintLight: 'hsla(' + hue + ', ' + Math.round(tintS * 100) + '%, 82%, 0.38)'
+    tintLight: 'hsla(' + hue + ', ' + Math.round(tintS * 100) + '%, 82%, 0.38)',
+    onAccent: cmOnColor(hue, Math.round(s * 100) / 100, Math.round(accentL * 100) / 100),
+    onAccentLight: cmOnColor(hue, Math.round(s * 100) / 100, Math.round(lightL * 100) / 100)
   };
 }
 
 /* beide Farbsätze setzen; welcher gilt, entscheidet das CSS (--accent, --bg-tint in base.css, hell/dunkel) */
 function applyMood(m) {
   var root = document.documentElement.style;
-  var props = {'--accent-d': 'accent', '--tint-d': 'tint', '--accent-l': 'accentLight', '--tint-l': 'tintLight'};
+  var props = {'--accent-d': 'accent', '--tint-d': 'tint', '--accent-l': 'accentLight', '--tint-l': 'tintLight',
+               '--on-accent-d': 'onAccent', '--on-accent-l': 'onAccentLight'};
   Object.keys(props).forEach(function(k){ if (m) root.setProperty(k, m[props[k]]); else root.removeProperty(k); });
 }
 

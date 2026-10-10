@@ -140,7 +140,9 @@ function rateAlbumPage(seq, e, who, tracks, meta, rows) {
         ev.stopPropagation();
         v = (v === n) ? 0 : n;                            /* gleicher Stern noch einmal: Bewertung weg */
         show();
-        showToast(v ? T('rate.albumSet', {n: v}) : T('rate.albumCleared'));
+        var hint = false;                                 /* Erklärung zum Entfernen nur beim ersten Mal */
+        if (!v) try { hint = !localStorage.getItem('rateClearHint'); localStorage.setItem('rateClearHint', '1'); } catch (er) { /* egal */ }
+        showToast(v ? T('rate.albumSet', {n: v}) : hint ? T('rate.albumClearedHint') : T('rate.cleared'));
         tagPostJson('/rate', {kind: 'album', uri: albumUri, al: e.album || '', ar: who || '', v: v}).catch(function(){ showToast(T('rate.saveError')); });
       });
       stars.appendChild(s);

@@ -39,4 +39,9 @@ t('Akzent bleibt bei sehr hellem Cover im erlaubten Bereich', function(){
   assert(m === null || (+mm[3] >= 58 && +mm[3] <= 72), m && m.accent); });
 t('Tönung ist halbtransparent und dunkel (l 34 %)', function(){
   var m = pickMood(field([[200, 90, 40, 300]])); assert(/hsla\(\d+, \d+%, 34%, 0\.42\)/.test(m.tint), m.tint); });
+t('Schrift auf dem Akzent: dunkel auf hellem Gelb, hell auf dunklem Blau', function(){
+  assert.strictEqual(cmOnColor(55, 0.85, 0.65), '#111');
+  assert.strictEqual(cmOnColor(230, 0.8, 0.35), '#fff');
+  var m = pickMood(field([[200, 90, 40, 300]]));
+  assert(/^#(111|fff)$/.test(m.onAccent) && /^#(111|fff)$/.test(m.onAccentLight), JSON.stringify(m)); });
 process.exit(fail ? 1 : 0);

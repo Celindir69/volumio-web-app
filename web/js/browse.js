@@ -165,6 +165,30 @@ function localSearchTitles(artist, have, me) {
   }).catch(function(){ return []; });
 }
 
+/* Abspielzeile unter dem Seitenkopf, überall gleich: Kreis ▶ mit Text, darunter Anzahl und Dauer, rechts Symbole
+   (Herz, Würfel, Stift bzw. ↻ und Anhängen); ein Tipp auf die Zeile spielt ab. Symbole rechts stoppen den Klick selbst. */
+function playRow(label, sub, onPlay, extras) {
+  var head = document.createElement('div');
+  head.className = 'playRow';
+  head.innerHTML = '<div class="playCircle"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
+  var lbl = document.createElement('div');
+  lbl.className = 'sMeta';
+  var t1 = document.createElement('div'); t1.className = 'sTitle bAlbum'; t1.textContent = label;
+  var t2 = document.createElement('div'); t2.className = 'sSub'; t2.textContent = sub || '';
+  lbl.appendChild(t1); lbl.appendChild(t2);
+  head.appendChild(lbl);
+  head.sub = t2;
+  (extras || []).forEach(function(x){ if (x) head.appendChild(x); });
+  head.addEventListener('click', onPlay);
+  return head;
+}
+/* "12 Titel · 48 Min." (Dauer nur, wenn alle Titel eine haben) */
+function playRowSub(tracks, secOf) {
+  var n = tracks.length, sum = 0, all = n > 0;
+  tracks.forEach(function(t){ var d = Number(secOf(t)) || 0; if (d > 0) sum += d; else all = false; });
+  return T('browse.trackCount', {n: n}) + (all && sum ? ' · ' + mixDuration(sum) : '');
+}
+
 function browseHeading(text) {
   var d = document.createElement('div');
   d.className = 'infoSection'; d.textContent = text;
@@ -273,19 +297,11 @@ function browseArtist(e, seq) {
     browseBody.appendChild(photo);
 
     if (!isStream) {                                  /* alles vom Künstler abspielen (Alben und Einzeltitel) */
-      var head = document.createElement('div');
-      head.id = 'browseArtistHead';
-      head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
-      var lbl = document.createElement('div');
-      lbl.className = 'bAlbum'; lbl.textContent = T('browse.playAll');
-      head.appendChild(lbl);
-      head.appendChild(rateArtistHeart(e.artist));      /* Lieblingskünstler (rating.js) */
-      head.appendChild(randomMixButton({artist: e.artist}));   /* 25 zufällige Titel des Künstlers (discover.js) */
-      head.appendChild(tagArtistButton(e.artist));    /* Tags aller lokalen Titel des Künstlers bearbeiten */
-      head.addEventListener('click', function(){
+      browseBody.appendChild(playRow(T('browse.playAll'), '', function(){
         browsePlay({uri:'artists://' + e.artist, service:'mpd', type:'folder', title:e.artist});
-      });
-      browseBody.appendChild(head);
+      }, [rateArtistHeart(e.artist),                   /* Lieblingskünstler (rating.js) */
+          randomMixButton({artist: e.artist}),         /* 25 zufällige Titel des Künstlers (discover.js) */
+          tagArtistButton(e.artist)]));                /* Tags aller lokalen Titel des Künstlers bearbeiten */
     }
 
     /* Reiter „Alben & Titel“, „Entdecken“ (discover.js; beim Dienst „Lokal entdecken“: aus der eigenen Sammlung)
@@ -421,21 +437,15 @@ function browseAlbum(e, seq) {
         ge.addEventListener('click', function(){ genreOpen(gs[0]); });
       });
     }
-    var play = document.createElement('div');
-    play.id = 'browsePlayAll';
-    play.title = T('browse.playAlbum');
-    play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>';
-    play.addEventListener('click', function(){
-      browsePlay({uri:e.uri, service:info.service || e.service || 'mpd', type:'folder', title:e.album, artist:e.artist});
-    });
     head.appendChild(img); head.appendChild(meta);
-    var localTracks = tracks.filter(isLocalTrack);
-    if (localTracks.length) {                              /* lokale Dateien: Tags bearbeiten */
-      head.appendChild(tagEditButton(localTracks.map(function(t){ return {uri:t.uri, title:t.title || t.name || ''}; }),
-                                     e.album, 'browseEditBtn'));
-    }
-    head.appendChild(play);
     browseBody.appendChild(head);
+    var localTracks = tracks.filter(isLocalTrack);
+    var play = playRow(T('browse.play'), playRowSub(tracks, function(t){ return t.duration; }), function(){
+      browsePlay({uri:e.uri, service:info.service || e.service || 'mpd', type:'folder', title:e.album, artist:e.artist});
+    }, [localTracks.length ? tagEditButton(localTracks.map(function(t){ return {uri:t.uri, title:t.title || t.name || ''}; }),   /* lokale Dateien: Tags bearbeiten */
+                                           e.album, 'browseEditBtn') : null]);
+    play.title = T('browse.playAlbum');
+    browseBody.appendChild(play);
 
     /* Reiter „Titel“, „Entdecken“ (beim Dienst „Lokal entdecken“) und „Hintergrund“ */
     var stream = !!streamOf(e.uri);
@@ -519,17 +529,8 @@ function browsePlaylist(e, seq) {
     plTileDraw(tile, plTileArtists(tracks));
     if (tile.firstChild) { tile.id = 'browsePlTile'; browseBody.appendChild(tile); }
 
-    var head = document.createElement('div');
-    head.id = 'browseArtistHead';
-    head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
-    var lbl = document.createElement('div');
-    lbl.className = 'sMeta';
-    var t1 = document.createElement('div'); t1.className = 'sTitle bAlbum'; t1.textContent = T('browse.playPlaylist');
-    var t2 = document.createElement('div'); t2.className = 'sSub'; t2.textContent = T('browse.trackCount', {n: tracks.length});
-    lbl.appendChild(t1); lbl.appendChild(t2);
-    head.appendChild(lbl);
-    head.addEventListener('click', function(){ playlistPlay(e, tracks, 0); });
-    browseBody.appendChild(head);
+    browseBody.appendChild(playRow(T('browse.playPlaylist'), playRowSub(tracks, function(t){ return t.duration; }),
+      function(){ playlistPlay(e, tracks, 0); }));
 
     tracks.forEach(function(t, i){
       var row = document.createElement('div');

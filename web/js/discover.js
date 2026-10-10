@@ -335,13 +335,6 @@ function browseSimilar(e, seq) {
     if (!r || !r.ok || !r.items.length) { browseBody.appendChild(browseNote(T(r && r.nodata ? 'similar.nodata' : 'similar.none'))); return; }
     var s = r.seed, sum = s.mood.map(mixName).concat(s.energy ? [T('similar.energy', {e: s.energy})] : [], s.bpm ? [s.bpm + '\u00a0BPM'] : []);
     if (sum.length) browseBody.appendChild(browseNote(T('similar.seed', {why: sum.join(' · ')}), 'sHint simSeed'));
-    var head = document.createElement('div');
-    head.id = 'browseArtistHead';
-    head.innerHTML = '<div id="browsePlayAll"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg></div>';
-    var lbl = histEl('div', 'sMeta');
-    lbl.appendChild(histEl('div', 'sTitle bAlbum', T('browse.playAll')));
-    lbl.appendChild(histEl('div', 'sSub', T('browse.trackCount', {n: r.items.length})));
-    head.appendChild(lbl);
     var dice = histEl('div', 'mixDice');
     dice.title = T('disc.mix');
     dice.innerHTML = DICE_SVG;
@@ -354,9 +347,8 @@ function browseSimilar(e, seq) {
         showToast(T('disc.mixStarted', {n: m.items.length}));
       }).catch(function(){ showToast(T('hist.offline')); });
     });
-    head.appendChild(dice);
-    head.addEventListener('click', function(){ tracksPlay(r.items); });
-    browseBody.appendChild(head);
+    browseBody.appendChild(playRow(T('browse.playAll'), playRowSub(r.items, function(x){ return x.d; }),
+      function(){ tracksPlay(r.items); }, [dice]));
     r.items.forEach(function(x){
       var row = histEl('div', 'sRow mxRow');
       row.appendChild(histImg(histAlbumArt(x.ar, x.al, x.f.replace(/\/[^\/]*$/, ''))));

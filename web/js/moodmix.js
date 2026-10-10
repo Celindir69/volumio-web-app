@@ -372,7 +372,6 @@ function mixPreview() {
   if (mixCrit.genres.length > 1) info.appendChild(histEl('div', 'mxSumS', mixCrit.genres.map(mixGenreName).join(' · ')));
   if (mixCrit.styles.length) info.appendChild(histEl('div', 'mxSumS', mixCrit.styles.join(mixCrit.match === 'all' ? ' + ' : ' · ')));
   var total = tracks.reduce(function(s, x){ return s + (x.d || 0); }, 0);
-  info.appendChild(histEl('div', 'mxSumN', T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : '')));
   head.appendChild(info);
   var edit = histEl('div', 'mxEdit', T('mix.edit'));
   edit.addEventListener('click', function(){ mixState.view = 'pick'; mixRender(); });
@@ -388,19 +387,16 @@ function mixPreview() {
     return;
   }
 
-  var bar = histEl('div', 'mxBar');
-  var play = histEl('button', 'mxGo mxPlay', '▶  ' + T('mix.play'));
-  play.addEventListener('click', function(){ mixPlay(tracks, true); });
   var reroll = histEl('button', 'mxIcon', '');
   reroll.title = T('mix.reroll');
   reroll.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
-  reroll.addEventListener('click', function(){ reroll.classList.add('spin'); mixBuild(); });
+  reroll.addEventListener('click', function(ev){ ev.stopPropagation(); reroll.classList.add('spin'); mixBuild(); });
   var add = histEl('button', 'mxIcon', '');
   add.title = T('mix.addToQueue');
   add.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14 10H3v2h11v-2zm0-4H3v2h11V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM3 16h7v-2H3v2z"/></svg>';
-  add.addEventListener('click', function(){ mixPlay(tracks, false); });
-  bar.appendChild(play); bar.appendChild(reroll); bar.appendChild(add);
-  mixBody.appendChild(bar);
+  add.addEventListener('click', function(ev){ ev.stopPropagation(); mixPlay(tracks, false); });
+  mixBody.appendChild(playRow(T('mix.play'), T('mix.tracks', {n: tracks.length}) + (total ? ' · ' + mixDuration(total) : ''),
+    function(){ mixPlay(tracks, true); }, [reroll, add]));   /* Zeile wie auf Album- und Künstlerseite (browse.js) */
 
   var list = histEl('div', 'mxList');
   tracks.forEach(function(x, i){
@@ -428,6 +424,7 @@ function mixPreview() {
       mixBody.scrollTop = keep;
     });
     row.appendChild(del);
+    row.addEventListener('click', function(){ mixPlay(tracks.slice(tracks.indexOf(x)), true); });   /* ab diesem Titel */
     list.appendChild(row);
   });
   mixBody.appendChild(list);
