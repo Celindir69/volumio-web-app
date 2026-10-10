@@ -1,6 +1,8 @@
 /* Deutsch: Texte der Oberfläche (Schlüssel siehe web/js/i18n.js). */
 langRegister('de', 'Deutsch', {
   'audio.busy': 'Audioziel ist belegt',
+  'audio.connected': 'Audioziel verbunden',
+  'audio.disconnected': 'Audioziel getrennt',
   'audio.unreachable': 'Audioziel nicht erreichbar',
   'browse.albums': 'Alben',
   'browse.hintAlbum': 'Tippen: Album ab diesem Titel',

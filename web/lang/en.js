@@ -3,6 +3,8 @@
    {name} sind Platzhalter und bleiben stehen; {one, other} sind Einzahl und Mehrzahl. */
 langRegister('en', 'English', {
   'audio.busy': 'Audio output is busy',
+  'audio.connected': 'Audio output connected',
+  'audio.disconnected': 'Audio output disconnected',
   'audio.unreachable': 'Audio output not reachable',
   'browse.albums': 'Albums',
   'browse.hintAlbum': 'Tap: play album from this track',
