@@ -802,7 +802,8 @@ html.stage body:has(.overlay.on:not(#overlayLyrics):not(#overlayInfo)) #lyrShift
 
 /* Geburtstage (discover.js): Abzeichen mit den Jahren bei runden Geburtstagen, Jubiläen zusätzlich mit goldenem Rand */
 .dRound, .dJubilee { position:relative; }
-.dBadge { position:absolute; top:calc(1.5 * var(--vw)); left:calc(1.5 * var(--vw)); padding:2px calc(2 * var(--vw));
+.dBadge { position:absolute; top:calc(1.5 * var(--vw)); left:calc(1.5 * var(--vw)); line-height:1.2;
+  padding:.3em calc(2 * var(--vw)) .18em;   /* Century Gothic sitzt hoch: oben etwas mehr, damit die Schrift mittig wirkt */
   border-radius:999px; font-size:calc(2.6 * var(--vw)); font-weight:700; background:rgba(0,0,0,.62); color:#fff; }
 .dJubilee .dBadge { background:var(--gold); color:var(--ink); }
 .dJubilee .sCover { outline:3px solid var(--gold); outline-offset:-3px; }   /* innen: die Reihe schneidet außen ab */
