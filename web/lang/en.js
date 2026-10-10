@@ -2,6 +2,8 @@
    Zeile anpassen) und <code> in LANGUAGES in web/config.local.js eintragen. Fehlende Einträge erscheinen englisch.
    {name} sind Platzhalter und bleiben stehen; {one, other} sind Einzahl und Mehrzahl. */
 langRegister('en', 'English', {
+  'audio.busy': 'Audio output is busy',
+  'audio.unreachable': 'Audio output not reachable',
   'browse.albums': 'Albums',
   'browse.hintAlbum': 'Tap: play album from this track',
   'browse.hintPlaylist': 'Tap: play playlist from this track',
